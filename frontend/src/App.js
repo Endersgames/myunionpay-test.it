@@ -123,6 +123,7 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <ChromePromptBanner />
         <Toaster 
           position="top-center" 
           richColors 
