@@ -63,10 +63,7 @@ export default function SendNotificationPage() {
       toast.error("Compila titolo e messaggio");
       return;
     }
-    if (formData.target_tags.length === 0) {
-      toast.error("Seleziona almeno un tag target");
-      return;
-    }
+    // Tags are optional - if none selected, sends to ALL users
     
     setSending(true);
     try {
