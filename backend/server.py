@@ -469,9 +469,9 @@ async def send_notification(data: NotificationCreate, user: dict = Depends(get_c
     if data.reward_amount < 0.01 or data.reward_amount > 1.00:
         raise HTTPException(status_code=400, detail="Importo reward deve essere tra 0.01€ e 1.00€")
     
-    # Find target users
+    # Find target users - only fetch id field for security and performance
     target_query = {"profile_tags": {"$in": data.target_tags}} if data.target_tags else {}
-    target_users = await db.users.find(target_query, {"_id": 0}).to_list(10000)
+    target_users = await db.users.find(target_query, {"_id": 0, "id": 1}).to_list(10000)
     
     total_recipients = len(target_users)
     total_cost = total_recipients * data.reward_amount
