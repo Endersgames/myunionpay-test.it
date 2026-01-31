@@ -3,29 +3,24 @@ import { QRCodeSVG } from "qrcode.react";
 /**
  * QRCode component that generates real, scannable QR codes
  * 
- * @param {string} value - The QR code identifier (e.g., UP123456 or REF123)
+ * The QR code contains a smart URL that:
+ * - If user is logged in → opens payment page
+ * - If user is NOT logged in → opens registration with referral
+ * 
+ * @param {string} value - The QR code identifier (e.g., UP123456)
  * @param {number} size - Size in pixels
- * @param {string} type - "payment" | "referral" - determines the URL structure
  */
-export const QRCode = ({ value, size = 200, type = "payment" }) => {
-  // Generate the full URL that the QR code will encode
+export const QRCode = ({ value, size = 200 }) => {
+  // Generate the smart URL - /s/ route handles the logic
   const baseUrl = window.location.origin;
-  
-  let qrContent;
-  if (type === "referral") {
-    // Referral QR encodes registration URL with referral code
-    qrContent = `${baseUrl}/register?ref=${value}`;
-  } else {
-    // Payment QR encodes payment URL with user's QR code
-    qrContent = `${baseUrl}/pay/${value}`;
-  }
+  const qrContent = `${baseUrl}/s/${value}`;
 
   return (
     <div data-testid="qr-code-container">
       <QRCodeSVG
         value={qrContent}
         size={size}
-        level="H" // High error correction
+        level="H" // High error correction for better scanning
         includeMargin={false}
         bgColor="#FFFFFF"
         fgColor="#000000"
