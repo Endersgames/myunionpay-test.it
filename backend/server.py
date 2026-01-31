@@ -520,7 +520,7 @@ async def send_notification(data: NotificationCreate, user: dict = Depends(get_c
     
     await db.notifications.insert_one(notification_doc)
     
-    # Create user notifications and credit rewards
+    # Create user notifications, credit rewards, and send push notifications
     for target_user in target_users:
         user_notif_doc = {
             "id": str(uuid.uuid4()),
@@ -535,6 +535,22 @@ async def send_notification(data: NotificationCreate, user: dict = Depends(get_c
         }
         await db.user_notifications.insert_one(user_notif_doc)
         await db.wallets.update_one({"user_id": target_user["id"]}, {"$inc": {"balance": data.reward_amount}})
+        
+        # Send push notification (async, don't wait)
+        try:
+            await send_push_notification(
+                user_id=target_user["id"],
+                title=f"💰 {merchant['business_name']}",
+                body=f"{data.title} - Hai guadagnato €{data.reward_amount:.2f}!",
+                data={
+                    "type": "merchant_notification",
+                    "notification_id": notification_id,
+                    "reward": data.reward_amount,
+                    "url": "/notifications"
+                }
+            )
+        except Exception as e:
+            logging.error(f"Failed to send push to user {target_user['id']}: {e}")
     
     return NotificationResponse(**notification_doc)
 
