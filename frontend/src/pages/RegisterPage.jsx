@@ -12,6 +12,8 @@ export default function RegisterPage() {
   const { register } = useAuth();
   const [searchParams] = useSearchParams();
   
+  const redirectTo = searchParams.get("redirect");
+  
   const [formData, setFormData] = useState({
     full_name: "",
     email: "",
@@ -40,8 +42,9 @@ export default function RegisterPage() {
     try {
       await register(formData);
       toast.success("Account creato! Benvenuto in UpPay");
-      // Small delay to ensure state is updated
-      setTimeout(() => navigate("/dashboard"), 100);
+      // Redirect to payment page if came from QR scan, otherwise dashboard
+      const destination = redirectTo || "/dashboard";
+      setTimeout(() => navigate(destination), 100);
     } catch (err) {
       toast.error(err.response?.data?.detail || "Errore durante la registrazione");
       setLoading(false);
