@@ -111,10 +111,11 @@ export default function LandingPage() {
                 onClick={handleInstall}
                 variant="secondary"
                 className="bg-white text-[#7C3AED] hover:bg-white/90"
-              data-testid="install-pwa-btn"
-            >
-              Installa
-            </Button>
+                data-testid="install-pwa-btn"
+              >
+                Installa
+              </Button>
+            )}
           </div>
         )}
 
