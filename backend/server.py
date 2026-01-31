@@ -148,6 +148,10 @@ class ProfileTagsUpdate(BaseModel):
 class DepositRequest(BaseModel):
     amount: float
 
+class PushSubscription(BaseModel):
+    endpoint: str
+    keys: dict
+
 # ========================
 # AUTH HELPERS
 # ========================
