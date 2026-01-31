@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Camera, Keyboard, X } from "lucide-react";
+import { Html5Qrcode } from "html5-qrcode";
+import { ArrowLeft, Camera, Keyboard, X, SwitchCamera, FlashlightOff, Flashlight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -10,39 +11,107 @@ export default function ScannerPage() {
   const navigate = useNavigate();
   const [showManual, setShowManual] = useState(false);
   const [manualCode, setManualCode] = useState("");
-  const [scanning, setScanning] = useState(true);
-  const videoRef = useRef(null);
-  const streamRef = useRef(null);
+  const [scanning, setScanning] = useState(false);
+  const [cameraError, setCameraError] = useState(null);
+  const [facingMode, setFacingMode] = useState("environment");
+  const scannerRef = useRef(null);
+  const html5QrCodeRef = useRef(null);
 
   useEffect(() => {
     if (!showManual) {
-      startCamera();
+      startScanner();
     }
-    return () => stopCamera();
-  }, [showManual]);
+    return () => stopScanner();
+  }, [showManual, facingMode]);
 
-  const startCamera = async () => {
+  const startScanner = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" }
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
+      setCameraError(null);
+      
+      // Create scanner instance
+      if (!html5QrCodeRef.current) {
+        html5QrCodeRef.current = new Html5Qrcode("qr-reader");
       }
+
+      const config = {
+        fps: 10,
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0,
+      };
+
+      await html5QrCodeRef.current.start(
+        { facingMode },
+        config,
+        onScanSuccess,
+        onScanFailure
+      );
+      
       setScanning(true);
     } catch (err) {
-      console.error("Camera error:", err);
-      toast.error("Impossibile accedere alla fotocamera");
+      console.error("Scanner error:", err);
+      setCameraError(err.message || "Impossibile accedere alla fotocamera");
       setShowManual(true);
     }
   };
 
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
+  const stopScanner = async () => {
+    try {
+      if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
+        await html5QrCodeRef.current.stop();
+      }
+    } catch (err) {
+      console.error("Stop scanner error:", err);
     }
+    setScanning(false);
+  };
+
+  const onScanSuccess = (decodedText, decodedResult) => {
+    console.log("QR Scanned:", decodedText);
+    
+    // Stop scanner immediately
+    stopScanner();
+    
+    // Parse the QR content
+    handleQRContent(decodedText);
+  };
+
+  const onScanFailure = (error) => {
+    // Silent - this fires constantly when no QR is in view
+  };
+
+  const handleQRContent = (content) => {
+    // Check if it's a full URL from our app
+    if (content.includes("/s/")) {
+      // Extract QR code from URL like https://domain.com/s/UP123456
+      const match = content.match(/\/s\/([A-Z0-9]+)/i);
+      if (match) {
+        const qrCode = match[1].toUpperCase();
+        toast.success("QR Code rilevato!");
+        navigate(`/s/${qrCode}`);
+        return;
+      }
+    }
+    
+    // Check if it's a payment URL
+    if (content.includes("/pay/")) {
+      const match = content.match(/\/pay\/([A-Z0-9]+)/i);
+      if (match) {
+        const qrCode = match[1].toUpperCase();
+        toast.success("QR Code rilevato!");
+        navigate(`/pay/${qrCode}`);
+        return;
+      }
+    }
+    
+    // Check if it's just a QR code (UP123456)
+    if (content.match(/^UP[A-Z0-9]+$/i)) {
+      toast.success("QR Code rilevato!");
+      navigate(`/s/${content.toUpperCase()}`);
+      return;
+    }
+    
+    // Unknown format
+    toast.error("QR Code non riconosciuto");
   };
 
   const handleManualSubmit = () => {
@@ -50,21 +119,26 @@ export default function ScannerPage() {
       toast.error("Inserisci un codice QR");
       return;
     }
-    const code = manualCode.trim().toUpperCase();
-    if (!code.startsWith("UP")) {
-      toast.error("Codice QR non valido");
+    let code = manualCode.trim().toUpperCase();
+    
+    // Handle full URL
+    if (code.includes("/S/") || code.includes("/PAY/")) {
+      handleQRContent(code);
       return;
     }
-    stopCamera();
-    navigate(`/pay/${code}`);
+    
+    // Add UP prefix if missing
+    if (!code.startsWith("UP")) {
+      code = "UP" + code;
+    }
+    
+    stopScanner();
+    navigate(`/s/${code}`);
   };
 
-  // Simulated QR detection (in production use a real QR scanner library)
-  const simulateScan = () => {
-    const demoCode = "UPTEST123456";
-    toast.success("QR Code rilevato!");
-    stopCamera();
-    navigate(`/pay/${demoCode}`);
+  const switchCamera = async () => {
+    await stopScanner();
+    setFacingMode(prev => prev === "environment" ? "user" : "environment");
   };
 
   return (
@@ -72,7 +146,7 @@ export default function ScannerPage() {
       {/* Header */}
       <div className="px-6 pt-8 pb-4">
         <button 
-          onClick={() => navigate("/dashboard")}
+          onClick={() => { stopScanner(); navigate("/dashboard"); }}
           className="flex items-center gap-2 text-[#A1A1AA] hover:text-white mb-6 transition-colors"
           data-testid="back-btn"
         >
@@ -84,37 +158,55 @@ export default function ScannerPage() {
         <p className="text-[#A1A1AA]">Inquadra il QR code per pagare</p>
       </div>
 
-      {/* Scanner/Manual Toggle */}
       {!showManual ? (
-        <div className="px-6 py-8 flex flex-col items-center">
-          {/* Camera Preview */}
-          <div className="qr-scanner-frame mb-8" data-testid="scanner-frame">
-            <video 
-              ref={videoRef}
-              autoPlay 
-              playsInline 
-              muted
-              className="w-full h-full object-cover rounded-[21px]"
-            />
-            <div className="scan-line" />
+        <div className="px-6 py-4 flex flex-col items-center">
+          {/* Scanner Container */}
+          <div className="relative w-full max-w-sm mb-6">
+            <div className="qr-scanner-frame mx-auto overflow-hidden">
+              <div 
+                id="qr-reader" 
+                ref={scannerRef}
+                className="w-full h-full"
+                style={{ 
+                  width: '274px', 
+                  height: '274px',
+                  background: '#000'
+                }}
+              />
+              {scanning && <div className="scan-line" />}
+            </div>
           </div>
 
-          <p className="text-[#A1A1AA] text-center mb-6">
-            Posiziona il QR code all'interno della cornice
+          {/* Camera Error */}
+          {cameraError && (
+            <div className="bg-[#FF3B30]/10 border border-[#FF3B30]/30 rounded-xl p-4 mb-4 w-full max-w-sm">
+              <p className="text-[#FF3B30] text-sm">{cameraError}</p>
+            </div>
+          )}
+
+          {/* Instructions */}
+          <p className="text-[#A1A1AA] text-center mb-6 max-w-sm">
+            {scanning 
+              ? "Posiziona il QR code all'interno della cornice" 
+              : "Avvio fotocamera..."}
           </p>
 
-          {/* Demo button for testing */}
-          <Button
-            onClick={simulateScan}
-            className="w-full max-w-sm h-12 rounded-full bg-[#121212] border border-white/10 hover:border-[#7C3AED]/50 mb-4"
-            data-testid="demo-scan-btn"
-          >
-            <Camera className="w-5 h-5 mr-2" />
-            Simula Scansione (Demo)
-          </Button>
+          {/* Camera Controls */}
+          <div className="flex gap-3 mb-6">
+            <Button
+              onClick={switchCamera}
+              variant="outline"
+              className="h-12 px-4 rounded-full border-white/20 bg-[#121212]"
+              data-testid="switch-camera-btn"
+            >
+              <SwitchCamera className="w-5 h-5 mr-2" />
+              Cambia Camera
+            </Button>
+          </div>
 
+          {/* Manual Entry Toggle */}
           <Button
-            onClick={() => { stopCamera(); setShowManual(true); }}
+            onClick={() => { stopScanner(); setShowManual(true); }}
             variant="ghost"
             className="text-[#A1A1AA] hover:text-white"
             data-testid="manual-entry-btn"
@@ -142,6 +234,7 @@ export default function ScannerPage() {
               onChange={(e) => setManualCode(e.target.value.toUpperCase())}
               className="h-12 bg-[#050505] border-white/10 focus:border-[#7C3AED] rounded-xl mb-4 font-mono"
               data-testid="manual-code-input"
+              onKeyDown={(e) => e.key === 'Enter' && handleManualSubmit()}
             />
             <Button
               onClick={handleManualSubmit}
