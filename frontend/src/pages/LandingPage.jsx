@@ -9,6 +9,8 @@ export default function LandingPage() {
   const { user, loading } = useAuth();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstall, setShowInstall] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
     if (!loading && user) {
@@ -17,6 +19,21 @@ export default function LandingPage() {
   }, [user, loading, navigate]);
 
   useEffect(() => {
+    // Check if on iOS
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    setIsIOS(isIOSDevice);
+    
+    // Check if already installed (standalone mode)
+    const standalone = window.matchMedia('(display-mode: standalone)').matches || 
+                       window.navigator.standalone === true;
+    setIsStandalone(standalone);
+    
+    // Show install banner if not standalone
+    if (!standalone) {
+      setShowInstall(true);
+    }
+    
+    // Android/Chrome install prompt
     const handler = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
