@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/App";
-import { ArrowLeft, Copy, Share2, Wallet, Users } from "lucide-react";
+import { ArrowLeft, Copy, Share2, QrCode as QrIcon, Users, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import BottomNav from "@/components/BottomNav";
 import QRCode from "@/components/QRCode";
@@ -11,58 +10,31 @@ import QRCode from "@/components/QRCode";
 export default function QRCodePage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [copiedPayment, setCopiedPayment] = useState(false);
-  const [copiedReferral, setCopiedReferral] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const qrCode = user?.qr_code || "";
-  const referralCode = user?.referral_code || "";
-  
-  const paymentUrl = `${window.location.origin}/pay/${qrCode}`;
-  const referralUrl = `${window.location.origin}/register?ref=${referralCode}`;
+  const qrUrl = `${window.location.origin}/s/${qrCode}`;
 
-  const handleCopyPayment = () => {
-    navigator.clipboard.writeText(paymentUrl);
-    setCopiedPayment(true);
-    toast.success("Link pagamento copiato!");
-    setTimeout(() => setCopiedPayment(false), 2000);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(qrUrl);
+    setCopied(true);
+    toast.success("Link copiato!");
+    setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleCopyReferral = () => {
-    navigator.clipboard.writeText(referralUrl);
-    setCopiedReferral(true);
-    toast.success("Link referral copiato!");
-    setTimeout(() => setCopiedReferral(false), 2000);
-  };
-
-  const handleSharePayment = async () => {
+  const handleShare = async () => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Pagami con UpPay",
-          text: `Paga ${user?.full_name} con UpPay`,
-          url: paymentUrl
+          title: "UpPay - Pagami o Unisciti",
+          text: `Scansiona per pagarmi o registrati su UpPay! Codice: ${qrCode}`,
+          url: qrUrl
         });
       } catch (err) {
         console.log("Share cancelled");
       }
     } else {
-      handleCopyPayment();
-    }
-  };
-
-  const handleShareReferral = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: "Unisciti a UpPay",
-          text: `Registrati con il mio codice e guadagna 1 UP! Codice: ${referralCode}`,
-          url: referralUrl
-        });
-      } catch (err) {
-        console.log("Share cancelled");
-      }
-    } else {
-      handleCopyReferral();
+      handleCopy();
     }
   };
 
@@ -79,120 +51,76 @@ export default function QRCodePage() {
           <span>Dashboard</span>
         </button>
 
-        <h1 className="font-heading text-2xl font-bold mb-2">I Tuoi QR Code</h1>
-        <p className="text-[#A1A1AA]">Condividi per ricevere pagamenti o invitare amici</p>
+        <h1 className="font-heading text-2xl font-bold mb-2">Il Tuo QR Code</h1>
+        <p className="text-[#A1A1AA]">Un unico codice per pagamenti e inviti</p>
       </div>
 
-      {/* QR Code Tabs */}
-      <div className="px-6 py-4">
-        <Tabs defaultValue="payment" className="w-full">
-          <TabsList className="w-full bg-[#121212] border border-white/10 rounded-xl p-1 mb-6">
-            <TabsTrigger 
-              value="payment" 
-              className="flex-1 rounded-lg data-[state=active]:bg-[#7C3AED] data-[state=active]:text-white"
-              data-testid="tab-payment"
-            >
-              <Wallet className="w-4 h-4 mr-2" />
-              Pagamenti
-            </TabsTrigger>
-            <TabsTrigger 
-              value="referral"
-              className="flex-1 rounded-lg data-[state=active]:bg-[#CCFF00] data-[state=active]:text-black"
-              data-testid="tab-referral"
-            >
-              <Users className="w-4 h-4 mr-2" />
-              Referral
-            </TabsTrigger>
-          </TabsList>
+      {/* QR Code Display */}
+      <div className="px-6 py-6 flex flex-col items-center">
+        <div className="bg-white rounded-3xl p-6 mb-6 animate-slideUp shadow-lg shadow-[#7C3AED]/20" data-testid="qr-container">
+          <QRCode value={qrCode} size={240} />
+        </div>
 
-          {/* Payment QR */}
-          <TabsContent value="payment" className="mt-0">
-            <div className="flex flex-col items-center">
-              <div className="bg-white rounded-3xl p-6 mb-6 animate-slideUp" data-testid="qr-payment-container">
-                <QRCode value={qrCode} size={220} type="payment" />
-              </div>
+        <div className="text-center mb-6">
+          <p className="font-mono text-xl text-[#7C3AED] mb-2">{qrCode}</p>
+          <p className="text-lg text-white">{user?.full_name}</p>
+          <div className="flex items-center justify-center gap-2 mt-2">
+            <span className="up-badge text-xs">
+              {user?.up_points || 0} UP
+            </span>
+          </div>
+        </div>
 
-              <div className="text-center mb-6">
-                <p className="font-mono text-lg text-[#7C3AED] mb-1">{qrCode}</p>
-                <p className="text-[#A1A1AA]">{user?.full_name}</p>
-              </div>
+        {/* Actions */}
+        <div className="w-full max-w-sm space-y-3">
+          <Button
+            onClick={handleShare}
+            className="w-full h-14 rounded-full bg-[#7C3AED] hover:bg-[#6D28D9] text-lg font-semibold glow-primary"
+            data-testid="share-btn"
+          >
+            <Share2 className="w-5 h-5 mr-2" />
+            Condividi QR Code
+          </Button>
+          <Button
+            onClick={handleCopy}
+            variant="outline"
+            className="w-full h-12 rounded-full border-white/20 bg-transparent hover:bg-white/5"
+            data-testid="copy-btn"
+          >
+            <Copy className="w-5 h-5 mr-2" />
+            {copied ? "Copiato!" : "Copia Link"}
+          </Button>
+        </div>
 
-              <div className="w-full max-w-sm space-y-3">
-                <Button
-                  onClick={handleSharePayment}
-                  className="w-full h-14 rounded-full bg-[#7C3AED] hover:bg-[#6D28D9] text-lg font-semibold glow-primary"
-                  data-testid="share-payment-btn"
-                >
-                  <Share2 className="w-5 h-5 mr-2" />
-                  Condividi per Ricevere
-                </Button>
-                <Button
-                  onClick={handleCopyPayment}
-                  variant="outline"
-                  className="w-full h-12 rounded-full border-white/20 bg-transparent hover:bg-white/5"
-                  data-testid="copy-payment-btn"
-                >
-                  <Copy className="w-5 h-5 mr-2" />
-                  {copiedPayment ? "Copiato!" : "Copia Link Pagamento"}
-                </Button>
+        {/* Info Cards */}
+        <div className="mt-8 w-full max-w-sm space-y-4">
+          {/* Payment Info */}
+          <div className="bg-[#121212] rounded-2xl p-5 border border-white/5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-[#7C3AED]/20 flex items-center justify-center">
+                <Wallet className="w-5 h-5 text-[#7C3AED]" />
               </div>
-
-              <div className="mt-6 bg-[#121212] rounded-2xl p-5 w-full max-w-sm border border-white/5">
-                <h3 className="font-semibold mb-2">Come funziona</h3>
-                <ul className="text-sm text-[#A1A1AA] space-y-2">
-                  <li>• Mostra il QR a chi deve pagarti</li>
-                  <li>• Il pagatore scansiona con la fotocamera</li>
-                  <li>• Si apre UpPay con il tastierino</li>
-                  <li>• Inserisce l'importo e conferma</li>
-                </ul>
-              </div>
+              <h3 className="font-semibold">Per Pagamenti</h3>
             </div>
-          </TabsContent>
+            <p className="text-sm text-[#A1A1AA]">
+              Chi ha già UpPay può scansionare e pagarti direttamente con il tastierino numerico.
+            </p>
+          </div>
 
-          {/* Referral QR */}
-          <TabsContent value="referral" className="mt-0">
-            <div className="flex flex-col items-center">
-              <div className="bg-white rounded-3xl p-6 mb-6 animate-slideUp" data-testid="qr-referral-container">
-                <QRCode value={referralCode} size={220} type="referral" />
+          {/* Referral Info */}
+          <div className="bg-[#121212] rounded-2xl p-5 border border-[#CCFF00]/20">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-[#CCFF00]/20 flex items-center justify-center">
+                <Users className="w-5 h-5 text-[#CCFF00]" />
               </div>
-
-              <div className="text-center mb-6">
-                <p className="font-mono text-lg text-[#CCFF00] mb-1">{referralCode}</p>
-                <p className="text-[#A1A1AA]">Il tuo codice invito</p>
-              </div>
-
-              <div className="w-full max-w-sm space-y-3">
-                <Button
-                  onClick={handleShareReferral}
-                  className="w-full h-14 rounded-full bg-[#CCFF00] hover:bg-[#b8e600] text-black text-lg font-semibold glow-secondary"
-                  data-testid="share-referral-btn"
-                >
-                  <Share2 className="w-5 h-5 mr-2" />
-                  Invita Amici
-                </Button>
-                <Button
-                  onClick={handleCopyReferral}
-                  variant="outline"
-                  className="w-full h-12 rounded-full border-white/20 bg-transparent hover:bg-white/5"
-                  data-testid="copy-referral-btn"
-                >
-                  <Copy className="w-5 h-5 mr-2" />
-                  {copiedReferral ? "Copiato!" : "Copia Link Invito"}
-                </Button>
-              </div>
-
-              <div className="mt-6 bg-[#121212] rounded-2xl p-5 w-full max-w-sm border border-[#CCFF00]/20">
-                <h3 className="font-semibold mb-2 text-[#CCFF00]">Guadagna UP Points!</h3>
-                <ul className="text-sm text-[#A1A1AA] space-y-2">
-                  <li>• Condividi il QR con i tuoi amici</li>
-                  <li>• Quando si registrano, entrambi guadagnate</li>
-                  <li>• <span className="text-[#CCFF00] font-semibold">+1 UP</span> per te</li>
-                  <li>• <span className="text-[#CCFF00] font-semibold">+1 UP</span> per il tuo amico</li>
-                </ul>
-              </div>
+              <h3 className="font-semibold">Per Nuovi Utenti</h3>
             </div>
-          </TabsContent>
-        </Tabs>
+            <p className="text-sm text-[#A1A1AA]">
+              Chi non ha l'app viene invitato a registrarsi con il tuo referral. 
+              <span className="text-[#CCFF00] font-semibold"> +1 UP</span> per entrambi!
+            </p>
+          </div>
+        </div>
       </div>
 
       <BottomNav active="qr" />
