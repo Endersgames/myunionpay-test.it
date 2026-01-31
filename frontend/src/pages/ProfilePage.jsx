@@ -4,11 +4,13 @@ import { useAuth, API } from "@/App";
 import axios from "axios";
 import { 
   ArrowLeft, User, Copy, Share2, Settings, 
-  LogOut, Store, TrendingUp, Users, Tag, ChevronRight
+  LogOut, Store, TrendingUp, Users, Tag, ChevronRight, Bell, BellOff
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import BottomNav from "@/components/BottomNav";
+import usePushNotifications from "@/hooks/usePushNotifications";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -18,6 +20,14 @@ export default function ProfilePage() {
   const [referralStats, setReferralStats] = useState(null);
   const [showTags, setShowTags] = useState(false);
   const [loading, setLoading] = useState(true);
+  
+  const { 
+    isSupported: pushSupported, 
+    isSubscribed: pushSubscribed, 
+    permission: pushPermission,
+    subscribe: subscribePush, 
+    unsubscribe: unsubscribePush 
+  } = usePushNotifications(token);
 
   useEffect(() => {
     fetchData();
