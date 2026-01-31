@@ -173,6 +173,72 @@ export default function LandingPage() {
           Unisciti a migliaia di utenti che usano UpPay ogni giorno
         </p>
       </div>
+
+      {/* Install Instructions Dialog */}
+      <Dialog open={showInstructions} onOpenChange={setShowInstructions}>
+        <DialogContent className="bg-[#121212] border-white/10 text-white max-w-sm mx-4">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-xl">Installa UpPay</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {isIOS ? (
+              <>
+                <p className="text-[#A1A1AA]">Per installare UpPay su iPhone/iPad:</p>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 bg-[#1E1E1E] p-3 rounded-xl">
+                    <div className="w-10 h-10 rounded-full bg-[#7C3AED]/20 flex items-center justify-center">
+                      <Share className="w-5 h-5 text-[#7C3AED]" />
+                    </div>
+                    <div>
+                      <p className="font-medium">1. Tocca Condividi</p>
+                      <p className="text-sm text-[#A1A1AA]">L'icona in basso al centro</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 bg-[#1E1E1E] p-3 rounded-xl">
+                    <div className="w-10 h-10 rounded-full bg-[#CCFF00]/20 flex items-center justify-center">
+                      <Plus className="w-5 h-5 text-[#CCFF00]" />
+                    </div>
+                    <div>
+                      <p className="font-medium">2. Aggiungi a Home</p>
+                      <p className="text-sm text-[#A1A1AA]">Scorri e seleziona l'opzione</p>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-[#A1A1AA]">Per installare UpPay:</p>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 bg-[#1E1E1E] p-3 rounded-xl">
+                    <div className="w-10 h-10 rounded-full bg-[#7C3AED]/20 flex items-center justify-center">
+                      <MoreVertical className="w-5 h-5 text-[#7C3AED]" />
+                    </div>
+                    <div>
+                      <p className="font-medium">1. Apri il menu</p>
+                      <p className="text-sm text-[#A1A1AA]">Tocca ⋮ in alto a destra</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 bg-[#1E1E1E] p-3 rounded-xl">
+                    <div className="w-10 h-10 rounded-full bg-[#CCFF00]/20 flex items-center justify-center">
+                      <Download className="w-5 h-5 text-[#CCFF00]" />
+                    </div>
+                    <div>
+                      <p className="font-medium">2. Installa app</p>
+                      <p className="text-sm text-[#A1A1AA]">Seleziona "Installa app" o "Aggiungi a Home"</p>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+            <Button 
+              onClick={() => setShowInstructions(false)}
+              className="w-full mt-4 rounded-full bg-[#7C3AED] hover:bg-[#6D28D9]"
+            >
+              Ho capito
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
