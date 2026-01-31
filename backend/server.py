@@ -366,12 +366,32 @@ async def get_user_by_qr(qr_code: str):
         if merchant:
             user = await db.users.find_one({"id": merchant["user_id"]}, {"_id": 0, "password_hash": 0})
             if user:
-                return {"type": "merchant", "name": merchant["business_name"], "qr_code": qr_code, "user_id": user["id"]}
+                return {"type": "merchant", "name": merchant["business_name"], "qr_code": qr_code, "user_id": user["id"], "referral_code": user.get("referral_code", "")}
     
     if not user:
         raise HTTPException(status_code=404, detail="QR code non valido")
     
-    return {"type": "user", "name": user["full_name"], "qr_code": qr_code, "user_id": user["id"]}
+    return {"type": "user", "name": user["full_name"], "qr_code": qr_code, "user_id": user["id"], "referral_code": user.get("referral_code", "")}
+
+# Get referral code from QR code (for non-logged users)
+@api_router.get("/qr/referral/{qr_code}", response_model=dict)
+async def get_referral_from_qr(qr_code: str):
+    """Get referral code from a user's QR code - used when non-logged user scans QR"""
+    user = await db.users.find_one({"qr_code": qr_code}, {"_id": 0, "password_hash": 0})
+    if not user:
+        # Try merchant QR
+        merchant = await db.merchants.find_one({"qr_code": qr_code}, {"_id": 0})
+        if merchant:
+            user = await db.users.find_one({"id": merchant["user_id"]}, {"_id": 0, "password_hash": 0})
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="QR code non valido")
+    
+    return {
+        "referral_code": user.get("referral_code", ""),
+        "name": user.get("full_name", ""),
+        "qr_code": qr_code
+    }
 
 # ========================
 # MERCHANT ROUTES
