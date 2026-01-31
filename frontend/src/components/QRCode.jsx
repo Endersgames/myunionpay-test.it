@@ -26,8 +26,6 @@ export const QRCode = ({ value, size = 200 }) => {
   const baseUrl = getBaseUrl();
   const qrContent = `${baseUrl}/s/${value}`;
 
-  console.log("QR Code URL:", qrContent); // Debug log
-
   return (
     <div data-testid="qr-code-container">
       <QRCodeSVG
@@ -39,10 +37,6 @@ export const QRCode = ({ value, size = 200 }) => {
         fgColor="#000000"
         data-testid="qr-canvas"
       />
-      {/* Debug: show URL in development */}
-      {process.env.NODE_ENV === 'development' && (
-        <p className="text-xs text-gray-500 mt-2 break-all">{qrContent}</p>
-      )}
     </div>
   );
 };
