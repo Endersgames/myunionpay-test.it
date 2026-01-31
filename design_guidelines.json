@@ -1,0 +1,143 @@
+{
+  "identity": {
+    "app_name": "UpPay",
+    "tagline": "Pay. Earn. Level Up.",
+    "mission": "Turn every transaction into a social connection. Frictionless P2P payments meets gamified rewards.",
+    "archetype": "The Performance Pro (Fintech Edition)",
+    "vibe": "Electric, Seamless, Rewarding, Futuristic"
+  },
+  "typography": {
+    "headings": {
+      "font_family": "Syne, sans-serif",
+      "weights": ["700", "800"],
+      "usage": "Hero sections, Balance displays, Merchant names",
+      "letter_spacing": "tracking-tight"
+    },
+    "body": {
+      "font_family": "Manrope, sans-serif",
+      "weights": ["400", "500", "600"],
+      "usage": "General text, descriptions, menus"
+    },
+    "numbers": {
+      "font_family": "Space Mono, monospace",
+      "weights": ["400", "700"],
+      "usage": "Currency amounts, Phone numbers, UP Points",
+      "letter_spacing": "tracking-wide"
+    }
+  },
+  "colors": {
+    "mode": "dark",
+    "palette": {
+      "background": "#050505",
+      "surface": "#121212",
+      "surface_highlight": "#1E1E1E",
+      "primary": "#7C3AED",
+      "primary_gradient": "linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%)",
+      "secondary": "#CCFF00",
+      "accent": "#06B6D4",
+      "text_primary": "#FFFFFF",
+      "text_secondary": "#A1A1AA",
+      "success": "#CCFF00",
+      "error": "#FF3B30",
+      "border": "rgba(255, 255, 255, 0.1)"
+    },
+    "gradients": {
+      "glow": "radial-gradient(circle at center, rgba(124, 58, 237, 0.15) 0%, rgba(0, 0, 0, 0) 70%)",
+      "card_shine": "linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.05) 25%, transparent 30%)"
+    }
+  },
+  "layout_strategy": {
+    "mobile_first": true,
+    "container_padding": "p-6",
+    "spacing_scale": "Generous (2x standard)",
+    "grid_system": "Bento Grid for Merchant Marketplace",
+    "bottom_nav": "Floating Glass Bar (z-50)",
+    "safe_area": "pb-safe-area-inset-bottom"
+  },
+  "components": {
+    "buttons": {
+      "primary": "rounded-full bg-primary text-white font-bold shadow-[0_0_20px_rgba(124,58,237,0.5)] hover:shadow-[0_0_30px_rgba(124,58,237,0.7)] transition-all active:scale-95",
+      "secondary": "rounded-full border border-white/20 bg-transparent text-white hover:bg-white/10 transition-all",
+      "keypad": "w-20 h-20 rounded-full bg-surface text-2xl font-mono text-white flex items-center justify-center active:bg-primary/20 transition-colors"
+    },
+    "cards": {
+      "merchant": "rounded-2xl bg-surface border border-white/5 overflow-hidden hover:border-primary/50 transition-colors group relative",
+      "wallet": "rounded-3xl bg-gradient-to-br from-surface to-surface_highlight border border-white/10 p-6 relative overflow-hidden"
+    },
+    "inputs": {
+      "amount": "bg-transparent text-6xl font-mono text-center text-white focus:outline-none placeholder-white/20 caret-secondary",
+      "text": "bg-surface border border-white/10 rounded-xl px-4 py-3 text-white focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+    }
+  },
+  "visual_enhancers": {
+    "glassmorphism": "backdrop-blur-xl bg-black/40 border border-white/10",
+    "noise_texture": "url('/noise.png') opacity-5",
+    "glow_effects": "Use colored shadows for primary actions",
+    "micro_interactions": "Scale down on click, slide up on entry"
+  },
+  "assets": {
+    "images": {
+      "merchants": [
+        {
+          "url": "https://images.unsplash.com/photo-1573840357491-06851c72e0d1?crop=entropy&cs=srgb&fm=jpg&q=85",
+          "category": "coffee_shop",
+          "alt": "Modern Coffee Shop"
+        },
+        {
+          "url": "https://images.unsplash.com/photo-1766934587163-186d20bf3d40?crop=entropy&cs=srgb&fm=jpg&q=85",
+          "category": "retail",
+          "alt": "Fashion Boutique"
+        },
+        {
+          "url": "https://images.unsplash.com/photo-1761971975769-97e598bf526b?crop=entropy&cs=srgb&fm=jpg&q=85",
+          "category": "gym",
+          "alt": "Fitness Center"
+        }
+      ],
+      "avatars": [
+        {
+          "url": "https://images.unsplash.com/photo-1672462478040-a5920e2c23d8?crop=entropy&cs=srgb&fm=jpg&q=85",
+          "category": "user",
+          "alt": "Smiling Woman"
+        },
+        {
+          "url": "https://images.unsplash.com/photo-1592234789031-94bf65f630ed?crop=entropy&cs=srgb&fm=jpg&q=85",
+          "category": "user",
+          "alt": "Smiling Man"
+        }
+      ]
+    },
+    "icons": "Lucide React (default) or Phosphor Icons (for bolder look)"
+  },
+  "instructions_to_main_agent": [
+    "Implement a 'Dark Mode First' approach. The app should feel like a premium night-mode fintech tool.",
+    "Use 'Syne' font for all major headings to give it a unique character. Import from Google Fonts.",
+    "The 'Keypad' for entering amounts is the heart of the UI. Make it massive, tactile, and satisfying to use.",
+    "The 'UP Points' should be visualized as glowing green (#CCFF00) elements.",
+    "For the Merchant Marketplace, use a 'Bento Grid' layout (mixed aspect ratios) to break the monotony.",
+    "Ensure the PWA install prompt is styled custom, not just the browser default.",
+    "Use 'Sonner' for all notifications (payment sent, money received).",
+    "The QR Code scanner should look like a camera viewfinder with a glowing frame.",
+    "Do not use standard Shadcn cards for the main wallet view; create a custom credit-card style component."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy",
+    "Use glass-morphism effects with backdrop filters (12-24px blur)",
+    "You MUST NOT apply universal transition. Eg: transition: all. This results in breaking transforms. Always add transitions for specific interactive elements like button, input excluding transforms",
+    "You MUST NOT center align the app container, ie do not add .App { text-align: center; } in the css file. This disrupts the human natural reading flow of text",
+    "Always use modern button styles like pill-shaped, or sharp button with interaction animations & color relevant to the app style",
+    "NEVER: use AI assistant Emoji characters like 🤖🧠💭💡🔮🎯📚🎭🎬🎪🎉🎊🎁🎀🎂🍰🎈🎨🎰💰💵💳🏦💎🪙💸🤑📊📈📉💹🔢🏆🥇 etc for icons.",
+    "Every interaction needs micro-animations - hover states, transitions, parallax effects, and entrance animations. Static = dead.",
+    "Use 2-3x more spacing than feels comfortable. Cramped designs look cheap.",
+    "Subtle grain textures, noise overlays, custom cursors, selection states, and loading animations: separates good from extraordinary.",
+    "Main agent relies on these image URLs. Missing categories (especially sponsor logos) = main agent will use placeholder text which is FORBIDDEN",
+    "Prioritize using pre-existing components from src/components/ui when applicable",
+    "Create new components that match the style and conventions of existing components when needed",
+    "Examine existing components to understand the project's component patterns before creating new ones",
+    "Components MUST use named exports (export const ComponentName = ...)",
+    "Pages MUST use default exports (export default function PageName() {...})",
+    "Use sonner for toasts. Sonner component are located in /app/src/components/ui/sonner.tsx"
+  ]
+}
