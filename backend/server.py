@@ -581,6 +581,90 @@ async def get_my_tags(user: dict = Depends(get_current_user)):
     return {"tags": user.get("profile_tags", [])}
 
 # ========================
+# PUSH NOTIFICATION ROUTES
+# ========================
+
+@api_router.get("/push/vapid-key")
+async def get_vapid_key():
+    """Get the VAPID public key for push subscription"""
+    return {"publicKey": VAPID_PUBLIC_KEY}
+
+@api_router.post("/push/subscribe")
+async def subscribe_push(subscription: PushSubscription, user: dict = Depends(get_current_user)):
+    """Register a push subscription for a user"""
+    # Store subscription in database
+    sub_doc = {
+        "user_id": user["id"],
+        "endpoint": subscription.endpoint,
+        "keys": subscription.keys,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    # Upsert - update if exists, insert if not
+    await db.push_subscriptions.update_one(
+        {"user_id": user["id"], "endpoint": subscription.endpoint},
+        {"$set": sub_doc},
+        upsert=True
+    )
+    
+    return {"success": True, "message": "Push subscription registered"}
+
+@api_router.delete("/push/unsubscribe")
+async def unsubscribe_push(user: dict = Depends(get_current_user)):
+    """Remove all push subscriptions for a user"""
+    await db.push_subscriptions.delete_many({"user_id": user["id"]})
+    return {"success": True, "message": "Push subscriptions removed"}
+
+async def send_push_notification(user_id: str, title: str, body: str, data: dict = None):
+    """Send push notification to a user"""
+    if not VAPID_PRIVATE_KEY or not VAPID_PUBLIC_KEY:
+        logging.warning("VAPID keys not configured, skipping push notification")
+        return False
+    
+    # Get user's push subscriptions
+    subscriptions = await db.push_subscriptions.find(
+        {"user_id": user_id},
+        {"_id": 0}
+    ).to_list(10)
+    
+    if not subscriptions:
+        return False
+    
+    payload = json.dumps({
+        "title": title,
+        "body": body,
+        "icon": "/icon.svg",
+        "badge": "/icon.svg",
+        "data": data or {},
+        "tag": f"uppay-{datetime.now().timestamp()}"
+    })
+    
+    success = False
+    for sub in subscriptions:
+        try:
+            webpush(
+                subscription_info={
+                    "endpoint": sub["endpoint"],
+                    "keys": sub["keys"]
+                },
+                data=payload,
+                vapid_private_key=VAPID_PRIVATE_KEY,
+                vapid_claims={
+                    "sub": VAPID_EMAIL
+                }
+            )
+            success = True
+        except WebPushException as e:
+            logging.error(f"Push notification failed: {e}")
+            # Remove invalid subscription
+            if e.response and e.response.status_code in [404, 410]:
+                await db.push_subscriptions.delete_one({"endpoint": sub["endpoint"]})
+        except Exception as e:
+            logging.error(f"Push notification error: {e}")
+    
+    return success
+
+# ========================
 # REFERRAL ROUTES
 # ========================
 
