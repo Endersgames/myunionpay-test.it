@@ -13,6 +13,8 @@ from datetime import datetime, timezone
 import jwt
 import bcrypt
 import secrets
+import json
+from pywebpush import webpush, WebPushException
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -25,6 +27,11 @@ db = client[os.environ['DB_NAME']]
 # JWT Config - Must use environment variable for multi-replica deployment
 JWT_SECRET = os.environ.get('JWT_SECRET', 'uppay-default-secret-change-in-production-2024')
 JWT_ALGORITHM = "HS256"
+
+# VAPID Config for Push Notifications
+VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
+VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
+VAPID_EMAIL = os.environ.get('VAPID_EMAIL', 'mailto:noreply@uppay.app')
 
 # Create the main app
 app = FastAPI(title="UpPay API", version="1.0.0")
