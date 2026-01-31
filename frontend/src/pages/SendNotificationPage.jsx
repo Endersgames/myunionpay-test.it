@@ -144,9 +144,9 @@ export default function SendNotificationPage() {
 
           {/* Target Tags */}
           <div className="space-y-3">
-            <Label>Target Utenti *</Label>
+            <Label>Target Utenti (opzionale)</Label>
             <p className="text-sm text-[#A1A1AA]">
-              Seleziona gli interessi degli utenti che vuoi raggiungere
+              Seleziona interessi specifici oppure lascia vuoto per inviare a TUTTI gli utenti
             </p>
             <div className="flex flex-wrap gap-2">
               {availableTags.map((tag) => (
