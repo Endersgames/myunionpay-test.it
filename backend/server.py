@@ -236,7 +236,10 @@ async def register(data: UserCreate):
     
     # Handle referral
     if data.referral_code:
-        referrer = await db.users.find_one({"referral_code": data.referral_code}, {"_id": 0})
+        referrer = await db.users.find_one(
+            {"referral_code": data.referral_code}, 
+            {"_id": 0, "id": 1}
+        )
         if referrer:
             # Give 1 UP to both
             await db.users.update_one({"id": referrer["id"]}, {"$inc": {"up_points": 1}})
