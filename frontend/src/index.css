@@ -111,6 +111,42 @@ body {
   color: rgba(255, 255, 255, 0.2);
 }
 
+/* QR Scanner Styles */
+#qr-reader {
+  border: none !important;
+  border-radius: 21px !important;
+  overflow: hidden;
+}
+
+#qr-reader video {
+  border-radius: 21px !important;
+  object-fit: cover !important;
+}
+
+#qr-reader__scan_region {
+  background: transparent !important;
+}
+
+#qr-reader__dashboard {
+  display: none !important;
+}
+
+#qr-reader__dashboard_section {
+  display: none !important;
+}
+
+#qr-reader__dashboard_section_csr {
+  display: none !important;
+}
+
+#qr-reader__status_span {
+  display: none !important;
+}
+
+#qr-reader__camera_selection {
+  display: none !important;
+}
+
 /* Wallet card */
 .wallet-card {
   background: linear-gradient(135deg, var(--up-surface) 0%, var(--up-surface-highlight) 100%);
