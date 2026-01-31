@@ -32,33 +32,44 @@ const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(localStorage.getItem("token"));
 
-  const fetchUser = async () => {
-    if (!token) {
+  const fetchUser = async (authToken) => {
+    const tokenToUse = authToken || token;
+    if (!tokenToUse) {
       setLoading(false);
-      return;
+      return null;
     }
     try {
       const response = await axios.get(`${API}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${tokenToUse}` }
       });
       setUser(response.data);
+      setLoading(false);
+      return response.data;
     } catch (e) {
       console.error("Auth error:", e);
       localStorage.removeItem("token");
       setToken(null);
+      setUser(null);
+      setLoading(false);
+      return null;
     }
-    setLoading(false);
   };
 
   useEffect(() => {
-    fetchUser();
-  }, [token]);
+    if (token) {
+      fetchUser(token);
+    } else {
+      setLoading(false);
+    }
+  }, []);
 
   const login = async (email, password) => {
     const response = await axios.post(`${API}/auth/login`, { email, password });
     const newToken = response.data.token;
     localStorage.setItem("token", newToken);
     setToken(newToken);
+    // Fetch user immediately with the new token
+    await fetchUser(newToken);
     return response.data;
   };
 
@@ -67,6 +78,8 @@ const AuthProvider = ({ children }) => {
     const newToken = response.data.token;
     localStorage.setItem("token", newToken);
     setToken(newToken);
+    // Fetch user immediately with the new token
+    await fetchUser(newToken);
     return response.data;
   };
 
@@ -76,7 +89,7 @@ const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  const refreshUser = () => fetchUser();
+  const refreshUser = () => fetchUser(token);
 
   return (
     <AuthContext.Provider value={{ user, loading, token, login, register, logout, refreshUser }}>
