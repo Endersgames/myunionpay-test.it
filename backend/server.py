@@ -22,8 +22,8 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# JWT Config
-JWT_SECRET = os.environ.get('JWT_SECRET', secrets.token_hex(32))
+# JWT Config - Must use environment variable for multi-replica deployment
+JWT_SECRET = os.environ.get('JWT_SECRET', 'uppay-default-secret-change-in-production-2024')
 JWT_ALGORITHM = "HS256"
 
 # Create the main app
@@ -557,6 +557,11 @@ async def root():
 
 @api_router.get("/health")
 async def health():
+    return {"status": "healthy"}
+
+# Root level health check for Kubernetes probes
+@app.get("/health")
+async def root_health():
     return {"status": "healthy"}
 
 # Include the router
