@@ -2,13 +2,15 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/App";
 import { Button } from "@/components/ui/button";
-import { QrCode, Wallet, Users, Bell, ArrowRight, Download } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { QrCode, Wallet, Users, Bell, ArrowRight, Download, Share, Plus, MoreVertical, X } from "lucide-react";
 
 export default function LandingPage() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstall, setShowInstall] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
 
@@ -51,6 +53,9 @@ export default function LandingPage() {
         setShowInstall(false);
       }
       setDeferredPrompt(null);
+    } else {
+      // Show manual instructions
+      setShowInstructions(true);
     }
   };
 
