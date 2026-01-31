@@ -25,11 +25,12 @@ export default function LoginPage() {
     try {
       await login(email, password);
       toast.success("Bentornato!");
-      navigate("/dashboard");
+      // Small delay to ensure state is updated
+      setTimeout(() => navigate("/dashboard"), 100);
     } catch (err) {
       toast.error(err.response?.data?.detail || "Credenziali non valide");
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

@@ -40,11 +40,12 @@ export default function RegisterPage() {
     try {
       await register(formData);
       toast.success("Account creato! Benvenuto in UpPay");
-      navigate("/dashboard");
+      // Small delay to ensure state is updated
+      setTimeout(() => navigate("/dashboard"), 100);
     } catch (err) {
       toast.error(err.response?.data?.detail || "Errore durante la registrazione");
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
