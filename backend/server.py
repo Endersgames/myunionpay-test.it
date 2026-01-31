@@ -196,8 +196,11 @@ MERCHANT_CATEGORIES = [
 
 @api_router.post("/auth/register", response_model=dict)
 async def register(data: UserCreate):
-    # Check existing user
-    existing = await db.users.find_one({"$or": [{"email": data.email}, {"phone": data.phone}]})
+    # Check existing user - only need to know if exists
+    existing = await db.users.find_one(
+        {"$or": [{"email": data.email}, {"phone": data.phone}]},
+        {"_id": 0, "id": 1}
+    )
     if existing:
         raise HTTPException(status_code=400, detail="Email o telefono già registrati")
     
