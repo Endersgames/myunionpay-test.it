@@ -470,8 +470,17 @@ async def send_notification(data: NotificationCreate, user: dict = Depends(get_c
         raise HTTPException(status_code=400, detail="Importo reward deve essere tra 0.01€ e 1.00€")
     
     # Find target users - only fetch id field for security and performance
-    target_query = {"profile_tags": {"$in": data.target_tags}} if data.target_tags else {}
+    if data.target_tags and len(data.target_tags) > 0:
+        # Filter by tags - users must have at least one matching tag
+        target_query = {"profile_tags": {"$in": data.target_tags}}
+    else:
+        # No tags selected = broadcast to ALL users (except the merchant)
+        target_query = {"id": {"$ne": user["id"]}}
+    
     target_users = await db.users.find(target_query, {"_id": 0, "id": 1}).to_list(10000)
+    
+    # Exclude the merchant from recipients
+    target_users = [u for u in target_users if u["id"] != user["id"]]
     
     total_recipients = len(target_users)
     total_cost = total_recipients * data.reward_amount
