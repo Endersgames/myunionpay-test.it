@@ -252,7 +252,11 @@ async def register(data: UserCreate):
             {"_id": 0, "id": 1}
         )
         if referrer:
-            # Give 1 UP to both
+            # Give 1 UP to both wallets
+            await db.wallets.update_one({"user_id": referrer["id"]}, {"$inc": {"balance": 1}})
+            await db.wallets.update_one({"user_id": user_id}, {"$inc": {"balance": 1}})
+            
+            # Also track UP points for stats
             await db.users.update_one({"id": referrer["id"]}, {"$inc": {"up_points": 1}})
             await db.users.update_one({"id": user_id}, {"$inc": {"up_points": 1}})
             
@@ -261,6 +265,7 @@ async def register(data: UserCreate):
                 "id": str(uuid.uuid4()),
                 "referrer_id": referrer["id"],
                 "referred_id": user_id,
+                "bonus_amount": 1,
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
             await db.referrals.insert_one(referral_doc)
