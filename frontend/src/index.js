@@ -3,16 +3,51 @@ import ReactDOM from "react-dom/client";
 import "@/index.css";
 import App from "@/App";
 
-// Register Service Worker for PWA
+// Register Service Worker for PWA with auto-update
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js')
-      .then((registration) => {
-        console.log('UpPay SW registered:', registration.scope);
-      })
-      .catch((error) => {
-        console.log('UpPay SW registration failed:', error);
+  window.addEventListener('load', async () => {
+    try {
+      const registration = await navigator.serviceWorker.register('/service-worker.js', {
+        updateViaCache: 'none' // Always check for updates
       });
+      
+      console.log('UpPay SW registered:', registration.scope);
+      
+      // Check for updates immediately
+      registration.update();
+      
+      // Check for updates periodically (every 5 minutes)
+      setInterval(() => {
+        registration.update();
+      }, 5 * 60 * 1000);
+      
+      // Handle updates
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        console.log('UpPay SW update found');
+        
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // New service worker is ready, prompt user or auto-reload
+            console.log('UpPay SW updated, reloading...');
+            // Auto-activate new service worker
+            newWorker.postMessage({ type: 'SKIP_WAITING' });
+          }
+        });
+      });
+      
+      // Refresh page when new service worker takes control
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          window.location.reload();
+        }
+      });
+      
+    } catch (error) {
+      console.log('UpPay SW registration failed:', error);
+    }
   });
 }
 
