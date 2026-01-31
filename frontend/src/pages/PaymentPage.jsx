@@ -1,0 +1,215 @@
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useAuth, API } from "@/App";
+import axios from "axios";
+import { ArrowLeft, Check, User, Store, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+
+export default function PaymentPage() {
+  const navigate = useNavigate();
+  const { qrCode } = useParams();
+  const { user, token } = useAuth();
+  const [recipient, setRecipient] = useState(null);
+  const [amount, setAmount] = useState("");
+  const [note, setNote] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchRecipient();
+  }, [qrCode]);
+
+  const fetchRecipient = async () => {
+    try {
+      const response = await axios.get(`${API}/payments/user/${qrCode}`);
+      setRecipient(response.data);
+    } catch (err) {
+      setError(err.response?.data?.detail || "QR code non valido");
+    }
+    setLoading(false);
+  };
+
+  const handleKeyPress = (key) => {
+    if (key === "backspace") {
+      setAmount(prev => prev.slice(0, -1));
+    } else if (key === ".") {
+      if (!amount.includes(".") && amount.length > 0) {
+        setAmount(prev => prev + ".");
+      }
+    } else {
+      // Limit to 2 decimal places
+      const parts = amount.split(".");
+      if (parts.length === 2 && parts[1].length >= 2) return;
+      if (amount.length >= 7) return;
+      setAmount(prev => prev + key);
+    }
+  };
+
+  const handleSend = async () => {
+    const numAmount = parseFloat(amount);
+    if (!numAmount || numAmount <= 0) {
+      toast.error("Inserisci un importo valido");
+      return;
+    }
+    
+    setSending(true);
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      await axios.post(`${API}/payments/send`, {
+        recipient_qr: qrCode,
+        amount: numAmount,
+        note: note || null
+      }, { headers });
+      
+      setSuccess(true);
+      toast.success("Pagamento inviato!");
+      setTimeout(() => navigate("/dashboard"), 2000);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Errore nel pagamento");
+    }
+    setSending(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#050505]">
+        <div className="w-8 h-8 border-2 border-[#7C3AED] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#050505] px-6 py-8">
+        <button 
+          onClick={() => navigate("/scan")}
+          className="flex items-center gap-2 text-[#A1A1AA] hover:text-white mb-6"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span>Indietro</span>
+        </button>
+        
+        <div className="flex flex-col items-center justify-center mt-20">
+          <div className="w-16 h-16 rounded-full bg-[#FF3B30]/10 flex items-center justify-center mb-4">
+            <AlertCircle className="w-8 h-8 text-[#FF3B30]" />
+          </div>
+          <h2 className="font-heading text-xl font-bold mb-2">Errore</h2>
+          <p className="text-[#A1A1AA] text-center mb-6">{error}</p>
+          <Button
+            onClick={() => navigate("/scan")}
+            className="rounded-full bg-[#7C3AED] hover:bg-[#6D28D9]"
+          >
+            Riprova
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (success) {
+    return (
+      <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center px-6">
+        <div className="w-20 h-20 rounded-full bg-[#CCFF00] flex items-center justify-center mb-6 glow-secondary animate-slideUp">
+          <Check className="w-10 h-10 text-[#050505]" />
+        </div>
+        <h2 className="font-heading text-2xl font-bold mb-2">Pagamento Inviato!</h2>
+        <p className="text-[#A1A1AA] text-center mb-2">
+          €{parseFloat(amount).toFixed(2)} a {recipient?.name}
+        </p>
+        <p className="text-[#A1A1AA] text-sm">Reindirizzamento...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#050505] flex flex-col">
+      {/* Header */}
+      <div className="px-6 pt-8 pb-4">
+        <button 
+          onClick={() => navigate("/scan")}
+          className="flex items-center gap-2 text-[#A1A1AA] hover:text-white mb-6"
+          data-testid="back-btn"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span>Annulla</span>
+        </button>
+      </div>
+
+      {/* Recipient Info */}
+      <div className="px-6 mb-6">
+        <div className="bg-[#121212] rounded-2xl p-4 flex items-center gap-4 border border-white/5">
+          <div className={`w-14 h-14 rounded-full flex items-center justify-center ${recipient?.type === 'merchant' ? 'bg-[#CCFF00]/10' : 'bg-[#7C3AED]/10'}`}>
+            {recipient?.type === 'merchant' ? (
+              <Store className="w-7 h-7 text-[#CCFF00]" />
+            ) : (
+              <User className="w-7 h-7 text-[#7C3AED]" />
+            )}
+          </div>
+          <div>
+            <p className="font-semibold text-lg">{recipient?.name}</p>
+            <p className="text-sm text-[#A1A1AA]">
+              {recipient?.type === 'merchant' ? 'Merchant' : 'Utente UpPay'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Amount Display */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6">
+        <p className="text-[#A1A1AA] text-sm mb-2">Importo da inviare</p>
+        <div className="flex items-baseline mb-8">
+          <span className="font-mono text-5xl font-bold mr-1">€</span>
+          <input
+            type="text"
+            value={amount || "0"}
+            readOnly
+            className="amount-input w-48"
+            data-testid="amount-display"
+          />
+        </div>
+
+        {/* Note input */}
+        <input
+          type="text"
+          placeholder="Aggiungi una nota (opzionale)"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          className="w-full max-w-xs bg-[#121212] border border-white/10 rounded-xl px-4 py-3 text-center text-[#A1A1AA] placeholder-[#A1A1AA]/50 focus:border-[#7C3AED] focus:outline-none mb-8"
+          data-testid="note-input"
+        />
+      </div>
+
+      {/* Keypad */}
+      <div className="px-6 pb-8">
+        <div className="grid grid-cols-3 gap-4 max-w-xs mx-auto mb-6">
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, ".", 0, "⌫"].map((key) => (
+            <button
+              key={key}
+              onClick={() => handleKeyPress(key === "⌫" ? "backspace" : String(key))}
+              className="keypad-btn"
+              data-testid={`keypad-${key === "⌫" ? "backspace" : key}`}
+            >
+              {key}
+            </button>
+          ))}
+        </div>
+
+        <Button
+          onClick={handleSend}
+          disabled={sending || !amount || parseFloat(amount) <= 0}
+          className="w-full h-14 rounded-full bg-[#7C3AED] hover:bg-[#6D28D9] text-lg font-semibold glow-primary disabled:opacity-50 disabled:cursor-not-allowed"
+          data-testid="send-payment-btn"
+        >
+          {sending ? (
+            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          ) : (
+            `Invia €${amount || "0"}`
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+}
