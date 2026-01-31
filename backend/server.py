@@ -566,10 +566,11 @@ async def get_my_tags(user: dict = Depends(get_current_user)):
 
 @api_router.get("/referrals/stats", response_model=dict)
 async def get_referral_stats(user: dict = Depends(get_current_user)):
-    referrals = await db.referrals.find({"referrer_id": user["id"]}, {"_id": 0}).to_list(1000)
+    # Use count_documents for better performance
+    total_referrals = await db.referrals.count_documents({"referrer_id": user["id"]})
     return {
         "referral_code": user["referral_code"],
-        "total_referrals": len(referrals),
+        "total_referrals": total_referrals,
         "up_points": user["up_points"]
     }
 
