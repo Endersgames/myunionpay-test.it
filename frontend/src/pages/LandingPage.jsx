@@ -96,21 +96,30 @@ export default function LandingPage() {
 
         {/* Install Banner */}
         {showInstall && !isStandalone && (
-          <div className="install-banner mb-8 animate-slideUp" style={{ animationDelay: '0.1s' }}>
-            <div className="flex items-center gap-3">
-              <Download className="w-6 h-6" />
+          <div 
+            className="install-banner mb-8 animate-slideUp cursor-pointer" 
+            style={{ animationDelay: '0.1s' }}
+            onClick={deferredPrompt ? handleInstall : undefined}
+            data-testid="install-banner"
+          >
+            <div className="flex items-center gap-3 flex-1">
+              <Download className="w-6 h-6 flex-shrink-0" />
               <div>
                 <p className="font-semibold">Installa UpPay</p>
                 <p className="text-sm opacity-80">
-                  {isIOS ? "Tocca Condividi → Aggiungi a Home" : "Accesso rapido dalla home"}
+                  {isIOS 
+                    ? "Tocca ⬆️ Condividi → Aggiungi a Home" 
+                    : deferredPrompt 
+                      ? "Tocca per installare l'app"
+                      : "Menu ⋮ → Installa app"}
                 </p>
               </div>
             </div>
-            {!isIOS && deferredPrompt && (
+            {deferredPrompt && (
               <Button 
-                onClick={handleInstall}
+                onClick={(e) => { e.stopPropagation(); handleInstall(); }}
                 variant="secondary"
-                className="bg-white text-[#7C3AED] hover:bg-white/90"
+                className="bg-white text-[#7C3AED] hover:bg-white/90 flex-shrink-0"
                 data-testid="install-pwa-btn"
               >
                 Installa
