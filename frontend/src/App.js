@@ -137,6 +137,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/s/:qrCode" element={<ScanRedirectPage />} />
           <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
           <Route path="/qr" element={<ProtectedRoute><QRCodePage /></ProtectedRoute>} />
           <Route path="/scan" element={<ProtectedRoute><ScannerPage /></ProtectedRoute>} />
