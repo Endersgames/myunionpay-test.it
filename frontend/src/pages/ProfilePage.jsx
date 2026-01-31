@@ -66,6 +66,26 @@ export default function ProfilePage() {
     }
   };
 
+  const handleTogglePush = async () => {
+    if (pushSubscribed) {
+      const success = await unsubscribePush();
+      if (success) {
+        toast.success("Notifiche push disattivate");
+      } else {
+        toast.error("Errore nella disattivazione");
+      }
+    } else {
+      const success = await subscribePush();
+      if (success) {
+        toast.success("Notifiche push attivate! 🔔");
+      } else if (pushPermission === 'denied') {
+        toast.error("Permesso notifiche negato. Abilitalo dalle impostazioni del browser.");
+      } else {
+        toast.error("Errore nell'attivazione delle notifiche");
+      }
+    }
+  };
+
   const handleCopyReferral = () => {
     const url = `${window.location.origin}/register?ref=${user?.referral_code}`;
     navigator.clipboard.writeText(url);
