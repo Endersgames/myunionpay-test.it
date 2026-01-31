@@ -11,9 +11,22 @@ import { QRCodeSVG } from "qrcode.react";
  * @param {number} size - Size in pixels
  */
 export const QRCode = ({ value, size = 200 }) => {
-  // Generate the smart URL - /s/ route handles the logic
-  const baseUrl = window.location.origin;
+  // Get the production URL from environment or fallback to window.location.origin
+  const getBaseUrl = () => {
+    // In production, use the backend URL which is the same domain
+    const envUrl = process.env.REACT_APP_BACKEND_URL;
+    if (envUrl) {
+      // Remove /api suffix if present and extract base domain
+      return envUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
+    }
+    // Fallback to current origin
+    return window.location.origin;
+  };
+
+  const baseUrl = getBaseUrl();
   const qrContent = `${baseUrl}/s/${value}`;
+
+  console.log("QR Code URL:", qrContent); // Debug log
 
   return (
     <div data-testid="qr-code-container">
@@ -26,6 +39,10 @@ export const QRCode = ({ value, size = 200 }) => {
         fgColor="#000000"
         data-testid="qr-canvas"
       />
+      {/* Debug: show URL in development */}
+      {process.env.NODE_ENV === 'development' && (
+        <p className="text-xs text-gray-500 mt-2 break-all">{qrContent}</p>
+      )}
     </div>
   );
 };
