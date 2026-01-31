@@ -19,6 +19,7 @@ import ProfilePage from "@/pages/ProfilePage";
 import MerchantDashboardPage from "@/pages/MerchantDashboardPage";
 import SendNotificationPage from "@/pages/SendNotificationPage";
 import ScanRedirectPage from "@/pages/ScanRedirectPage";
+import ChromePromptBanner from "@/components/ChromePromptBanner";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 export const API = `${BACKEND_URL}/api`;
