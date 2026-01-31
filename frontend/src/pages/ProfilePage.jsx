@@ -155,6 +155,39 @@ export default function ProfilePage() {
           </div>
         </div>
 
+        {/* Push Notifications */}
+        {pushSupported && (
+          <div className="bg-[#121212] rounded-2xl p-5 border border-white/5 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {pushSubscribed ? (
+                  <Bell className="w-5 h-5 text-[#CCFF00]" />
+                ) : (
+                  <BellOff className="w-5 h-5 text-[#A1A1AA]" />
+                )}
+                <div>
+                  <h3 className="font-semibold">Notifiche Push</h3>
+                  <p className="text-sm text-[#A1A1AA]">
+                    {pushSubscribed 
+                      ? "Ricevi notifiche sul telefono" 
+                      : "Attiva per ricevere notifiche"}
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={pushSubscribed}
+                onCheckedChange={handleTogglePush}
+                data-testid="push-switch"
+              />
+            </div>
+            {pushPermission === 'denied' && (
+              <p className="text-xs text-[#FF3B30] mt-3">
+                Permesso negato. Vai nelle impostazioni del browser per abilitare le notifiche.
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Referral Section */}
         <div className="bg-[#121212] rounded-2xl p-5 border border-white/5 mb-6">
           <div className="flex items-center gap-3 mb-4">
