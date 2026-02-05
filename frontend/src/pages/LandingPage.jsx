@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/App";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { QrCode, Wallet, Users, Bell, ArrowRight, Download, Share, Plus, MoreVertical, X } from "lucide-react";
+import { QrCode, Wallet, Users, Bell, ArrowRight, Download, Share, Plus, MoreVertical } from "lucide-react";
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -69,7 +69,7 @@ export default function LandingPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#050505]">
-        <div className="w-8 h-8 border-2 border-[#7C3AED] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#2B7AB8] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -77,22 +77,23 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-[#050505] overflow-hidden">
       {/* Glow effect */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[#7C3AED] opacity-10 blur-[150px] rounded-full pointer-events-none" />
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[#2B7AB8] opacity-10 blur-[150px] rounded-full pointer-events-none" />
       
       <div className="relative z-10 px-6 py-12 max-w-lg mx-auto">
         {/* Logo */}
-        <div className="flex items-center gap-3 mb-16">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#7C3AED] to-[#4F46E5] flex items-center justify-center glow-primary">
-            <span className="font-heading text-xl font-bold">UP</span>
-          </div>
-          <span className="font-heading text-2xl font-bold">UpPay</span>
+        <div className="flex items-center gap-3 mb-16 justify-center">
+          <img 
+            src="/logo.png" 
+            alt="My Union Pay" 
+            className="h-16 w-auto"
+          />
         </div>
 
         {/* Hero */}
-        <div className="mb-12 animate-slideUp">
+        <div className="mb-12 animate-slideUp text-center">
           <h1 className="font-heading text-4xl sm:text-5xl font-extrabold leading-tight mb-4">
-            Pay. Earn.<br />
-            <span className="text-[#CCFF00]">Level Up.</span>
+            Paga. Guadagna.<br />
+            <span className="text-[#E85A24]">Unisciti.</span>
           </h1>
           <p className="text-[#A1A1AA] text-lg">
             Pagamenti P2P istantanei, marketplace merchant e ricompense per ogni notifica che ricevi.
@@ -110,13 +111,13 @@ export default function LandingPage() {
             <div className="flex items-center gap-3 flex-1">
               <Download className="w-6 h-6 flex-shrink-0" />
               <div>
-                <p className="font-semibold">Installa UpPay</p>
+                <p className="font-semibold">Installa My Union Pay</p>
                 <p className="text-sm opacity-80">
                   Tocca per aggiungere alla Home
                 </p>
               </div>
             </div>
-            <span className="bg-white text-[#7C3AED] px-4 py-2 rounded-full font-semibold text-sm flex-shrink-0">
+            <span className="bg-white text-[#2B7AB8] px-4 py-2 rounded-full font-semibold text-sm flex-shrink-0">
               Installa
             </span>
           </button>
@@ -130,7 +131,7 @@ export default function LandingPage() {
               className="bg-[#121212] border border-white/5 rounded-2xl p-5 animate-slideUp"
               style={{ animationDelay: `${0.1 + i * 0.05}s` }}
             >
-              <f.icon className="w-8 h-8 text-[#7C3AED] mb-3" />
+              <f.icon className="w-8 h-8 text-[#2B7AB8] mb-3" />
               <h3 className="font-semibold mb-1">{f.title}</h3>
               <p className="text-sm text-[#A1A1AA]">{f.desc}</p>
             </div>
@@ -141,7 +142,7 @@ export default function LandingPage() {
         <div className="space-y-4 animate-slideUp" style={{ animationDelay: '0.3s' }}>
           <Button 
             onClick={() => navigate("/register")}
-            className="w-full h-14 rounded-full bg-[#7C3AED] hover:bg-[#6D28D9] text-lg font-semibold glow-primary"
+            className="w-full h-14 rounded-full bg-[#2B7AB8] hover:bg-[#236699] text-lg font-semibold glow-primary"
             data-testid="get-started-btn"
           >
             Inizia Ora
@@ -159,7 +160,7 @@ export default function LandingPage() {
 
         {/* Footer */}
         <p className="text-center text-[#A1A1AA] text-sm mt-12">
-          Unisciti a migliaia di utenti che usano UpPay ogni giorno
+          Unisciti a migliaia di utenti che usano My Union Pay ogni giorno
         </p>
       </div>
 
@@ -167,16 +168,16 @@ export default function LandingPage() {
       <Dialog open={showInstructions} onOpenChange={setShowInstructions}>
         <DialogContent className="bg-[#121212] border-white/10 text-white max-w-sm mx-4">
           <DialogHeader>
-            <DialogTitle className="font-heading text-xl">Installa UpPay</DialogTitle>
+            <DialogTitle className="font-heading text-xl">Installa My Union Pay</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             {isIOS ? (
               <>
-                <p className="text-[#A1A1AA]">Per installare UpPay su iPhone/iPad:</p>
+                <p className="text-[#A1A1AA]">Per installare My Union Pay su iPhone/iPad:</p>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 bg-[#1E1E1E] p-3 rounded-xl">
-                    <div className="w-10 h-10 rounded-full bg-[#7C3AED]/20 flex items-center justify-center">
-                      <Share className="w-5 h-5 text-[#7C3AED]" />
+                    <div className="w-10 h-10 rounded-full bg-[#2B7AB8]/20 flex items-center justify-center">
+                      <Share className="w-5 h-5 text-[#2B7AB8]" />
                     </div>
                     <div>
                       <p className="font-medium">1. Tocca Condividi</p>
@@ -184,8 +185,8 @@ export default function LandingPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3 bg-[#1E1E1E] p-3 rounded-xl">
-                    <div className="w-10 h-10 rounded-full bg-[#CCFF00]/20 flex items-center justify-center">
-                      <Plus className="w-5 h-5 text-[#CCFF00]" />
+                    <div className="w-10 h-10 rounded-full bg-[#E85A24]/20 flex items-center justify-center">
+                      <Plus className="w-5 h-5 text-[#E85A24]" />
                     </div>
                     <div>
                       <p className="font-medium">2. Aggiungi a Home</p>
@@ -196,11 +197,11 @@ export default function LandingPage() {
               </>
             ) : (
               <>
-                <p className="text-[#A1A1AA]">Per installare UpPay:</p>
+                <p className="text-[#A1A1AA]">Per installare My Union Pay:</p>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 bg-[#1E1E1E] p-3 rounded-xl">
-                    <div className="w-10 h-10 rounded-full bg-[#7C3AED]/20 flex items-center justify-center">
-                      <MoreVertical className="w-5 h-5 text-[#7C3AED]" />
+                    <div className="w-10 h-10 rounded-full bg-[#2B7AB8]/20 flex items-center justify-center">
+                      <MoreVertical className="w-5 h-5 text-[#2B7AB8]" />
                     </div>
                     <div>
                       <p className="font-medium">1. Apri il menu</p>
@@ -208,8 +209,8 @@ export default function LandingPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3 bg-[#1E1E1E] p-3 rounded-xl">
-                    <div className="w-10 h-10 rounded-full bg-[#CCFF00]/20 flex items-center justify-center">
-                      <Download className="w-5 h-5 text-[#CCFF00]" />
+                    <div className="w-10 h-10 rounded-full bg-[#E85A24]/20 flex items-center justify-center">
+                      <Download className="w-5 h-5 text-[#E85A24]" />
                     </div>
                     <div>
                       <p className="font-medium">2. Installa app</p>
@@ -221,7 +222,7 @@ export default function LandingPage() {
             )}
             <Button 
               onClick={() => setShowInstructions(false)}
-              className="w-full mt-4 rounded-full bg-[#7C3AED] hover:bg-[#6D28D9]"
+              className="w-full mt-4 rounded-full bg-[#2B7AB8] hover:bg-[#236699]"
             >
               Ho capito
             </Button>
