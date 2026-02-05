@@ -5,17 +5,17 @@
 @tailwind utilities;
 
 :root {
-  --up-background: #050505;
-  --up-surface: #121212;
-  --up-surface-highlight: #1E1E1E;
+  --up-background: #FFFFFF;
+  --up-surface: #F5F5F5;
+  --up-surface-highlight: #EBEBEB;
   --up-primary: #2B7AB8;
   --up-secondary: #E85A24;
   --up-accent: #2B7AB8;
-  --up-text-primary: #FFFFFF;
-  --up-text-secondary: #A1A1AA;
+  --up-text-primary: #1A1A1A;
+  --up-text-secondary: #6B7280;
   --up-success: #22C55E;
   --up-error: #FF3B30;
-  --up-border: rgba(255, 255, 255, 0.1);
+  --up-border: rgba(0, 0, 0, 0.1);
 }
 
 * {
@@ -57,7 +57,7 @@ body {
 
 /* Glassmorphism */
 .glass {
-  background: rgba(18, 18, 18, 0.8);
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--up-border);
@@ -65,11 +65,11 @@ body {
 
 /* Glow effects */
 .glow-primary {
-  box-shadow: 0 0 20px rgba(43, 122, 184, 0.5);
+  box-shadow: 0 4px 20px rgba(43, 122, 184, 0.3);
 }
 
 .glow-secondary {
-  box-shadow: 0 0 20px rgba(232, 90, 36, 0.5);
+  box-shadow: 0 4px 20px rgba(232, 90, 36, 0.3);
 }
 
 /* Keypad button */
@@ -78,7 +78,7 @@ body {
   height: 72px;
   border-radius: 50%;
   background: var(--up-surface);
-  color: white;
+  color: var(--up-text-primary);
   font-family: 'Space Mono', monospace;
   font-size: 1.5rem;
   display: flex;
@@ -89,7 +89,7 @@ body {
 }
 
 .keypad-btn:active {
-  background: rgba(43, 122, 184, 0.3);
+  background: rgba(43, 122, 184, 0.2);
   transform: scale(0.95);
 }
 
@@ -100,7 +100,7 @@ body {
   font-size: 3.5rem;
   font-weight: 700;
   text-align: center;
-  color: white;
+  color: var(--up-text-primary);
   border: none;
   outline: none;
   width: 100%;
@@ -108,7 +108,7 @@ body {
 }
 
 .amount-input::placeholder {
-  color: rgba(255, 255, 255, 0.2);
+  color: rgba(0, 0, 0, 0.2);
 }
 
 /* QR Scanner Styles */
@@ -149,12 +149,13 @@ body {
 
 /* Wallet card */
 .wallet-card {
-  background: linear-gradient(135deg, var(--up-surface) 0%, var(--up-surface-highlight) 100%);
-  border: 1px solid var(--up-border);
+  background: linear-gradient(135deg, var(--up-primary) 0%, #1E5F8A 100%);
+  border: none;
   border-radius: 24px;
   padding: 24px;
   position: relative;
   overflow: hidden;
+  color: white;
 }
 
 .wallet-card::before {
@@ -164,7 +165,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.03) 25%, transparent 30%);
+  background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.1) 25%, transparent 30%);
   pointer-events: none;
 }
 
@@ -180,7 +181,7 @@ body {
 }
 
 .bottom-nav-inner {
-  background: rgba(18, 18, 18, 0.9);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--up-border);
@@ -189,6 +190,7 @@ body {
   display: flex;
   justify-content: space-around;
   align-items: center;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
 }
 
 .nav-item {
@@ -220,7 +222,7 @@ body {
   padding: 4px 12px;
   border-radius: 999px;
   font-size: 0.875rem;
-  box-shadow: 0 0 15px rgba(232, 90, 36, 0.4);
+  box-shadow: 0 2px 10px rgba(232, 90, 36, 0.3);
 }
 
 /* Merchant card */
@@ -229,12 +231,13 @@ body {
   border: 1px solid var(--up-border);
   border-radius: 16px;
   overflow: hidden;
-  transition: border-color 0.2s ease, transform 0.2s ease;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .merchant-card:hover {
   border-color: rgba(43, 122, 184, 0.5);
   transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
 /* QR Scanner frame */
@@ -244,7 +247,7 @@ body {
   height: 280px;
   border: 3px solid var(--up-primary);
   border-radius: 24px;
-  box-shadow: 0 0 30px rgba(43, 122, 184, 0.4);
+  box-shadow: 0 0 30px rgba(43, 122, 184, 0.2);
 }
 
 .qr-scanner-frame::before,
@@ -323,7 +326,7 @@ body {
 
 /* Tag pills */
 .tag-pill {
-  background: var(--up-surface);
+  background: white;
   border: 1px solid var(--up-border);
   color: var(--up-text-secondary);
   padding: 8px 16px;
@@ -334,7 +337,7 @@ body {
 }
 
 .tag-pill.selected {
-  background: rgba(43, 122, 184, 0.2);
+  background: rgba(43, 122, 184, 0.1);
   border-color: var(--up-primary);
   color: var(--up-primary);
 }
@@ -350,24 +353,24 @@ body {
 
 @layer base {
   :root {
-    --background: 0 0% 2%;
-    --foreground: 0 0% 100%;
-    --card: 0 0% 7%;
-    --card-foreground: 0 0% 100%;
-    --popover: 0 0% 7%;
-    --popover-foreground: 0 0% 100%;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 10%;
+    --card: 0 0% 96%;
+    --card-foreground: 0 0% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
     --primary: 204 58% 45%;
     --primary-foreground: 0 0% 100%;
     --secondary: 18 81% 53%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 63%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
     --accent: 204 58% 45%;
     --accent-foreground: 0 0% 100%;
     --destructive: 4 100% 59%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 14%;
-    --input: 0 0% 14%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
     --ring: 204 58% 45%;
     --radius: 0.75rem;
   }
@@ -410,4 +413,13 @@ body {
   align-items: center;
   justify-content: space-between;
   box-shadow: 0 4px 20px rgba(43, 122, 184, 0.3);
+  color: white;
+}
+
+/* Light theme cards */
+.card-light {
+  background: white;
+  border: 1px solid var(--up-border);
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
