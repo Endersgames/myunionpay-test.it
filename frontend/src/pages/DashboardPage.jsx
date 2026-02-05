@@ -164,11 +164,11 @@ export default function DashboardPage() {
                     className="bg-[#121212] rounded-xl p-4 flex items-center justify-between border border-white/5"
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isReceived ? 'bg-[#CCFF00]/10' : 'bg-[#7C3AED]/10'}`}>
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isReceived ? 'bg-[#E85A24]/10' : 'bg-[#2B7AB8]/10'}`}>
                         {isReceived ? (
-                          <ArrowDownLeft className="w-5 h-5 text-[#CCFF00]" />
+                          <ArrowDownLeft className="w-5 h-5 text-[#E85A24]" />
                         ) : (
-                          <ArrowUpRight className="w-5 h-5 text-[#7C3AED]" />
+                          <ArrowUpRight className="w-5 h-5 text-[#2B7AB8]" />
                         )}
                       </div>
                       <div>
