@@ -129,7 +129,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 gap-4 mb-8">
           <button
             onClick={() => navigate("/scan")}
-            className="bg-[#7C3AED] rounded-2xl p-5 flex flex-col items-start glow-primary"
+            className="bg-[#2B7AB8] rounded-2xl p-5 flex flex-col items-start glow-primary"
             data-testid="scan-btn"
           >
             <Scan className="w-8 h-8 mb-3" />
