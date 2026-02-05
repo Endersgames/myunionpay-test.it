@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useAuth, API } from "@/App";
-import axios from "axios";
-import { Loader2, Smartphone } from "lucide-react";
+import { useAuth } from "@/App";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+// Firestore
+import { getUserByQRCode } from "@/lib/firestore";
 
 /**
  * Smart QR Landing Page
@@ -13,7 +15,7 @@ import { Button } from "@/components/ui/button";
 export default function ScanRedirectPage() {
   const navigate = useNavigate();
   const { qrCode } = useParams();
-  const { user, loading: authLoading, token } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [error, setError] = useState(null);
   const [recipientName, setRecipientName] = useState("");
 
@@ -22,14 +24,18 @@ export default function ScanRedirectPage() {
 
     const handleRedirect = async () => {
       try {
-        // Get user/merchant info from QR code
-        const response = await axios.get(`${API}/payments/user/${qrCode}`);
-        const qrOwner = response.data;
-        setRecipientName(qrOwner.name);
+        // Get user info from QR code
+        const qrOwner = await getUserByQRCode(qrCode);
+        
+        if (!qrOwner) {
+          setError("QR Code non valido o scaduto");
+          return;
+        }
+        
+        setRecipientName(qrOwner.full_name);
 
-        if (user && token) {
+        if (user) {
           // User is logged in → go directly to payment
-          // Small delay to ensure token is valid
           setTimeout(() => {
             navigate(`/pay/${qrCode}`, { replace: true });
           }, 100);
@@ -45,7 +51,7 @@ export default function ScanRedirectPage() {
     };
 
     handleRedirect();
-  }, [qrCode, user, token, authLoading, navigate]);
+  }, [qrCode, user, authLoading, navigate]);
 
   if (error) {
     return (
