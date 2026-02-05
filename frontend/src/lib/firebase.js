@@ -1,27 +1,18 @@
-// Firebase Configuration
-import { initializeApp, getApps } from 'firebase/app';
-import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+// src/firebase.js
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.REACT_APP_FIREBASE_APP_ID
+  apiKey: "AIzaSyDv6Lo9QYB83BrQPBAmC73qGuKqXbNFTf",
+  authDomain: "unionpointpay-d0104.firebaseapp.com",
+  projectId: "unionpointpay-d0104",
+  storageBucket: "unionpointpay-d0104.appspot.com",
+  messagingSenderId: "565612910207",
+  appId: "1:565612910207:web:dc57a7fd32c8e8b625c1ca"
 };
 
-// Initialize Firebase (singleton pattern)
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const app = initializeApp(firebaseConfig);
 
-// Initialize Auth
-const auth = getAuth(app);
-
-// Set persistence to local (survives browser restart)
-setPersistence(auth, browserLocalPersistence).catch(console.error);
-
-// Initialize Firestore
-const db = getFirestore(app);
-
-export { app, auth, db };
+export const auth = getAuth(app);
+export const db = getFirestore(app);
