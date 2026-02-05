@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth, API } from "@/App";
-import axios from "axios";
+import { useAuth } from "@/App";
 import { 
-  ArrowLeft, Store, QrCode, Bell, Send, 
+  ArrowLeft, Store, QrCode, Bell, 
   Wallet, MapPin, ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,12 +13,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import QRCode from "@/components/QRCode";
 
+// Firestore
+import { 
+  getWallet, 
+  getMerchantByUserId, 
+  createMerchant,
+  MERCHANT_CATEGORIES 
+} from "@/lib/firestore";
+
 export default function MerchantDashboardPage() {
   const navigate = useNavigate();
-  const { user, token, refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [merchant, setMerchant] = useState(null);
   const [wallet, setWallet] = useState(null);
-  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [showQR, setShowQR] = useState(false);
@@ -34,22 +40,19 @@ export default function MerchantDashboardPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (user?.id) {
+      fetchData();
+    }
+  }, [user?.id]);
 
   const fetchData = async () => {
     try {
-      const headers = { Authorization: `Bearer ${token}` };
-      const [categoriesRes, walletRes] = await Promise.all([
-        axios.get(`${API}/merchants/categories/list`),
-        axios.get(`${API}/wallet`, { headers })
-      ]);
-      setCategories(categoriesRes.data);
-      setWallet(walletRes.data);
+      const walletData = await getWallet(user.id);
+      setWallet(walletData);
 
       if (user?.is_merchant) {
-        const merchantRes = await axios.get(`${API}/merchants/me`, { headers });
-        setMerchant(merchantRes.data);
+        const merchantData = await getMerchantByUserId(user.id);
+        setMerchant(merchantData);
       } else {
         setShowForm(true);
       }
@@ -79,14 +82,13 @@ export default function MerchantDashboardPage() {
     
     setSubmitting(true);
     try {
-      const headers = { Authorization: `Bearer ${token}` };
-      const response = await axios.post(`${API}/merchants`, formData, { headers });
-      setMerchant(response.data);
+      const merchantData = await createMerchant(user.id, formData);
+      setMerchant(merchantData);
       setShowForm(false);
       await refreshUser();
       toast.success("Negozio registrato con successo!");
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Errore nella registrazione");
+      toast.error(err.message || "Errore nella registrazione");
     }
     setSubmitting(false);
   };
@@ -148,7 +150,7 @@ export default function MerchantDashboardPage() {
                   <SelectValue placeholder="Seleziona categoria" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((cat) => (
+                  {MERCHANT_CATEGORIES.map((cat) => (
                     <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                   ))}
                 </SelectContent>
@@ -228,7 +230,7 @@ export default function MerchantDashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-[#A1A1AA]">Saldo Wallet</p>
-                  <p className="font-mono text-2xl font-bold">€{wallet?.balance?.toFixed(2) || "0.00"}</p>
+                  <p className="font-mono text-2xl font-bold">{wallet?.balance?.toFixed(2) || "0.00"} UP</p>
                 </div>
                 <Wallet className="w-8 h-8 text-[#7C3AED]" />
               </div>
@@ -272,7 +274,7 @@ export default function MerchantDashboardPage() {
           </Button>
 
           <p className="text-center text-sm text-[#A1A1AA] mt-4">
-            Invia notifiche agli utenti e paga da €0.01 a €1.00 per destinatario
+            Invia notifiche agli utenti e paga da 0.01 a 1.00 UP per destinatario
           </p>
         </div>
       )}
