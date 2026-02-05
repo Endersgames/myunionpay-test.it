@@ -110,7 +110,7 @@ export default function RegisterPage() {
 
         <div className="mb-8">
           <h1 className="font-heading text-3xl font-bold mb-2">Crea Account</h1>
-          <p className="text-[#A1A1AA]">Unisciti a UpPay in pochi secondi</p>
+          <p className="text-[#A1A1AA]">Unisciti a My Union Pay in pochi secondi</p>
         </div>
 
         {formData.referral_code && (
