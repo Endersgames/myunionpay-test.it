@@ -132,7 +132,7 @@ export default function RegisterPage() {
               placeholder="Mario Rossi"
               value={formData.full_name}
               onChange={handleChange("full_name")}
-              className="h-12 bg-[#121212] border-white/10 focus:border-[#7C3AED] rounded-xl"
+              className="h-12 bg-[#121212] border-white/10 focus:border-[#2B7AB8] rounded-xl"
               data-testid="fullname-input"
             />
           </div>
@@ -145,7 +145,7 @@ export default function RegisterPage() {
               placeholder="la-tua@email.com"
               value={formData.email}
               onChange={handleChange("email")}
-              className="h-12 bg-[#121212] border-white/10 focus:border-[#7C3AED] rounded-xl"
+              className="h-12 bg-[#121212] border-white/10 focus:border-[#2B7AB8] rounded-xl"
               data-testid="email-input"
             />
           </div>
@@ -158,7 +158,7 @@ export default function RegisterPage() {
               placeholder="+39 333 1234567"
               value={formData.phone}
               onChange={handleChange("phone")}
-              className="h-12 bg-[#121212] border-white/10 focus:border-[#7C3AED] rounded-xl"
+              className="h-12 bg-[#121212] border-white/10 focus:border-[#2B7AB8] rounded-xl"
               data-testid="phone-input"
             />
           </div>
@@ -193,7 +193,7 @@ export default function RegisterPage() {
               placeholder="REFXXXXX"
               value={formData.referral_code}
               onChange={handleChange("referral_code")}
-              className="h-12 bg-[#121212] border-white/10 focus:border-[#7C3AED] rounded-xl"
+              className="h-12 bg-[#121212] border-white/10 focus:border-[#2B7AB8] rounded-xl"
               data-testid="referral-input"
             />
           </div>
