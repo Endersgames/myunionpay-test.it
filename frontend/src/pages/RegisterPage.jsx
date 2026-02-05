@@ -1,15 +1,18 @@
 import { useState } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
-import { useAuth } from "@/App";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Eye, EyeOff, Gift } from "lucide-react";
 import { toast } from "sonner";
 
+// Firebase Auth
+import { auth } from "@/lib/firebase";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserProfile, getUserByReferralCode, processReferral } from "@/lib/firestore";
+
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const { register } = useAuth();
   const [searchParams] = useSearchParams();
   
   const redirectTo = searchParams.get("redirect");
@@ -39,14 +42,52 @@ export default function RegisterPage() {
       return;
     }
     setLoading(true);
+    
     try {
-      await register(formData);
+      // 1. Create Firebase Auth user
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
+      );
+      const firebaseUser = userCredential.user;
+      
+      // 2. Create user profile in Firestore
+      await createUserProfile(firebaseUser.uid, {
+        email: formData.email,
+        phone: formData.phone,
+        full_name: formData.full_name
+      });
+      
+      // 3. Handle referral if provided
+      if (formData.referral_code) {
+        const referrer = await getUserByReferralCode(formData.referral_code);
+        if (referrer) {
+          await processReferral(referrer.id, firebaseUser.uid);
+          toast.success("Bonus referral applicato! +1 UP per te e per chi ti ha invitato");
+        }
+      }
+      
       toast.success("Account creato! Benvenuto in UpPay");
+      
       // Redirect to payment page if came from QR scan, otherwise dashboard
       const destination = redirectTo || "/dashboard";
       setTimeout(() => navigate(destination), 100);
+      
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Errore durante la registrazione");
+      console.error("Registration error:", err);
+      
+      // Handle Firebase Auth errors
+      let errorMessage = "Errore durante la registrazione";
+      if (err.code === "auth/email-already-in-use") {
+        errorMessage = "Email già registrata";
+      } else if (err.code === "auth/invalid-email") {
+        errorMessage = "Email non valida";
+      } else if (err.code === "auth/weak-password") {
+        errorMessage = "Password troppo debole";
+      }
+      
+      toast.error(errorMessage);
       setLoading(false);
     }
   };
