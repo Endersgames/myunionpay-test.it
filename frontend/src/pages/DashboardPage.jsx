@@ -30,7 +30,6 @@ export default function DashboardPage() {
     if (user?.id) {
       fetchData();
       
-      // Subscribe to real-time wallet updates
       const unsubscribe = subscribeToWallet(user.id, (walletData) => {
         setWallet(walletData);
       });
@@ -70,28 +69,28 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#050505]">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="w-8 h-8 border-2 border-[#2B7AB8] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] pb-safe">
+    <div className="min-h-screen bg-white pb-safe">
       {/* Header */}
       <div className="px-6 pt-8 pb-4">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <p className="text-[#A1A1AA] text-sm">Ciao,</p>
-            <h1 className="font-heading text-2xl font-bold">{user?.full_name?.split(' ')[0]}</h1>
+            <p className="text-[#6B7280] text-sm">Ciao,</p>
+            <h1 className="font-heading text-2xl font-bold text-[#1A1A1A]">{user?.full_name?.split(' ')[0]}</h1>
           </div>
           <div className="flex items-center gap-3">
             <button 
               onClick={() => navigate("/notifications")}
-              className="relative p-3 bg-[#121212] rounded-xl border border-white/5"
+              className="relative p-3 bg-[#F5F5F5] rounded-xl border border-black/5"
               data-testid="notifications-btn"
             >
-              <Bell className="w-5 h-5" />
+              <Bell className="w-5 h-5 text-[#1A1A1A]" />
               {unreadCount > 0 && (
                 <span className="notification-badge">{unreadCount}</span>
               )}
@@ -107,17 +106,17 @@ export default function DashboardPage() {
         <div className="wallet-card mb-6 animate-slideUp" data-testid="wallet-card">
           <div className="flex items-start justify-between mb-6">
             <div>
-              <p className="text-[#A1A1AA] text-sm mb-1">Saldo Disponibile</p>
-              <p className="font-mono text-4xl font-bold">
+              <p className="text-white/70 text-sm mb-1">Saldo Disponibile</p>
+              <p className="font-mono text-4xl font-bold text-white">
                 {wallet?.balance?.toFixed(2) || "0.00"} <span className="text-xl">UP</span>
               </p>
             </div>
-            <Wallet className="w-8 h-8 text-[#2B7AB8]" />
+            <Wallet className="w-8 h-8 text-white/70" />
           </div>
           <Button
             onClick={handleDeposit}
             variant="outline"
-            className="h-10 rounded-full border-white/20 bg-white/5 hover:bg-white/10"
+            className="h-10 rounded-full border-white/30 bg-white/10 hover:bg-white/20 text-white"
             data-testid="deposit-btn"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -129,7 +128,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 gap-4 mb-8">
           <button
             onClick={() => navigate("/scan")}
-            className="bg-[#2B7AB8] rounded-2xl p-5 flex flex-col items-start glow-primary"
+            className="bg-[#2B7AB8] rounded-2xl p-5 flex flex-col items-start glow-primary text-white"
             data-testid="scan-btn"
           >
             <Scan className="w-8 h-8 mb-3" />
@@ -138,21 +137,21 @@ export default function DashboardPage() {
           </button>
           <button
             onClick={() => navigate("/qr")}
-            className="bg-[#121212] border border-white/10 rounded-2xl p-5 flex flex-col items-start hover:border-[#2B7AB8]/50 transition-colors"
+            className="bg-[#F5F5F5] border border-black/5 rounded-2xl p-5 flex flex-col items-start hover:border-[#2B7AB8]/50 transition-colors"
             data-testid="myqr-btn"
           >
             <QrCode className="w-8 h-8 mb-3 text-[#E85A24]" />
-            <span className="font-semibold text-lg">Il Mio QR</span>
-            <span className="text-sm text-[#A1A1AA]">Ricevi pagamenti</span>
+            <span className="font-semibold text-lg text-[#1A1A1A]">Il Mio QR</span>
+            <span className="text-sm text-[#6B7280]">Ricevi pagamenti</span>
           </button>
         </div>
 
         {/* Recent Transactions */}
         <div className="mb-6">
-          <h2 className="font-heading text-lg font-bold mb-4">Ultime Transazioni</h2>
+          <h2 className="font-heading text-lg font-bold mb-4 text-[#1A1A1A]">Ultime Transazioni</h2>
           {transactions.length === 0 ? (
-            <div className="bg-[#121212] rounded-2xl p-6 text-center">
-              <p className="text-[#A1A1AA]">Nessuna transazione ancora</p>
+            <div className="bg-[#F5F5F5] rounded-2xl p-6 text-center">
+              <p className="text-[#6B7280]">Nessuna transazione ancora</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -161,7 +160,7 @@ export default function DashboardPage() {
                 return (
                   <div 
                     key={tx.id}
-                    className="bg-[#121212] rounded-xl p-4 flex items-center justify-between border border-white/5"
+                    className="bg-[#F5F5F5] rounded-xl p-4 flex items-center justify-between border border-black/5"
                   >
                     <div className="flex items-center gap-3">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isReceived ? 'bg-[#E85A24]/10' : 'bg-[#2B7AB8]/10'}`}>
@@ -172,13 +171,13 @@ export default function DashboardPage() {
                         )}
                       </div>
                       <div>
-                        <p className="font-medium">
+                        <p className="font-medium text-[#1A1A1A]">
                           {isReceived ? tx.sender_name : tx.recipient_name}
                         </p>
-                        <p className="text-sm text-[#A1A1AA]">{tx.note || "Pagamento"}</p>
+                        <p className="text-sm text-[#6B7280]">{tx.note || "Pagamento"}</p>
                       </div>
                     </div>
-                    <p className={`font-mono font-bold ${isReceived ? 'text-[#E85A24]' : ''}`}>
+                    <p className={`font-mono font-bold ${isReceived ? 'text-[#E85A24]' : 'text-[#1A1A1A]'}`}>
                       {isReceived ? '+' : '-'}{tx.amount.toFixed(2)} UP
                     </p>
                   </div>
