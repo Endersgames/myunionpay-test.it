@@ -114,8 +114,8 @@ export default function RegisterPage() {
         </div>
 
         {formData.referral_code && (
-          <div className="bg-[#121212] border border-[#CCFF00]/30 rounded-2xl p-4 mb-6 flex items-center gap-3">
-            <Gift className="w-6 h-6 text-[#CCFF00]" />
+          <div className="bg-[#121212] border border-[#E85A24]/30 rounded-2xl p-4 mb-6 flex items-center gap-3">
+            <Gift className="w-6 h-6 text-[#E85A24]" />
             <div>
               <p className="font-semibold text-[#CCFF00]">Codice Referral Applicato!</p>
               <p className="text-sm text-[#A1A1AA]">Riceverai 1 UP bonus alla registrazione</p>
