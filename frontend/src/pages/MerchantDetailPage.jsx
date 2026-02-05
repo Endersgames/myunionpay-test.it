@@ -46,7 +46,7 @@ export default function MerchantDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#050505]">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="w-8 h-8 border-2 border-[#2B7AB8] border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -54,17 +54,17 @@ export default function MerchantDetailPage() {
 
   if (!merchant) {
     return (
-      <div className="min-h-screen bg-[#050505] px-6 py-8">
+      <div className="min-h-screen bg-white px-6 py-8">
         <button 
           onClick={() => navigate("/marketplace")}
-          className="flex items-center gap-2 text-[#A1A1AA] hover:text-white mb-6"
+          className="flex items-center gap-2 text-[#6B7280] hover:text-[#1A1A1A] mb-6"
         >
           <ArrowLeft className="w-5 h-5" />
           <span>Marketplace</span>
         </button>
         <div className="text-center mt-20">
-          <Store className="w-16 h-16 text-[#A1A1AA] mx-auto mb-4" />
-          <p className="text-[#A1A1AA]">Merchant non trovato</p>
+          <Store className="w-16 h-16 text-[#6B7280] mx-auto mb-4" />
+          <p className="text-[#6B7280]">Merchant non trovato</p>
         </div>
       </div>
     );
@@ -73,7 +73,7 @@ export default function MerchantDetailPage() {
   const imageUrl = merchant.image_url || CATEGORY_IMAGES[merchant.category] || CATEGORY_IMAGES["Altro"];
 
   return (
-    <div className="min-h-screen bg-[#050505]">
+    <div className="min-h-screen bg-white">
       {/* Hero Image */}
       <div className="relative h-64">
         <div 
@@ -97,13 +97,13 @@ export default function MerchantDetailPage() {
             {merchant.category}
           </span>
           <h1 className="font-heading text-3xl font-bold mt-3 mb-2">{merchant.business_name}</h1>
-          <p className="text-[#A1A1AA] flex items-center gap-2">
+          <p className="text-[#6B7280] flex items-center gap-2">
             <MapPin className="w-4 h-4" />
             {merchant.address}
           </p>
         </div>
 
-        <p className="text-[#A1A1AA] mb-8">{merchant.description}</p>
+        <p className="text-[#6B7280] mb-8">{merchant.description}</p>
 
         {/* Actions */}
         <div className="space-y-3 mb-8">
@@ -118,7 +118,7 @@ export default function MerchantDetailPage() {
           <Button
             onClick={() => setShowQR(!showQR)}
             variant="outline"
-            className="w-full h-14 rounded-full border-white/20 bg-transparent hover:bg-white/5"
+            className="w-full h-14 rounded-full border-black/20 bg-transparent hover:bg-white/5"
             data-testid="show-qr-btn"
           >
             <QrCode className="w-5 h-5 mr-2" />
@@ -135,15 +135,15 @@ export default function MerchantDetailPage() {
         )}
 
         {/* Info Card */}
-        <div className="bg-[#121212] rounded-2xl p-5 border border-white/5 mb-8">
+        <div className="bg-[#F5F5F5] rounded-2xl p-5 border border-black/5 mb-8">
           <h3 className="font-semibold mb-3">Informazioni</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-[#A1A1AA]">Categoria</span>
+              <span className="text-[#6B7280]">Categoria</span>
               <span>{merchant.category}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#A1A1AA]">ID Merchant</span>
+              <span className="text-[#6B7280]">ID Merchant</span>
               <span className="font-mono text-xs">{merchant.id.slice(0, 8)}...</span>
             </div>
           </div>

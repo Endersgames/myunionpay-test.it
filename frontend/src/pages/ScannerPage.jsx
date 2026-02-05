@@ -142,12 +142,12 @@ export default function ScannerPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] pb-safe">
+    <div className="min-h-screen bg-white pb-safe">
       {/* Header */}
       <div className="px-6 pt-8 pb-4">
         <button 
           onClick={() => { stopScanner(); navigate("/dashboard"); }}
-          className="flex items-center gap-2 text-[#A1A1AA] hover:text-white mb-6 transition-colors"
+          className="flex items-center gap-2 text-[#6B7280] hover:text-[#1A1A1A] mb-6 transition-colors"
           data-testid="back-btn"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -155,7 +155,7 @@ export default function ScannerPage() {
         </button>
 
         <h1 className="font-heading text-2xl font-bold mb-2">Scansiona QR</h1>
-        <p className="text-[#A1A1AA]">Inquadra il QR code per pagare</p>
+        <p className="text-[#6B7280]">Inquadra il QR code per pagare</p>
       </div>
 
       {!showManual ? (
@@ -185,7 +185,7 @@ export default function ScannerPage() {
           )}
 
           {/* Instructions */}
-          <p className="text-[#A1A1AA] text-center mb-6 max-w-sm">
+          <p className="text-[#6B7280] text-center mb-6 max-w-sm">
             {scanning 
               ? "Posiziona il QR code all'interno della cornice" 
               : "Avvio fotocamera..."}
@@ -196,7 +196,7 @@ export default function ScannerPage() {
             <Button
               onClick={switchCamera}
               variant="outline"
-              className="h-12 px-4 rounded-full border-white/20 bg-[#121212]"
+              className="h-12 px-4 rounded-full border-black/20 bg-[#F5F5F5]"
               data-testid="switch-camera-btn"
             >
               <SwitchCamera className="w-5 h-5 mr-2" />
@@ -208,7 +208,7 @@ export default function ScannerPage() {
           <Button
             onClick={() => { stopScanner(); setShowManual(true); }}
             variant="ghost"
-            className="text-[#A1A1AA] hover:text-white"
+            className="text-[#6B7280] hover:text-[#1A1A1A]"
             data-testid="manual-entry-btn"
           >
             <Keyboard className="w-5 h-5 mr-2" />
@@ -218,12 +218,12 @@ export default function ScannerPage() {
       ) : (
         <div className="px-6 py-8">
           {/* Manual Entry */}
-          <div className="bg-[#121212] rounded-2xl p-6 border border-white/5">
+          <div className="bg-[#F5F5F5] rounded-2xl p-6 border border-black/5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold">Inserisci Codice QR</h3>
               <button 
                 onClick={() => setShowManual(false)}
-                className="text-[#A1A1AA] hover:text-white"
+                className="text-[#6B7280] hover:text-[#1A1A1A]"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -232,7 +232,7 @@ export default function ScannerPage() {
               placeholder="Es: UP1234ABCD5678"
               value={manualCode}
               onChange={(e) => setManualCode(e.target.value.toUpperCase())}
-              className="h-12 bg-[#050505] border-white/10 focus:border-[#2B7AB8] rounded-xl mb-4 font-mono"
+              className="h-12 bg-white border-black/10 focus:border-[#2B7AB8] rounded-xl mb-4 font-mono"
               data-testid="manual-code-input"
               onKeyDown={(e) => e.key === 'Enter' && handleManualSubmit()}
             />
@@ -248,7 +248,7 @@ export default function ScannerPage() {
           <Button
             onClick={() => setShowManual(false)}
             variant="ghost"
-            className="w-full mt-4 text-[#A1A1AA] hover:text-white"
+            className="w-full mt-4 text-[#6B7280] hover:text-[#1A1A1A]"
           >
             <Camera className="w-5 h-5 mr-2" />
             Torna alla fotocamera

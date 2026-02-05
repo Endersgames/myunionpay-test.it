@@ -54,27 +54,27 @@ export default function MarketplacePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#050505]">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="w-8 h-8 border-2 border-[#2B7AB8] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] pb-safe">
+    <div className="min-h-screen bg-white pb-safe">
       {/* Header */}
       <div className="px-6 pt-8 pb-4">
         <h1 className="font-heading text-2xl font-bold mb-2">Marketplace</h1>
-        <p className="text-[#A1A1AA] mb-6">Scopri i merchant affiliati</p>
+        <p className="text-[#6B7280] mb-6">Scopri i merchant affiliati</p>
 
         {/* Search */}
         <div className="relative mb-6">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#A1A1AA]" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6B7280]" />
           <Input
             placeholder="Cerca negozi..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-12 pl-12 bg-[#121212] border-white/10 focus:border-[#2B7AB8] rounded-xl"
+            className="h-12 pl-12 bg-[#F5F5F5] border-black/10 focus:border-[#2B7AB8] rounded-xl"
             data-testid="search-input"
           />
         </div>
@@ -104,9 +104,9 @@ export default function MarketplacePage() {
       {/* Merchants Grid */}
       <div className="px-6 py-4">
         {filteredMerchants.length === 0 ? (
-          <div className="bg-[#121212] rounded-2xl p-8 text-center">
-            <Store className="w-12 h-12 text-[#A1A1AA] mx-auto mb-4" />
-            <p className="text-[#A1A1AA]">
+          <div className="bg-[#F5F5F5] rounded-2xl p-8 text-center">
+            <Store className="w-12 h-12 text-[#6B7280] mx-auto mb-4" />
+            <p className="text-[#6B7280]">
               {searchQuery || selectedCategory 
                 ? "Nessun merchant trovato" 
                 : "Nessun merchant registrato"}
@@ -132,15 +132,15 @@ export default function MarketplacePage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <h3 className="font-semibold text-lg mb-1">{merchant.business_name}</h3>
-                      <p className="text-sm text-[#A1A1AA] line-clamp-1">{merchant.description}</p>
+                      <p className="text-sm text-[#6B7280] line-clamp-1">{merchant.description}</p>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-[#A1A1AA] flex-shrink-0 mt-1" />
+                    <ChevronRight className="w-5 h-5 text-[#6B7280] flex-shrink-0 mt-1" />
                   </div>
                   <div className="flex items-center gap-2 mt-3">
                     <span className="text-xs px-2 py-1 bg-[#2B7AB8]/20 text-[#2B7AB8] rounded-full">
                       {merchant.category}
                     </span>
-                    <span className="text-xs text-[#A1A1AA] flex items-center gap-1">
+                    <span className="text-xs text-[#6B7280] flex items-center gap-1">
                       <MapPin className="w-3 h-3" />
                       {merchant.address.split(',')[0]}
                     </span>

@@ -88,7 +88,7 @@ export default function PaymentPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#050505]">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="w-8 h-8 border-2 border-[#2B7AB8] border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -96,10 +96,10 @@ export default function PaymentPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#050505] px-6 py-8">
+      <div className="min-h-screen bg-white px-6 py-8">
         <button 
           onClick={() => navigate("/scan")}
-          className="flex items-center gap-2 text-[#A1A1AA] hover:text-white mb-6"
+          className="flex items-center gap-2 text-[#6B7280] hover:text-[#1A1A1A] mb-6"
         >
           <ArrowLeft className="w-5 h-5" />
           <span>Indietro</span>
@@ -110,7 +110,7 @@ export default function PaymentPage() {
             <AlertCircle className="w-8 h-8 text-[#FF3B30]" />
           </div>
           <h2 className="font-heading text-xl font-bold mb-2">Errore</h2>
-          <p className="text-[#A1A1AA] text-center mb-6">{error}</p>
+          <p className="text-[#6B7280] text-center mb-6">{error}</p>
           <Button
             onClick={() => navigate("/scan")}
             className="rounded-full bg-[#2B7AB8] hover:bg-[#236699]"
@@ -124,26 +124,26 @@ export default function PaymentPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center px-6">
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
         <div className="w-20 h-20 rounded-full bg-[#E85A24] flex items-center justify-center mb-6 glow-secondary animate-slideUp">
           <Check className="w-10 h-10 text-[#050505]" />
         </div>
         <h2 className="font-heading text-2xl font-bold mb-2">Pagamento Inviato!</h2>
-        <p className="text-[#A1A1AA] text-center mb-2">
+        <p className="text-[#6B7280] text-center mb-2">
           {parseFloat(amount).toFixed(2)} UP a {recipient?.name}
         </p>
-        <p className="text-[#A1A1AA] text-sm">Reindirizzamento...</p>
+        <p className="text-[#6B7280] text-sm">Reindirizzamento...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
       {/* Header */}
       <div className="px-6 pt-8 pb-4">
         <button 
           onClick={() => navigate("/scan")}
-          className="flex items-center gap-2 text-[#A1A1AA] hover:text-white mb-6"
+          className="flex items-center gap-2 text-[#6B7280] hover:text-[#1A1A1A] mb-6"
           data-testid="back-btn"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -153,7 +153,7 @@ export default function PaymentPage() {
 
       {/* Recipient Info */}
       <div className="px-6 mb-6">
-        <div className="bg-[#121212] rounded-2xl p-4 flex items-center gap-4 border border-white/5">
+        <div className="bg-[#F5F5F5] rounded-2xl p-4 flex items-center gap-4 border border-black/5">
           <div className={`w-14 h-14 rounded-full flex items-center justify-center ${recipient?.type === 'merchant' ? 'bg-[#E85A24]/10' : 'bg-[#2B7AB8]/10'}`}>
             {recipient?.type === 'merchant' ? (
               <Store className="w-7 h-7 text-[#E85A24]" />
@@ -163,7 +163,7 @@ export default function PaymentPage() {
           </div>
           <div>
             <p className="font-semibold text-lg">{recipient?.name}</p>
-            <p className="text-sm text-[#A1A1AA]">
+            <p className="text-sm text-[#6B7280]">
               {recipient?.type === 'merchant' ? 'Merchant' : 'Utente My Union Pay'}
             </p>
           </div>
@@ -172,7 +172,7 @@ export default function PaymentPage() {
 
       {/* Amount Display */}
       <div className="flex-1 flex flex-col items-center justify-center px-6">
-        <p className="text-[#A1A1AA] text-sm mb-2">Importo da inviare</p>
+        <p className="text-[#6B7280] text-sm mb-2">Importo da inviare</p>
         <div className="flex items-baseline mb-8">
           <input
             type="text"
@@ -181,7 +181,7 @@ export default function PaymentPage() {
             className="amount-input w-48"
             data-testid="amount-display"
           />
-          <span className="font-mono text-2xl font-bold ml-2 text-[#A1A1AA]">UP</span>
+          <span className="font-mono text-2xl font-bold ml-2 text-[#6B7280]">UP</span>
         </div>
 
         {/* Note input */}
@@ -190,7 +190,7 @@ export default function PaymentPage() {
           placeholder="Aggiungi una nota (opzionale)"
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          className="w-full max-w-xs bg-[#121212] border border-white/10 rounded-xl px-4 py-3 text-center text-[#A1A1AA] placeholder-[#A1A1AA]/50 focus:border-[#2B7AB8] focus:outline-none mb-8"
+          className="w-full max-w-xs bg-[#F5F5F5] border border-black/10 rounded-xl px-4 py-3 text-center text-[#6B7280] placeholder-[#A1A1AA]/50 focus:border-[#2B7AB8] focus:outline-none mb-8"
           data-testid="note-input"
         />
       </div>

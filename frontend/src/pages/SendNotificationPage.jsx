@@ -96,19 +96,19 @@ export default function SendNotificationPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#050505]">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="w-8 h-8 border-2 border-[#2B7AB8] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] pb-8">
+    <div className="min-h-screen bg-white pb-8">
       {/* Header */}
       <div className="px-6 pt-8 pb-4">
         <button 
           onClick={() => navigate("/merchant-dashboard")}
-          className="flex items-center gap-2 text-[#A1A1AA] hover:text-white mb-6 transition-colors"
+          className="flex items-center gap-2 text-[#6B7280] hover:text-[#1A1A1A] mb-6 transition-colors"
           data-testid="back-btn"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -116,7 +116,7 @@ export default function SendNotificationPage() {
         </button>
 
         <h1 className="font-heading text-2xl font-bold mb-2">Invia Notifica</h1>
-        <p className="text-[#A1A1AA]">Raggiungi i tuoi clienti con notifiche profilate</p>
+        <p className="text-[#6B7280]">Raggiungi i tuoi clienti con notifiche profilate</p>
       </div>
 
       <div className="px-6">
@@ -126,7 +126,7 @@ export default function SendNotificationPage() {
             <AlertCircle className="w-5 h-5 text-[#FF3B30] flex-shrink-0 mt-0.5" />
             <div>
               <p className="font-semibold text-[#FF3B30]">Saldo Basso</p>
-              <p className="text-sm text-[#A1A1AA]">
+              <p className="text-sm text-[#6B7280]">
                 Il tuo saldo è {wallet.balance.toFixed(2)} UP. Ricarica per inviare notifiche.
               </p>
             </div>
@@ -142,7 +142,7 @@ export default function SendNotificationPage() {
               placeholder="Es: Offerta speciale oggi!"
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              className="h-12 bg-[#121212] border-white/10 focus:border-[#2B7AB8] rounded-xl"
+              className="h-12 bg-[#F5F5F5] border-black/10 focus:border-[#2B7AB8] rounded-xl"
               data-testid="title-input"
             />
           </div>
@@ -154,7 +154,7 @@ export default function SendNotificationPage() {
               placeholder="Descrivi la tua offerta o messaggio..."
               value={formData.message}
               onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
-              className="bg-[#121212] border-white/10 focus:border-[#2B7AB8] rounded-xl min-h-[100px]"
+              className="bg-[#F5F5F5] border-black/10 focus:border-[#2B7AB8] rounded-xl min-h-[100px]"
               data-testid="message-input"
             />
           </div>
@@ -162,7 +162,7 @@ export default function SendNotificationPage() {
           {/* Target Tags */}
           <div className="space-y-3">
             <Label>Target Utenti (opzionale)</Label>
-            <p className="text-sm text-[#A1A1AA]">
+            <p className="text-sm text-[#6B7280]">
               Seleziona interessi specifici oppure lascia vuoto per inviare a TUTTI gli utenti
             </p>
             <div className="flex flex-wrap gap-2">
@@ -196,25 +196,25 @@ export default function SendNotificationPage() {
               className="py-4"
               data-testid="reward-slider"
             />
-            <div className="flex justify-between text-xs text-[#A1A1AA]">
+            <div className="flex justify-between text-xs text-[#6B7280]">
               <span>0.01 UP</span>
               <span>1.00 UP</span>
             </div>
           </div>
 
           {/* Cost Summary */}
-          <div className="bg-[#121212] rounded-2xl p-5 border border-white/5">
+          <div className="bg-[#F5F5F5] rounded-2xl p-5 border border-black/5">
             <h3 className="font-semibold mb-4">Riepilogo Costi</h3>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-[#A1A1AA] flex items-center gap-2">
+                <span className="text-[#6B7280] flex items-center gap-2">
                   <Users className="w-4 h-4" />
                   Destinatari stimati
                 </span>
                 <span className="font-mono">{estimatedRecipients}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#A1A1AA]">Reward per utente</span>
+                <span className="text-[#6B7280]">Reward per utente</span>
                 <span className="font-mono">{formData.reward_amount.toFixed(2)} UP</span>
               </div>
               <div className="h-px bg-white/10 my-2" />
@@ -247,7 +247,7 @@ export default function SendNotificationPage() {
             )}
           </Button>
 
-          <p className="text-center text-xs text-[#A1A1AA]">
+          <p className="text-center text-xs text-[#6B7280]">
             L'importo verrà addebitato dal tuo wallet e accreditato agli utenti
           </p>
         </div>

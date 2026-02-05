@@ -55,12 +55,12 @@ export default function ScanRedirectPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center px-6">
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
         <div className="w-16 h-16 rounded-2xl bg-[#FF3B30]/20 flex items-center justify-center mb-6">
           <span className="text-3xl">❌</span>
         </div>
         <h2 className="font-heading text-xl font-bold mb-2">Errore</h2>
-        <p className="text-[#A1A1AA] text-center mb-6">{error}</p>
+        <p className="text-[#6B7280] text-center mb-6">{error}</p>
         <Button
           onClick={() => navigate("/")}
           className="rounded-full bg-[#2B7AB8] hover:bg-[#236699]"
@@ -72,7 +72,7 @@ export default function ScanRedirectPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center px-6">
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
       <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#2B7AB8] to-[#1E5F8A] flex items-center justify-center mb-6 glow-primary">
         <img src="/logo.png" alt="My Union Pay" className="h-10 w-auto" />
       </div>
@@ -80,9 +80,9 @@ export default function ScanRedirectPage() {
       {recipientName ? (
         <p className="text-white text-lg mb-2">Pagamento a <span className="text-[#E85A24]">{recipientName}</span></p>
       ) : (
-        <p className="text-[#A1A1AA]">Caricamento...</p>
+        <p className="text-[#6B7280]">Caricamento...</p>
       )}
-      <p className="text-[#A1A1AA] text-sm">Preparazione pagamento...</p>
+      <p className="text-[#6B7280] text-sm">Preparazione pagamento...</p>
     </div>
   );
 }
