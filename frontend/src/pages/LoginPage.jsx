@@ -80,7 +80,7 @@ export default function LoginPage() {
               placeholder="la-tua@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="h-12 bg-[#121212] border-white/10 focus:border-[#7C3AED] rounded-xl"
+              className="h-12 bg-[#121212] border-white/10 focus:border-[#2B7AB8] rounded-xl"
               data-testid="email-input"
             />
           </div>
