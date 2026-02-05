@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useAuth, API } from "@/App";
-import axios from "axios";
+import { useAuth } from "@/App";
 import { ArrowLeft, MapPin, QrCode, Send, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import QRCode from "@/components/QRCode";
+
+// Firestore
+import { getMerchantById } from "@/lib/firestore";
 
 const CATEGORY_IMAGES = {
   "Ristorante": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",
@@ -23,7 +25,7 @@ const CATEGORY_IMAGES = {
 export default function MerchantDetailPage() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { token } = useAuth();
+  const { user } = useAuth();
   const [merchant, setMerchant] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showQR, setShowQR] = useState(false);
@@ -34,8 +36,8 @@ export default function MerchantDetailPage() {
 
   const fetchMerchant = async () => {
     try {
-      const response = await axios.get(`${API}/merchants/${id}`);
-      setMerchant(response.data);
+      const merchantData = await getMerchantById(id);
+      setMerchant(merchantData);
     } catch (err) {
       console.error("Merchant fetch error:", err);
     }
