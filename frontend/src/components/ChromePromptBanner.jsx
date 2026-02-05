@@ -69,7 +69,7 @@ export default function ChromePromptBanner() {
         </h2>
         
         <p className="text-[#A1A1AA] text-center mb-6">
-          Per la migliore esperienza e per installare l'app sulla Home, apri UpPay con Google Chrome.
+          Per la migliore esperienza e per installare l'app sulla Home, apri My Union Pay con Google Chrome.
         </p>
 
         <div className="space-y-3">
@@ -93,7 +93,7 @@ export default function ChromePromptBanner() {
         <div className="mt-6 p-4 bg-[#050505] rounded-xl">
           <p className="text-xs text-[#A1A1AA] text-center">
             <Smartphone className="w-4 h-4 inline mr-1" />
-            Con Chrome puoi installare UpPay come app e ricevere notifiche push
+            Con Chrome puoi installare My Union Pay come app e ricevere notifiche push
           </p>
         </div>
       </div>

@@ -26,8 +26,8 @@ export default function QRCodePage() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "UpPay - Pagami o Unisciti",
-          text: `Scansiona per pagarmi o registrati su UpPay! Codice: ${qrCode}`,
+          title: "My Union Pay - Pagami o Unisciti",
+          text: `Scansiona per pagarmi o registrati su My Union Pay! Codice: ${qrCode}`,
           url: qrUrl
         });
       } catch (err) {
@@ -103,7 +103,7 @@ export default function QRCodePage() {
               <h3 className="font-semibold">Per Pagamenti</h3>
             </div>
             <p className="text-sm text-[#A1A1AA]">
-              Chi ha già UpPay può scansionare e pagarti direttamente con il tastierino numerico.
+              Chi ha già My Union Pay può scansionare e pagarti direttamente con il tastierino numerico.
             </p>
           </div>
 
