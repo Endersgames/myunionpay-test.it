@@ -214,7 +214,7 @@ export default function RegisterPage() {
 
         <p className="text-center text-[#A1A1AA] mt-8">
           Hai già un account?{" "}
-          <Link to="/login" className="text-[#7C3AED] hover:underline" data-testid="login-link">
+          <Link to="/login" className="text-[#2B7AB8] hover:underline" data-testid="login-link">
             Accedi
           </Link>
         </p>
