@@ -57,7 +57,7 @@ export default function ChromePromptBanner() {
 
   return (
     <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
-      <div className="bg-[#121212] rounded-3xl p-6 max-w-sm w-full border border-white/10 animate-slideUp">
+      <div className="bg-[#F5F5F5] rounded-3xl p-6 max-w-sm w-full border border-black/10 animate-slideUp">
         <div className="flex justify-center mb-6">
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#2B7AB8] to-[#1E5F8A] flex items-center justify-center">
             <Chrome className="w-10 h-10 text-white" />
@@ -68,7 +68,7 @@ export default function ChromePromptBanner() {
           Apri con Chrome
         </h2>
         
-        <p className="text-[#A1A1AA] text-center mb-6">
+        <p className="text-[#6B7280] text-center mb-6">
           Per la migliore esperienza e per installare l'app sulla Home, apri My Union Pay con Google Chrome.
         </p>
 
@@ -84,14 +84,14 @@ export default function ChromePromptBanner() {
           <Button
             onClick={dismissPrompt}
             variant="ghost"
-            className="w-full text-[#A1A1AA] hover:text-white"
+            className="w-full text-[#6B7280] hover:text-white"
           >
             Continua comunque
           </Button>
         </div>
 
-        <div className="mt-6 p-4 bg-[#050505] rounded-xl">
-          <p className="text-xs text-[#A1A1AA] text-center">
+        <div className="mt-6 p-4 bg-white rounded-xl">
+          <p className="text-xs text-[#6B7280] text-center">
             <Smartphone className="w-4 h-4 inline mr-1" />
             Con Chrome puoi installare My Union Pay come app e ricevere notifiche push
           </p>
