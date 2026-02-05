@@ -178,7 +178,7 @@ export default function DashboardPage() {
                         <p className="text-sm text-[#A1A1AA]">{tx.note || "Pagamento"}</p>
                       </div>
                     </div>
-                    <p className={`font-mono font-bold ${isReceived ? 'text-[#CCFF00]' : ''}`}>
+                    <p className={`font-mono font-bold ${isReceived ? 'text-[#E85A24]' : ''}`}>
                       {isReceived ? '+' : '-'}{tx.amount.toFixed(2)} UP
                     </p>
                   </div>
