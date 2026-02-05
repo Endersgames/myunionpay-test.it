@@ -19,7 +19,7 @@
   "scope": "/",
   "display": "standalone",
   "theme_color": "#2B7AB8",
-  "background_color": "#050505",
+  "background_color": "#FFFFFF",
   "orientation": "portrait",
   "categories": ["finance", "business"],
   "prefer_related_applications": false
