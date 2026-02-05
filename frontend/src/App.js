@@ -1,8 +1,12 @@
 import { useEffect, useState, createContext, useContext } from "react";
 import "@/App.css";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
-import { Toaster, toast } from "sonner";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "sonner";
+
+// Firebase
+import { auth } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { getUserProfile } from "@/lib/firestore";
 
 // Pages
 import LandingPage from "@/pages/LandingPage";
@@ -21,9 +25,6 @@ import SendNotificationPage from "@/pages/SendNotificationPage";
 import ScanRedirectPage from "@/pages/ScanRedirectPage";
 import ChromePromptBanner from "@/components/ChromePromptBanner";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-export const API = `${BACKEND_URL}/api`;
-
 // Auth Context
 const AuthContext = createContext(null);
 
@@ -31,70 +32,57 @@ export const useAuth = () => useContext(AuthContext);
 
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [firebaseUser, setFirebaseUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState(localStorage.getItem("token"));
 
-  const fetchUser = async (authToken) => {
-    const tokenToUse = authToken || token;
-    if (!tokenToUse) {
-      setLoading(false);
-      return null;
-    }
-    try {
-      const response = await axios.get(`${API}/auth/me`, {
-        headers: { Authorization: `Bearer ${tokenToUse}` }
-      });
-      setUser(response.data);
-      setLoading(false);
-      return response.data;
-    } catch (e) {
-      console.error("Auth error:", e);
-      localStorage.removeItem("token");
-      setToken(null);
-      setUser(null);
-      setLoading(false);
-      return null;
-    }
-  };
-
+  // Listen to Firebase auth state changes
   useEffect(() => {
-    if (token) {
-      fetchUser(token);
-    } else {
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      setFirebaseUser(fbUser);
+      
+      if (fbUser) {
+        // Fetch user profile from Firestore
+        try {
+          const profile = await getUserProfile(fbUser.uid);
+          setUser(profile);
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
+      
       setLoading(false);
-    }
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const login = async (email, password) => {
-    const response = await axios.post(`${API}/auth/login`, { email, password });
-    const newToken = response.data.token;
-    localStorage.setItem("token", newToken);
-    setToken(newToken);
-    // Fetch user immediately with the new token
-    await fetchUser(newToken);
-    return response.data;
+  const refreshUser = async () => {
+    if (firebaseUser) {
+      const profile = await getUserProfile(firebaseUser.uid);
+      setUser(profile);
+      return profile;
+    }
+    return null;
   };
 
-  const register = async (data) => {
-    const response = await axios.post(`${API}/auth/register`, data);
-    const newToken = response.data.token;
-    localStorage.setItem("token", newToken);
-    setToken(newToken);
-    // Fetch user immediately with the new token
-    await fetchUser(newToken);
-    return response.data;
-  };
-
-  const logout = () => {
-    localStorage.removeItem("token");
-    setToken(null);
+  const logout = async () => {
+    await auth.signOut();
     setUser(null);
+    setFirebaseUser(null);
   };
-
-  const refreshUser = () => fetchUser(token);
 
   return (
-    <AuthContext.Provider value={{ user, loading, token, login, register, logout, refreshUser }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      firebaseUser,
+      loading, 
+      logout, 
+      refreshUser,
+      setUser
+    }}>
       {children}
     </AuthContext.Provider>
   );
