@@ -68,7 +68,7 @@ export default function RegisterPage() {
         }
       }
       
-      toast.success("Account creato! Benvenuto in UpPay");
+      toast.success("Account creato! Benvenuto in My Union Pay");
       
       // Redirect to payment page if came from QR scan, otherwise dashboard
       const destination = redirectTo || "/dashboard";
