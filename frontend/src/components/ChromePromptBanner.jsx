@@ -59,7 +59,7 @@ export default function ChromePromptBanner() {
     <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
       <div className="bg-[#121212] rounded-3xl p-6 max-w-sm w-full border border-white/10 animate-slideUp">
         <div className="flex justify-center mb-6">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#7C3AED] to-[#4F46E5] flex items-center justify-center">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#2B7AB8] to-[#1E5F8A] flex items-center justify-center">
             <Chrome className="w-10 h-10 text-white" />
           </div>
         </div>
@@ -75,7 +75,7 @@ export default function ChromePromptBanner() {
         <div className="space-y-3">
           <Button
             onClick={openInChrome}
-            className="w-full h-14 rounded-full bg-[#7C3AED] hover:bg-[#6D28D9] text-lg font-semibold glow-primary"
+            className="w-full h-14 rounded-full bg-[#2B7AB8] hover:bg-[#236699] text-lg font-semibold glow-primary"
           >
             <Chrome className="w-5 h-5 mr-2" />
             Apri in Chrome
