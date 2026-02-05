@@ -141,7 +141,7 @@ export default function DashboardPage() {
             className="bg-[#121212] border border-white/10 rounded-2xl p-5 flex flex-col items-start hover:border-[#7C3AED]/50 transition-colors"
             data-testid="myqr-btn"
           >
-            <QrCode className="w-8 h-8 mb-3 text-[#CCFF00]" />
+            <QrCode className="w-8 h-8 mb-3 text-[#E85A24]" />
             <span className="font-semibold text-lg">Il Mio QR</span>
             <span className="text-sm text-[#A1A1AA]">Ricevi pagamenti</span>
           </button>
