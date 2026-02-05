@@ -1,49 +1,67 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth, API } from "@/App";
-import axios from "axios";
+import { useAuth } from "@/App";
 import { toast } from "sonner";
 import { 
-  Wallet, QrCode, Scan, Store, Bell, User, 
+  Wallet, QrCode, Scan, Bell, 
   ArrowUpRight, ArrowDownLeft, Plus, TrendingUp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BottomNav from "@/components/BottomNav";
 
+// Firestore
+import { 
+  getWallet, 
+  depositToWallet, 
+  getPaymentHistory, 
+  getUnreadNotificationCount,
+  subscribeToWallet
+} from "@/lib/firestore";
+
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const { user, token, refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [wallet, setWallet] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    if (user?.id) {
+      fetchData();
+      
+      // Subscribe to real-time wallet updates
+      const unsubscribe = subscribeToWallet(user.id, (walletData) => {
+        setWallet(walletData);
+      });
+      
+      return () => unsubscribe();
+    }
+  }, [user?.id]);
+
   const fetchData = async () => {
+    if (!user?.id) return;
+    
     try {
-      const headers = { Authorization: `Bearer ${token}` };
-      const [walletRes, txRes, notifRes] = await Promise.all([
-        axios.get(`${API}/wallet`, { headers }),
-        axios.get(`${API}/payments/history`, { headers }),
-        axios.get(`${API}/notifications/unread-count`, { headers })
+      const [walletData, txData, notifCount] = await Promise.all([
+        getWallet(user.id),
+        getPaymentHistory(user.id),
+        getUnreadNotificationCount(user.id)
       ]);
-      setWallet(walletRes.data);
-      setTransactions(txRes.data.slice(0, 5));
-      setUnreadCount(notifRes.data.count);
+      
+      setWallet(walletData);
+      setTransactions(txData.slice(0, 5));
+      setUnreadCount(notifCount);
     } catch (err) {
       console.error("Dashboard fetch error:", err);
     }
     setLoading(false);
   };
 
-  useEffect(() => {
-    fetchData();
-  }, [token]);
-
   const handleDeposit = async () => {
     try {
-      const headers = { Authorization: `Bearer ${token}` };
-      await axios.post(`${API}/wallet/deposit`, { amount: 50 }, { headers });
-      toast.success("Deposito di €50 effettuato!");
+      await depositToWallet(user.id, 50, user.full_name);
+      toast.success("Deposito di 50 UP effettuato!");
       fetchData();
     } catch (err) {
       toast.error("Errore nel deposito");
@@ -91,7 +109,7 @@ export default function DashboardPage() {
             <div>
               <p className="text-[#A1A1AA] text-sm mb-1">Saldo Disponibile</p>
               <p className="font-mono text-4xl font-bold">
-                €{wallet?.balance?.toFixed(2) || "0.00"}
+                {wallet?.balance?.toFixed(2) || "0.00"} <span className="text-xl">UP</span>
               </p>
             </div>
             <Wallet className="w-8 h-8 text-[#7C3AED]" />
@@ -103,7 +121,7 @@ export default function DashboardPage() {
             data-testid="deposit-btn"
           >
             <Plus className="w-4 h-4 mr-2" />
-            Ricarica Demo
+            Ricarica Demo (+50 UP)
           </Button>
         </div>
 
@@ -161,7 +179,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                     <p className={`font-mono font-bold ${isReceived ? 'text-[#CCFF00]' : ''}`}>
-                      {isReceived ? '+' : '-'}€{tx.amount.toFixed(2)}
+                      {isReceived ? '+' : '-'}{tx.amount.toFixed(2)} UP
                     </p>
                   </div>
                 );
