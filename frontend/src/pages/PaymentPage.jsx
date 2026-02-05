@@ -1,15 +1,17 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useAuth, API } from "@/App";
-import axios from "axios";
+import { useAuth } from "@/App";
 import { ArrowLeft, Check, User, Store, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
+// Firestore
+import { getUserByQRCode, sendPayment } from "@/lib/firestore";
+
 export default function PaymentPage() {
   const navigate = useNavigate();
   const { qrCode } = useParams();
-  const { user, token } = useAuth();
+  const { user } = useAuth();
   const [recipient, setRecipient] = useState(null);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
@@ -24,10 +26,20 @@ export default function PaymentPage() {
 
   const fetchRecipient = async () => {
     try {
-      const response = await axios.get(`${API}/payments/user/${qrCode}`);
-      setRecipient(response.data);
+      const userData = await getUserByQRCode(qrCode);
+      if (userData) {
+        setRecipient({
+          type: 'user',
+          name: userData.full_name,
+          qr_code: userData.qr_code,
+          user_id: userData.id
+        });
+      } else {
+        setError("QR code non valido");
+      }
     } catch (err) {
-      setError(err.response?.data?.detail || "QR code non valido");
+      console.error("Error fetching recipient:", err);
+      setError("QR code non valido");
     }
     setLoading(false);
   };
@@ -57,18 +69,19 @@ export default function PaymentPage() {
     
     setSending(true);
     try {
-      const headers = { Authorization: `Bearer ${token}` };
-      await axios.post(`${API}/payments/send`, {
-        recipient_qr: qrCode,
-        amount: numAmount,
-        note: note || null
-      }, { headers });
+      await sendPayment(
+        user.id,
+        user.full_name,
+        qrCode,
+        numAmount,
+        note || null
+      );
       
       setSuccess(true);
       toast.success("Pagamento inviato!");
       setTimeout(() => navigate("/dashboard"), 2000);
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Errore nel pagamento");
+      toast.error(err.message || "Errore nel pagamento");
     }
     setSending(false);
   };
@@ -117,7 +130,7 @@ export default function PaymentPage() {
         </div>
         <h2 className="font-heading text-2xl font-bold mb-2">Pagamento Inviato!</h2>
         <p className="text-[#A1A1AA] text-center mb-2">
-          €{parseFloat(amount).toFixed(2)} a {recipient?.name}
+          {parseFloat(amount).toFixed(2)} UP a {recipient?.name}
         </p>
         <p className="text-[#A1A1AA] text-sm">Reindirizzamento...</p>
       </div>
@@ -161,7 +174,6 @@ export default function PaymentPage() {
       <div className="flex-1 flex flex-col items-center justify-center px-6">
         <p className="text-[#A1A1AA] text-sm mb-2">Importo da inviare</p>
         <div className="flex items-baseline mb-8">
-          <span className="font-mono text-5xl font-bold mr-1">€</span>
           <input
             type="text"
             value={amount || "0"}
@@ -169,6 +181,7 @@ export default function PaymentPage() {
             className="amount-input w-48"
             data-testid="amount-display"
           />
+          <span className="font-mono text-2xl font-bold ml-2 text-[#A1A1AA]">UP</span>
         </div>
 
         {/* Note input */}
@@ -206,7 +219,7 @@ export default function PaymentPage() {
           {sending ? (
             <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
           ) : (
-            `Invia €${amount || "0"}`
+            `Invia ${amount || "0"} UP`
           )}
         </Button>
       </div>
