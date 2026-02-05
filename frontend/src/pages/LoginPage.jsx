@@ -53,7 +53,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-[#050505] px-6 py-8">
       {/* Glow */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-[#7C3AED] opacity-10 blur-[120px] rounded-full pointer-events-none" />
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-[#2B7AB8] opacity-10 blur-[120px] rounded-full pointer-events-none" />
       
       <div className="relative z-10 max-w-md mx-auto">
         {/* Header */}
