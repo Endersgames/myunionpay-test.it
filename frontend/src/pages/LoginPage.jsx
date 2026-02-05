@@ -94,7 +94,7 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="h-12 bg-[#121212] border-white/10 focus:border-[#7C3AED] rounded-xl pr-12"
+                className="h-12 bg-[#121212] border-white/10 focus:border-[#2B7AB8] rounded-xl pr-12"
                 data-testid="password-input"
               />
               <button
