@@ -138,7 +138,7 @@ export default function DashboardPage() {
           </button>
           <button
             onClick={() => navigate("/qr")}
-            className="bg-[#121212] border border-white/10 rounded-2xl p-5 flex flex-col items-start hover:border-[#7C3AED]/50 transition-colors"
+            className="bg-[#121212] border border-white/10 rounded-2xl p-5 flex flex-col items-start hover:border-[#2B7AB8]/50 transition-colors"
             data-testid="myqr-btn"
           >
             <QrCode className="w-8 h-8 mb-3 text-[#E85A24]" />
