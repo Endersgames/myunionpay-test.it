@@ -1,49 +1,40 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth, API } from "@/App";
-import axios from "axios";
+import { useAuth } from "@/App";
 import { 
-  ArrowLeft, User, Copy, Share2, Settings, 
-  LogOut, Store, TrendingUp, Users, Tag, ChevronRight, Bell, BellOff
+  User, Copy, Share2, 
+  LogOut, Store, Users, Tag, ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import BottomNav from "@/components/BottomNav";
-import usePushNotifications from "@/hooks/usePushNotifications";
+
+// Firestore
+import { 
+  updateUserTags, 
+  getReferralStats,
+  PROFILE_TAGS 
+} from "@/lib/firestore";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { user, token, logout, refreshUser } = useAuth();
-  const [availableTags, setAvailableTags] = useState([]);
+  const { user, logout, refreshUser } = useAuth();
   const [myTags, setMyTags] = useState([]);
   const [referralStats, setReferralStats] = useState(null);
   const [showTags, setShowTags] = useState(false);
   const [loading, setLoading] = useState(true);
-  
-  const { 
-    isSupported: pushSupported, 
-    isSubscribed: pushSubscribed, 
-    permission: pushPermission,
-    subscribe: subscribePush, 
-    unsubscribe: unsubscribePush 
-  } = usePushNotifications(token);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (user?.id) {
+      fetchData();
+    }
+  }, [user?.id]);
 
   const fetchData = async () => {
     try {
-      const headers = { Authorization: `Bearer ${token}` };
-      const [tagsRes, myTagsRes, refRes] = await Promise.all([
-        axios.get(`${API}/profile/tags`, { headers }),
-        axios.get(`${API}/profile/my-tags`, { headers }),
-        axios.get(`${API}/referrals/stats`, { headers })
-      ]);
-      setAvailableTags(tagsRes.data);
-      setMyTags(myTagsRes.data.tags);
-      setReferralStats(refRes.data);
+      setMyTags(user?.profile_tags || []);
+      const refStats = await getReferralStats(user.id, user);
+      setReferralStats(refStats);
     } catch (err) {
       console.error("Profile fetch error:", err);
     }
@@ -58,31 +49,11 @@ export default function ProfilePage() {
     setMyTags(newTags);
     
     try {
-      const headers = { Authorization: `Bearer ${token}` };
-      await axios.put(`${API}/profile/tags`, { tags: newTags }, { headers });
+      await updateUserTags(user.id, newTags);
+      await refreshUser();
       toast.success("Interessi aggiornati");
     } catch (err) {
       toast.error("Errore nell'aggiornamento");
-    }
-  };
-
-  const handleTogglePush = async () => {
-    if (pushSubscribed) {
-      const success = await unsubscribePush();
-      if (success) {
-        toast.success("Notifiche push disattivate");
-      } else {
-        toast.error("Errore nella disattivazione");
-      }
-    } else {
-      const success = await subscribePush();
-      if (success) {
-        toast.success("Notifiche push attivate! 🔔");
-      } else if (pushPermission === 'denied') {
-        toast.error("Permesso notifiche negato. Abilitalo dalle impostazioni del browser.");
-      } else {
-        toast.error("Errore nell'attivazione delle notifiche");
-      }
     }
   };
 
@@ -109,8 +80,8 @@ export default function ProfilePage() {
     }
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate("/");
   };
 
@@ -154,39 +125,6 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
-
-        {/* Push Notifications */}
-        {pushSupported && (
-          <div className="bg-[#121212] rounded-2xl p-5 border border-white/5 mb-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {pushSubscribed ? (
-                  <Bell className="w-5 h-5 text-[#CCFF00]" />
-                ) : (
-                  <BellOff className="w-5 h-5 text-[#A1A1AA]" />
-                )}
-                <div>
-                  <h3 className="font-semibold">Notifiche Push</h3>
-                  <p className="text-sm text-[#A1A1AA]">
-                    {pushSubscribed 
-                      ? "Ricevi notifiche sul telefono" 
-                      : "Attiva per ricevere notifiche"}
-                  </p>
-                </div>
-              </div>
-              <Switch
-                checked={pushSubscribed}
-                onCheckedChange={handleTogglePush}
-                data-testid="push-switch"
-              />
-            </div>
-            {pushPermission === 'denied' && (
-              <p className="text-xs text-[#FF3B30] mt-3">
-                Permesso negato. Vai nelle impostazioni del browser per abilitare le notifiche.
-              </p>
-            )}
-          </div>
-        )}
 
         {/* Referral Section */}
         <div className="bg-[#121212] rounded-2xl p-5 border border-white/5 mb-6">
@@ -241,7 +179,7 @@ export default function ProfilePage() {
                 Seleziona i tuoi interessi per ricevere notifiche personalizzate dai merchant
               </p>
               <div className="flex flex-wrap gap-2">
-                {availableTags.map((tag) => (
+                {PROFILE_TAGS.map((tag) => (
                   <button
                     key={tag}
                     onClick={() => toggleTag(tag)}
