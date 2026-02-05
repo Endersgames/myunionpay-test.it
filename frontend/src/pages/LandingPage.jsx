@@ -21,21 +21,17 @@ export default function LandingPage() {
   }, [user, loading, navigate]);
 
   useEffect(() => {
-    // Check if on iOS
     const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     setIsIOS(isIOSDevice);
     
-    // Check if already installed (standalone mode)
     const standalone = window.matchMedia('(display-mode: standalone)').matches || 
                        window.navigator.standalone === true;
     setIsStandalone(standalone);
     
-    // Show install banner if not standalone
     if (!standalone) {
       setShowInstall(true);
     }
     
-    // Android/Chrome install prompt
     const handler = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -54,7 +50,6 @@ export default function LandingPage() {
       }
       setDeferredPrompt(null);
     } else {
-      // Show manual instructions
       setShowInstructions(true);
     }
   };
@@ -68,16 +63,16 @@ export default function LandingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#050505]">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="w-8 h-8 border-2 border-[#2B7AB8] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] overflow-hidden">
-      {/* Glow effect */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[#2B7AB8] opacity-10 blur-[150px] rounded-full pointer-events-none" />
+    <div className="min-h-screen bg-white overflow-hidden">
+      {/* Subtle gradient background */}
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-[#2B7AB8] opacity-5 blur-[150px] rounded-full pointer-events-none" />
       
       <div className="relative z-10 px-6 py-12 max-w-lg mx-auto">
         {/* Logo */}
@@ -85,17 +80,17 @@ export default function LandingPage() {
           <img 
             src="/logo.png" 
             alt="My Union Pay" 
-            className="h-16 w-auto"
+            className="h-20 w-auto"
           />
         </div>
 
         {/* Hero */}
         <div className="mb-12 animate-slideUp text-center">
-          <h1 className="font-heading text-4xl sm:text-5xl font-extrabold leading-tight mb-4">
+          <h1 className="font-heading text-4xl sm:text-5xl font-extrabold leading-tight mb-4 text-[#1A1A1A]">
             Paga. Guadagna.<br />
             <span className="text-[#E85A24]">Unisciti.</span>
           </h1>
-          <p className="text-[#A1A1AA] text-lg">
+          <p className="text-[#6B7280] text-lg">
             Pagamenti P2P istantanei, marketplace merchant e ricompense per ogni notifica che ricevi.
           </p>
         </div>
@@ -128,12 +123,12 @@ export default function LandingPage() {
           {features.map((f, i) => (
             <div 
               key={f.title}
-              className="bg-[#121212] border border-white/5 rounded-2xl p-5 animate-slideUp"
+              className="bg-[#F5F5F5] border border-black/5 rounded-2xl p-5 animate-slideUp"
               style={{ animationDelay: `${0.1 + i * 0.05}s` }}
             >
               <f.icon className="w-8 h-8 text-[#2B7AB8] mb-3" />
-              <h3 className="font-semibold mb-1">{f.title}</h3>
-              <p className="text-sm text-[#A1A1AA]">{f.desc}</p>
+              <h3 className="font-semibold mb-1 text-[#1A1A1A]">{f.title}</h3>
+              <p className="text-sm text-[#6B7280]">{f.desc}</p>
             </div>
           ))}
         </div>
@@ -142,7 +137,7 @@ export default function LandingPage() {
         <div className="space-y-4 animate-slideUp" style={{ animationDelay: '0.3s' }}>
           <Button 
             onClick={() => navigate("/register")}
-            className="w-full h-14 rounded-full bg-[#2B7AB8] hover:bg-[#236699] text-lg font-semibold glow-primary"
+            className="w-full h-14 rounded-full bg-[#2B7AB8] hover:bg-[#236699] text-lg font-semibold text-white glow-primary"
             data-testid="get-started-btn"
           >
             Inizia Ora
@@ -151,7 +146,7 @@ export default function LandingPage() {
           <Button 
             onClick={() => navigate("/login")}
             variant="outline"
-            className="w-full h-14 rounded-full border-white/20 bg-transparent hover:bg-white/5 text-lg"
+            className="w-full h-14 rounded-full border-[#2B7AB8]/30 bg-transparent hover:bg-[#2B7AB8]/5 text-lg text-[#2B7AB8]"
             data-testid="login-btn"
           >
             Ho già un account
@@ -159,62 +154,62 @@ export default function LandingPage() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-[#A1A1AA] text-sm mt-12">
+        <p className="text-center text-[#6B7280] text-sm mt-12">
           Unisciti a migliaia di utenti che usano My Union Pay ogni giorno
         </p>
       </div>
 
       {/* Install Instructions Dialog */}
       <Dialog open={showInstructions} onOpenChange={setShowInstructions}>
-        <DialogContent className="bg-[#121212] border-white/10 text-white max-w-sm mx-4">
+        <DialogContent className="bg-white border-black/10 text-[#1A1A1A] max-w-sm mx-4">
           <DialogHeader>
             <DialogTitle className="font-heading text-xl">Installa My Union Pay</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             {isIOS ? (
               <>
-                <p className="text-[#A1A1AA]">Per installare My Union Pay su iPhone/iPad:</p>
+                <p className="text-[#6B7280]">Per installare My Union Pay su iPhone/iPad:</p>
                 <div className="space-y-3">
-                  <div className="flex items-center gap-3 bg-[#1E1E1E] p-3 rounded-xl">
-                    <div className="w-10 h-10 rounded-full bg-[#2B7AB8]/20 flex items-center justify-center">
+                  <div className="flex items-center gap-3 bg-[#F5F5F5] p-3 rounded-xl">
+                    <div className="w-10 h-10 rounded-full bg-[#2B7AB8]/10 flex items-center justify-center">
                       <Share className="w-5 h-5 text-[#2B7AB8]" />
                     </div>
                     <div>
                       <p className="font-medium">1. Tocca Condividi</p>
-                      <p className="text-sm text-[#A1A1AA]">L'icona in basso al centro</p>
+                      <p className="text-sm text-[#6B7280]">L'icona in basso al centro</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 bg-[#1E1E1E] p-3 rounded-xl">
-                    <div className="w-10 h-10 rounded-full bg-[#E85A24]/20 flex items-center justify-center">
+                  <div className="flex items-center gap-3 bg-[#F5F5F5] p-3 rounded-xl">
+                    <div className="w-10 h-10 rounded-full bg-[#E85A24]/10 flex items-center justify-center">
                       <Plus className="w-5 h-5 text-[#E85A24]" />
                     </div>
                     <div>
                       <p className="font-medium">2. Aggiungi a Home</p>
-                      <p className="text-sm text-[#A1A1AA]">Scorri e seleziona l'opzione</p>
+                      <p className="text-sm text-[#6B7280]">Scorri e seleziona l'opzione</p>
                     </div>
                   </div>
                 </div>
               </>
             ) : (
               <>
-                <p className="text-[#A1A1AA]">Per installare My Union Pay:</p>
+                <p className="text-[#6B7280]">Per installare My Union Pay:</p>
                 <div className="space-y-3">
-                  <div className="flex items-center gap-3 bg-[#1E1E1E] p-3 rounded-xl">
-                    <div className="w-10 h-10 rounded-full bg-[#2B7AB8]/20 flex items-center justify-center">
+                  <div className="flex items-center gap-3 bg-[#F5F5F5] p-3 rounded-xl">
+                    <div className="w-10 h-10 rounded-full bg-[#2B7AB8]/10 flex items-center justify-center">
                       <MoreVertical className="w-5 h-5 text-[#2B7AB8]" />
                     </div>
                     <div>
                       <p className="font-medium">1. Apri il menu</p>
-                      <p className="text-sm text-[#A1A1AA]">Tocca ⋮ in alto a destra</p>
+                      <p className="text-sm text-[#6B7280]">Tocca ⋮ in alto a destra</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 bg-[#1E1E1E] p-3 rounded-xl">
-                    <div className="w-10 h-10 rounded-full bg-[#E85A24]/20 flex items-center justify-center">
+                  <div className="flex items-center gap-3 bg-[#F5F5F5] p-3 rounded-xl">
+                    <div className="w-10 h-10 rounded-full bg-[#E85A24]/10 flex items-center justify-center">
                       <Download className="w-5 h-5 text-[#E85A24]" />
                     </div>
                     <div>
                       <p className="font-medium">2. Installa app</p>
-                      <p className="text-sm text-[#A1A1AA]">Seleziona "Installa app" o "Aggiungi a Home"</p>
+                      <p className="text-sm text-[#6B7280]">Seleziona "Installa app" o "Aggiungi a Home"</p>
                     </div>
                   </div>
                 </div>
@@ -222,7 +217,7 @@ export default function LandingPage() {
             )}
             <Button 
               onClick={() => setShowInstructions(false)}
-              className="w-full mt-4 rounded-full bg-[#2B7AB8] hover:bg-[#236699]"
+              className="w-full mt-4 rounded-full bg-[#2B7AB8] hover:bg-[#236699] text-white"
             >
               Ho capito
             </Button>
