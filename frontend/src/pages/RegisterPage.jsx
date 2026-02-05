@@ -172,7 +172,7 @@ export default function RegisterPage() {
                 placeholder="Minimo 6 caratteri"
                 value={formData.password}
                 onChange={handleChange("password")}
-                className="h-12 bg-[#121212] border-white/10 focus:border-[#7C3AED] rounded-xl pr-12"
+                className="h-12 bg-[#121212] border-white/10 focus:border-[#2B7AB8] rounded-xl pr-12"
                 data-testid="password-input"
               />
               <button
