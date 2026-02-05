@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth, API } from "@/App";
-import axios from "axios";
+import { useAuth } from "@/App";
 import { Store, Search, ChevronRight, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import BottomNav from "@/components/BottomNav";
+
+// Firestore
+import { getMerchants, MERCHANT_CATEGORIES } from "@/lib/firestore";
 
 const CATEGORY_IMAGES = {
   "Ristorante": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400",
@@ -23,9 +24,8 @@ const CATEGORY_IMAGES = {
 
 export default function MarketplacePage() {
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const { user } = useAuth();
   const [merchants, setMerchants] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -36,12 +36,8 @@ export default function MarketplacePage() {
 
   const fetchData = async () => {
     try {
-      const [merchantsRes, categoriesRes] = await Promise.all([
-        axios.get(`${API}/merchants`),
-        axios.get(`${API}/merchants/categories/list`)
-      ]);
-      setMerchants(merchantsRes.data);
-      setCategories(categoriesRes.data);
+      const merchantsData = await getMerchants();
+      setMerchants(merchantsData);
     } catch (err) {
       console.error("Marketplace fetch error:", err);
     }
@@ -92,7 +88,7 @@ export default function MarketplacePage() {
           >
             Tutti
           </button>
-          {categories.map((cat) => (
+          {MERCHANT_CATEGORIES.map((cat) => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
