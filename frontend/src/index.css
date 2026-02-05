@@ -8,12 +8,12 @@
   --up-background: #050505;
   --up-surface: #121212;
   --up-surface-highlight: #1E1E1E;
-  --up-primary: #7C3AED;
-  --up-secondary: #CCFF00;
-  --up-accent: #06B6D4;
+  --up-primary: #2B7AB8;
+  --up-secondary: #E85A24;
+  --up-accent: #2B7AB8;
   --up-text-primary: #FFFFFF;
   --up-text-secondary: #A1A1AA;
-  --up-success: #CCFF00;
+  --up-success: #22C55E;
   --up-error: #FF3B30;
   --up-border: rgba(255, 255, 255, 0.1);
 }
@@ -65,11 +65,11 @@ body {
 
 /* Glow effects */
 .glow-primary {
-  box-shadow: 0 0 20px rgba(124, 58, 237, 0.5);
+  box-shadow: 0 0 20px rgba(43, 122, 184, 0.5);
 }
 
 .glow-secondary {
-  box-shadow: 0 0 20px rgba(204, 255, 0, 0.5);
+  box-shadow: 0 0 20px rgba(232, 90, 36, 0.5);
 }
 
 /* Keypad button */
@@ -89,7 +89,7 @@ body {
 }
 
 .keypad-btn:active {
-  background: rgba(124, 58, 237, 0.3);
+  background: rgba(43, 122, 184, 0.3);
   transform: scale(0.95);
 }
 
@@ -204,7 +204,7 @@ body {
 
 .nav-item.active {
   color: var(--up-primary);
-  background: rgba(124, 58, 237, 0.1);
+  background: rgba(43, 122, 184, 0.1);
 }
 
 .nav-item:hover {
@@ -214,13 +214,13 @@ body {
 /* UP Points badge */
 .up-badge {
   background: var(--up-secondary);
-  color: var(--up-background);
+  color: white;
   font-family: 'Space Mono', monospace;
   font-weight: 700;
   padding: 4px 12px;
   border-radius: 999px;
   font-size: 0.875rem;
-  box-shadow: 0 0 15px rgba(204, 255, 0, 0.4);
+  box-shadow: 0 0 15px rgba(232, 90, 36, 0.4);
 }
 
 /* Merchant card */
@@ -233,7 +233,7 @@ body {
 }
 
 .merchant-card:hover {
-  border-color: rgba(124, 58, 237, 0.5);
+  border-color: rgba(43, 122, 184, 0.5);
   transform: translateY(-2px);
 }
 
@@ -244,7 +244,7 @@ body {
   height: 280px;
   border: 3px solid var(--up-primary);
   border-radius: 24px;
-  box-shadow: 0 0 30px rgba(124, 58, 237, 0.4);
+  box-shadow: 0 0 30px rgba(43, 122, 184, 0.4);
 }
 
 .qr-scanner-frame::before,
@@ -334,7 +334,7 @@ body {
 }
 
 .tag-pill.selected {
-  background: rgba(124, 58, 237, 0.2);
+  background: rgba(43, 122, 184, 0.2);
   border-color: var(--up-primary);
   color: var(--up-primary);
 }
@@ -356,19 +356,19 @@ body {
     --card-foreground: 0 0% 100%;
     --popover: 0 0% 7%;
     --popover-foreground: 0 0% 100%;
-    --primary: 262 83% 58%;
+    --primary: 204 58% 45%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 75 100% 50%;
-    --secondary-foreground: 0 0% 2%;
+    --secondary: 18 81% 53%;
+    --secondary-foreground: 0 0% 100%;
     --muted: 0 0% 12%;
     --muted-foreground: 0 0% 63%;
-    --accent: 187 85% 43%;
+    --accent: 204 58% 45%;
     --accent-foreground: 0 0% 100%;
     --destructive: 4 100% 59%;
     --destructive-foreground: 0 0% 100%;
     --border: 0 0% 14%;
     --input: 0 0% 14%;
-    --ring: 262 83% 58%;
+    --ring: 204 58% 45%;
     --radius: 0.75rem;
   }
 }
@@ -389,7 +389,7 @@ body {
   right: -4px;
   min-width: 18px;
   height: 18px;
-  background: var(--up-error);
+  background: var(--up-secondary);
   color: white;
   font-size: 0.75rem;
   font-weight: 600;
@@ -402,12 +402,12 @@ body {
 
 /* PWA Install Banner */
 .install-banner {
-  background: linear-gradient(135deg, var(--up-primary) 0%, #4F46E5 100%);
+  background: linear-gradient(135deg, var(--up-primary) 0%, #1E5F8A 100%);
   padding: 16px 20px;
   border-radius: 16px;
   margin: 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.3);
+  box-shadow: 0 4px 20px rgba(43, 122, 184, 0.3);
 }
