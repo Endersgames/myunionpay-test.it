@@ -1,26 +1,28 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth, API } from "@/App";
-import axios from "axios";
-import { ArrowLeft, Bell, Check, Gift, Store } from "lucide-react";
+import { useAuth } from "@/App";
+import { Bell, Check, Gift, Store } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
-import { toast } from "sonner";
+
+// Firestore
+import { getUserNotifications, markNotificationRead } from "@/lib/firestore";
 
 export default function NotificationsPage() {
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchNotifications();
-  }, []);
+    if (user?.id) {
+      fetchNotifications();
+    }
+  }, [user?.id]);
 
   const fetchNotifications = async () => {
     try {
-      const headers = { Authorization: `Bearer ${token}` };
-      const response = await axios.get(`${API}/notifications/me`, { headers });
-      setNotifications(response.data);
+      const notifs = await getUserNotifications(user.id);
+      setNotifications(notifs);
     } catch (err) {
       console.error("Notifications fetch error:", err);
     }
@@ -29,8 +31,7 @@ export default function NotificationsPage() {
 
   const markAsRead = async (id) => {
     try {
-      const headers = { Authorization: `Bearer ${token}` };
-      await axios.put(`${API}/notifications/${id}/read`, {}, { headers });
+      await markNotificationRead(id);
       setNotifications(prev => 
         prev.map(n => n.id === id ? { ...n, is_read: true } : n)
       );
@@ -111,7 +112,7 @@ export default function NotificationsPage() {
                       <div className="flex items-center gap-1 px-2 py-1 bg-[#CCFF00]/10 rounded-full">
                         <Gift className="w-3 h-3 text-[#CCFF00]" />
                         <span className="text-xs font-mono text-[#CCFF00]">
-                          +€{notif.reward_amount.toFixed(2)}
+                          +{notif.reward_amount.toFixed(2)} UP
                         </span>
                       </div>
                       {notif.is_read && (
