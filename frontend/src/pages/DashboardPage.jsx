@@ -112,7 +112,7 @@ export default function DashboardPage() {
                 {wallet?.balance?.toFixed(2) || "0.00"} <span className="text-xl">UP</span>
               </p>
             </div>
-            <Wallet className="w-8 h-8 text-[#7C3AED]" />
+            <Wallet className="w-8 h-8 text-[#2B7AB8]" />
           </div>
           <Button
             onClick={handleDeposit}
