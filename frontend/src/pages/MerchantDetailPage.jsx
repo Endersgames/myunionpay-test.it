@@ -47,7 +47,7 @@ export default function MerchantDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#050505]">
-        <div className="w-8 h-8 border-2 border-[#7C3AED] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#2B7AB8] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -93,7 +93,7 @@ export default function MerchantDetailPage() {
       {/* Content */}
       <div className="px-6 -mt-8 relative z-10">
         <div className="mb-6">
-          <span className="text-xs px-3 py-1 bg-[#7C3AED]/20 text-[#7C3AED] rounded-full">
+          <span className="text-xs px-3 py-1 bg-[#2B7AB8]/20 text-[#2B7AB8] rounded-full">
             {merchant.category}
           </span>
           <h1 className="font-heading text-3xl font-bold mt-3 mb-2">{merchant.business_name}</h1>
@@ -109,7 +109,7 @@ export default function MerchantDetailPage() {
         <div className="space-y-3 mb-8">
           <Button
             onClick={() => navigate(`/pay/${merchant.qr_code}`)}
-            className="w-full h-14 rounded-full bg-[#7C3AED] hover:bg-[#6D28D9] text-lg font-semibold glow-primary"
+            className="w-full h-14 rounded-full bg-[#2B7AB8] hover:bg-[#236699] text-lg font-semibold glow-primary"
             data-testid="pay-merchant-btn"
           >
             <Send className="w-5 h-5 mr-2" />

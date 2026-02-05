@@ -57,12 +57,12 @@ export default function QRCodePage() {
 
       {/* QR Code Display */}
       <div className="px-6 py-6 flex flex-col items-center">
-        <div className="bg-white rounded-3xl p-6 mb-6 animate-slideUp shadow-lg shadow-[#7C3AED]/20" data-testid="qr-container">
+        <div className="bg-white rounded-3xl p-6 mb-6 animate-slideUp shadow-lg shadow-[#2B7AB8]/20" data-testid="qr-container">
           <QRCode value={qrCode} size={240} />
         </div>
 
         <div className="text-center mb-6">
-          <p className="font-mono text-xl text-[#7C3AED] mb-2">{qrCode}</p>
+          <p className="font-mono text-xl text-[#2B7AB8] mb-2">{qrCode}</p>
           <p className="text-lg text-white">{user?.full_name}</p>
           <div className="flex items-center justify-center gap-2 mt-2">
             <span className="up-badge text-xs">
@@ -75,7 +75,7 @@ export default function QRCodePage() {
         <div className="w-full max-w-sm space-y-3">
           <Button
             onClick={handleShare}
-            className="w-full h-14 rounded-full bg-[#7C3AED] hover:bg-[#6D28D9] text-lg font-semibold glow-primary"
+            className="w-full h-14 rounded-full bg-[#2B7AB8] hover:bg-[#236699] text-lg font-semibold glow-primary"
             data-testid="share-btn"
           >
             <Share2 className="w-5 h-5 mr-2" />
@@ -97,8 +97,8 @@ export default function QRCodePage() {
           {/* Payment Info */}
           <div className="bg-[#121212] rounded-2xl p-5 border border-white/5">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-full bg-[#7C3AED]/20 flex items-center justify-center">
-                <Wallet className="w-5 h-5 text-[#7C3AED]" />
+              <div className="w-10 h-10 rounded-full bg-[#2B7AB8]/20 flex items-center justify-center">
+                <Wallet className="w-5 h-5 text-[#2B7AB8]" />
               </div>
               <h3 className="font-semibold">Per Pagamenti</h3>
             </div>
@@ -108,16 +108,16 @@ export default function QRCodePage() {
           </div>
 
           {/* Referral Info */}
-          <div className="bg-[#121212] rounded-2xl p-5 border border-[#CCFF00]/20">
+          <div className="bg-[#121212] rounded-2xl p-5 border border-[#E85A24]/20">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-full bg-[#CCFF00]/20 flex items-center justify-center">
-                <Users className="w-5 h-5 text-[#CCFF00]" />
+              <div className="w-10 h-10 rounded-full bg-[#E85A24]/20 flex items-center justify-center">
+                <Users className="w-5 h-5 text-[#E85A24]" />
               </div>
               <h3 className="font-semibold">Per Nuovi Utenti</h3>
             </div>
             <p className="text-sm text-[#A1A1AA]">
               Chi non ha l'app viene invitato a registrarsi con il tuo referral. 
-              <span className="text-[#CCFF00] font-semibold"> +1 UP</span> per entrambi!
+              <span className="text-[#E85A24] font-semibold"> +1 UP</span> per entrambi!
             </p>
           </div>
         </div>

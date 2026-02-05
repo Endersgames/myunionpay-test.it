@@ -55,7 +55,7 @@ export default function MarketplacePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#050505]">
-        <div className="w-8 h-8 border-2 border-[#7C3AED] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#2B7AB8] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -74,7 +74,7 @@ export default function MarketplacePage() {
             placeholder="Cerca negozi..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-12 pl-12 bg-[#121212] border-white/10 focus:border-[#7C3AED] rounded-xl"
+            className="h-12 pl-12 bg-[#121212] border-white/10 focus:border-[#2B7AB8] rounded-xl"
             data-testid="search-input"
           />
         </div>
@@ -137,7 +137,7 @@ export default function MarketplacePage() {
                     <ChevronRight className="w-5 h-5 text-[#A1A1AA] flex-shrink-0 mt-1" />
                   </div>
                   <div className="flex items-center gap-2 mt-3">
-                    <span className="text-xs px-2 py-1 bg-[#7C3AED]/20 text-[#7C3AED] rounded-full">
+                    <span className="text-xs px-2 py-1 bg-[#2B7AB8]/20 text-[#2B7AB8] rounded-full">
                       {merchant.category}
                     </span>
                     <span className="text-xs text-[#A1A1AA] flex items-center gap-1">

@@ -97,7 +97,7 @@ export default function SendNotificationPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#050505]">
-        <div className="w-8 h-8 border-2 border-[#7C3AED] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#2B7AB8] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -142,7 +142,7 @@ export default function SendNotificationPage() {
               placeholder="Es: Offerta speciale oggi!"
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              className="h-12 bg-[#121212] border-white/10 focus:border-[#7C3AED] rounded-xl"
+              className="h-12 bg-[#121212] border-white/10 focus:border-[#2B7AB8] rounded-xl"
               data-testid="title-input"
             />
           </div>
@@ -154,7 +154,7 @@ export default function SendNotificationPage() {
               placeholder="Descrivi la tua offerta o messaggio..."
               value={formData.message}
               onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
-              className="bg-[#121212] border-white/10 focus:border-[#7C3AED] rounded-xl min-h-[100px]"
+              className="bg-[#121212] border-white/10 focus:border-[#2B7AB8] rounded-xl min-h-[100px]"
               data-testid="message-input"
             />
           </div>
@@ -183,7 +183,7 @@ export default function SendNotificationPage() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label>Reward per Utente</Label>
-              <span className="font-mono text-[#CCFF00] font-bold">
+              <span className="font-mono text-[#E85A24] font-bold">
                 {formData.reward_amount.toFixed(2)} UP
               </span>
             </div>
@@ -220,10 +220,10 @@ export default function SendNotificationPage() {
               <div className="h-px bg-white/10 my-2" />
               <div className="flex justify-between font-semibold">
                 <span className="flex items-center gap-2">
-                  <Wallet className="w-4 h-4 text-[#7C3AED]" />
+                  <Wallet className="w-4 h-4 text-[#2B7AB8]" />
                   Costo Totale Stimato
                 </span>
-                <span className="font-mono text-[#7C3AED]">
+                <span className="font-mono text-[#2B7AB8]">
                   {typeof totalCost === 'number' ? `${totalCost.toFixed(2)} UP` : totalCost}
                 </span>
               </div>
@@ -234,7 +234,7 @@ export default function SendNotificationPage() {
           <Button
             onClick={handleSubmit}
             disabled={sending || !formData.title || !formData.message}
-            className="w-full h-14 rounded-full bg-[#7C3AED] hover:bg-[#6D28D9] text-lg font-semibold glow-primary disabled:opacity-50"
+            className="w-full h-14 rounded-full bg-[#2B7AB8] hover:bg-[#236699] text-lg font-semibold glow-primary disabled:opacity-50"
             data-testid="send-notification-submit-btn"
           >
             {sending ? (

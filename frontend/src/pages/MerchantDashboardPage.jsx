@@ -96,7 +96,7 @@ export default function MerchantDashboardPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#050505]">
-        <div className="w-8 h-8 border-2 border-[#7C3AED] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#2B7AB8] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -135,7 +135,7 @@ export default function MerchantDashboardPage() {
                 placeholder="Es: Caffè Roma"
                 value={formData.business_name}
                 onChange={handleChange("business_name")}
-                className="h-12 bg-[#121212] border-white/10 focus:border-[#7C3AED] rounded-xl"
+                className="h-12 bg-[#121212] border-white/10 focus:border-[#2B7AB8] rounded-xl"
                 data-testid="business-name-input"
               />
             </div>
@@ -144,7 +144,7 @@ export default function MerchantDashboardPage() {
               <Label htmlFor="category">Categoria *</Label>
               <Select value={formData.category} onValueChange={handleCategoryChange}>
                 <SelectTrigger 
-                  className="h-12 bg-[#121212] border-white/10 focus:border-[#7C3AED] rounded-xl"
+                  className="h-12 bg-[#121212] border-white/10 focus:border-[#2B7AB8] rounded-xl"
                   data-testid="category-select"
                 >
                   <SelectValue placeholder="Seleziona categoria" />
@@ -164,7 +164,7 @@ export default function MerchantDashboardPage() {
                 placeholder="Descrivi la tua attività..."
                 value={formData.description}
                 onChange={handleChange("description")}
-                className="bg-[#121212] border-white/10 focus:border-[#7C3AED] rounded-xl min-h-[100px]"
+                className="bg-[#121212] border-white/10 focus:border-[#2B7AB8] rounded-xl min-h-[100px]"
                 data-testid="description-input"
               />
             </div>
@@ -176,7 +176,7 @@ export default function MerchantDashboardPage() {
                 placeholder="Via Roma 1, Milano"
                 value={formData.address}
                 onChange={handleChange("address")}
-                className="h-12 bg-[#121212] border-white/10 focus:border-[#7C3AED] rounded-xl"
+                className="h-12 bg-[#121212] border-white/10 focus:border-[#2B7AB8] rounded-xl"
                 data-testid="address-input"
               />
             </div>
@@ -188,7 +188,7 @@ export default function MerchantDashboardPage() {
                 placeholder="https://..."
                 value={formData.image_url}
                 onChange={handleChange("image_url")}
-                className="h-12 bg-[#121212] border-white/10 focus:border-[#7C3AED] rounded-xl"
+                className="h-12 bg-[#121212] border-white/10 focus:border-[#2B7AB8] rounded-xl"
                 data-testid="image-url-input"
               />
             </div>
@@ -196,7 +196,7 @@ export default function MerchantDashboardPage() {
             <Button
               type="submit"
               disabled={submitting}
-              className="w-full h-14 rounded-full bg-[#7C3AED] hover:bg-[#6D28D9] text-lg font-semibold glow-primary mt-4"
+              className="w-full h-14 rounded-full bg-[#2B7AB8] hover:bg-[#236699] text-lg font-semibold glow-primary mt-4"
               data-testid="register-merchant-btn"
             >
               {submitting ? (
@@ -213,8 +213,8 @@ export default function MerchantDashboardPage() {
           {/* Merchant Info Card */}
           <div className="bg-[#121212] rounded-2xl p-5 border border-white/5 mb-6">
             <div className="flex items-start gap-4 mb-4">
-              <div className="w-14 h-14 rounded-xl bg-[#CCFF00]/10 flex items-center justify-center">
-                <Store className="w-7 h-7 text-[#CCFF00]" />
+              <div className="w-14 h-14 rounded-xl bg-[#E85A24]/10 flex items-center justify-center">
+                <Store className="w-7 h-7 text-[#E85A24]" />
               </div>
               <div className="flex-1">
                 <h2 className="font-semibold text-lg">{merchant.business_name}</h2>
@@ -232,7 +232,7 @@ export default function MerchantDashboardPage() {
                   <p className="text-sm text-[#A1A1AA]">Saldo Wallet</p>
                   <p className="font-mono text-2xl font-bold">{wallet?.balance?.toFixed(2) || "0.00"} UP</p>
                 </div>
-                <Wallet className="w-8 h-8 text-[#7C3AED]" />
+                <Wallet className="w-8 h-8 text-[#2B7AB8]" />
               </div>
             </div>
           </div>
@@ -244,7 +244,7 @@ export default function MerchantDashboardPage() {
               className="w-full flex items-center justify-between"
             >
               <div className="flex items-center gap-3">
-                <QrCode className="w-5 h-5 text-[#7C3AED]" />
+                <QrCode className="w-5 h-5 text-[#2B7AB8]" />
                 <div className="text-left">
                   <h3 className="font-semibold">QR Code Cassa</h3>
                   <p className="text-sm text-[#A1A1AA]">Mostra ai clienti per ricevere pagamenti</p>
@@ -258,7 +258,7 @@ export default function MerchantDashboardPage() {
                 <div className="bg-white rounded-2xl p-4 mb-3">
                   <QRCode value={merchant.qr_code} size={160} />
                 </div>
-                <p className="font-mono text-sm text-[#7C3AED]">{merchant.qr_code}</p>
+                <p className="font-mono text-sm text-[#2B7AB8]">{merchant.qr_code}</p>
               </div>
             )}
           </div>
@@ -266,7 +266,7 @@ export default function MerchantDashboardPage() {
           {/* Send Notification Button */}
           <Button
             onClick={() => navigate("/send-notification")}
-            className="w-full h-14 rounded-full bg-[#7C3AED] hover:bg-[#6D28D9] text-lg font-semibold glow-primary"
+            className="w-full h-14 rounded-full bg-[#2B7AB8] hover:bg-[#236699] text-lg font-semibold glow-primary"
             data-testid="send-notification-btn"
           >
             <Bell className="w-5 h-5 mr-2" />

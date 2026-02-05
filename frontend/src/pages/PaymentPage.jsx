@@ -89,7 +89,7 @@ export default function PaymentPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#050505]">
-        <div className="w-8 h-8 border-2 border-[#7C3AED] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#2B7AB8] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -113,7 +113,7 @@ export default function PaymentPage() {
           <p className="text-[#A1A1AA] text-center mb-6">{error}</p>
           <Button
             onClick={() => navigate("/scan")}
-            className="rounded-full bg-[#7C3AED] hover:bg-[#6D28D9]"
+            className="rounded-full bg-[#2B7AB8] hover:bg-[#236699]"
           >
             Riprova
           </Button>
@@ -125,7 +125,7 @@ export default function PaymentPage() {
   if (success) {
     return (
       <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center px-6">
-        <div className="w-20 h-20 rounded-full bg-[#CCFF00] flex items-center justify-center mb-6 glow-secondary animate-slideUp">
+        <div className="w-20 h-20 rounded-full bg-[#E85A24] flex items-center justify-center mb-6 glow-secondary animate-slideUp">
           <Check className="w-10 h-10 text-[#050505]" />
         </div>
         <h2 className="font-heading text-2xl font-bold mb-2">Pagamento Inviato!</h2>
@@ -154,11 +154,11 @@ export default function PaymentPage() {
       {/* Recipient Info */}
       <div className="px-6 mb-6">
         <div className="bg-[#121212] rounded-2xl p-4 flex items-center gap-4 border border-white/5">
-          <div className={`w-14 h-14 rounded-full flex items-center justify-center ${recipient?.type === 'merchant' ? 'bg-[#CCFF00]/10' : 'bg-[#7C3AED]/10'}`}>
+          <div className={`w-14 h-14 rounded-full flex items-center justify-center ${recipient?.type === 'merchant' ? 'bg-[#E85A24]/10' : 'bg-[#2B7AB8]/10'}`}>
             {recipient?.type === 'merchant' ? (
-              <Store className="w-7 h-7 text-[#CCFF00]" />
+              <Store className="w-7 h-7 text-[#E85A24]" />
             ) : (
-              <User className="w-7 h-7 text-[#7C3AED]" />
+              <User className="w-7 h-7 text-[#2B7AB8]" />
             )}
           </div>
           <div>
@@ -190,7 +190,7 @@ export default function PaymentPage() {
           placeholder="Aggiungi una nota (opzionale)"
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          className="w-full max-w-xs bg-[#121212] border border-white/10 rounded-xl px-4 py-3 text-center text-[#A1A1AA] placeholder-[#A1A1AA]/50 focus:border-[#7C3AED] focus:outline-none mb-8"
+          className="w-full max-w-xs bg-[#121212] border border-white/10 rounded-xl px-4 py-3 text-center text-[#A1A1AA] placeholder-[#A1A1AA]/50 focus:border-[#2B7AB8] focus:outline-none mb-8"
           data-testid="note-input"
         />
       </div>
@@ -213,7 +213,7 @@ export default function PaymentPage() {
         <Button
           onClick={handleSend}
           disabled={sending || !amount || parseFloat(amount) <= 0}
-          className="w-full h-14 rounded-full bg-[#7C3AED] hover:bg-[#6D28D9] text-lg font-semibold glow-primary disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full h-14 rounded-full bg-[#2B7AB8] hover:bg-[#236699] text-lg font-semibold glow-primary disabled:opacity-50 disabled:cursor-not-allowed"
           data-testid="send-payment-btn"
         >
           {sending ? (

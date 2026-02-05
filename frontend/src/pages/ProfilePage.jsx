@@ -88,7 +88,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#050505]">
-        <div className="w-8 h-8 border-2 border-[#7C3AED] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#2B7AB8] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -102,7 +102,7 @@ export default function ProfilePage() {
         {/* User Card */}
         <div className="bg-[#121212] rounded-2xl p-5 border border-white/5 mb-6">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#7C3AED] to-[#4F46E5] flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#2B7AB8] to-[#1E5F8A] flex items-center justify-center">
               <span className="font-heading text-2xl font-bold">
                 {user?.full_name?.charAt(0).toUpperCase()}
               </span>
@@ -116,7 +116,7 @@ export default function ProfilePage() {
           
           <div className="flex gap-4">
             <div className="flex-1 bg-[#050505] rounded-xl p-3 text-center">
-              <p className="font-mono text-xl font-bold text-[#CCFF00]">{user?.up_points || 0}</p>
+              <p className="font-mono text-xl font-bold text-[#E85A24]">{user?.up_points || 0}</p>
               <p className="text-xs text-[#A1A1AA]">UP Points</p>
             </div>
             <div className="flex-1 bg-[#050505] rounded-xl p-3 text-center">
@@ -129,14 +129,14 @@ export default function ProfilePage() {
         {/* Referral Section */}
         <div className="bg-[#121212] rounded-2xl p-5 border border-white/5 mb-6">
           <div className="flex items-center gap-3 mb-4">
-            <Users className="w-5 h-5 text-[#CCFF00]" />
+            <Users className="w-5 h-5 text-[#E85A24]" />
             <h3 className="font-semibold">Invita Amici</h3>
           </div>
           <p className="text-sm text-[#A1A1AA] mb-4">
             Condividi il tuo codice e guadagna 1 UP per ogni amico che si registra!
           </p>
           <div className="bg-[#050505] rounded-xl p-3 mb-4 flex items-center justify-between">
-            <span className="font-mono text-[#7C3AED]">{user?.referral_code}</span>
+            <span className="font-mono text-[#2B7AB8]">{user?.referral_code}</span>
             <button 
               onClick={handleCopyReferral}
               className="text-[#A1A1AA] hover:text-white"
@@ -146,7 +146,7 @@ export default function ProfilePage() {
           </div>
           <Button
             onClick={handleShare}
-            className="w-full h-12 rounded-full bg-[#7C3AED] hover:bg-[#6D28D9]"
+            className="w-full h-12 rounded-full bg-[#2B7AB8] hover:bg-[#236699]"
             data-testid="share-referral-btn"
           >
             <Share2 className="w-4 h-4 mr-2" />
@@ -162,7 +162,7 @@ export default function ProfilePage() {
             data-testid="toggle-tags-btn"
           >
             <div className="flex items-center gap-3">
-              <Tag className="w-5 h-5 text-[#7C3AED]" />
+              <Tag className="w-5 h-5 text-[#2B7AB8]" />
               <div className="text-left">
                 <h3 className="font-semibold">I Miei Interessi</h3>
                 <p className="text-sm text-[#A1A1AA]">
@@ -202,7 +202,7 @@ export default function ProfilePage() {
             data-testid="merchant-dashboard-btn"
           >
             <div className="flex items-center gap-3">
-              <Store className="w-5 h-5 text-[#CCFF00]" />
+              <Store className="w-5 h-5 text-[#E85A24]" />
               <div className="text-left">
                 <h3 className="font-semibold">Dashboard Merchant</h3>
                 <p className="text-sm text-[#A1A1AA]">Gestisci il tuo negozio</p>
@@ -217,7 +217,7 @@ export default function ProfilePage() {
             data-testid="become-merchant-btn"
           >
             <div className="flex items-center gap-3">
-              <Store className="w-5 h-5 text-[#7C3AED]" />
+              <Store className="w-5 h-5 text-[#2B7AB8]" />
               <div className="text-left">
                 <h3 className="font-semibold">Diventa Merchant</h3>
                 <p className="text-sm text-[#A1A1AA]">Registra la tua attività</p>

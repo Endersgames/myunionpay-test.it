@@ -63,7 +63,7 @@ export default function ScanRedirectPage() {
         <p className="text-[#A1A1AA] text-center mb-6">{error}</p>
         <Button
           onClick={() => navigate("/")}
-          className="rounded-full bg-[#7C3AED] hover:bg-[#6D28D9]"
+          className="rounded-full bg-[#2B7AB8] hover:bg-[#236699]"
         >
           Torna alla Home
         </Button>
@@ -73,12 +73,12 @@ export default function ScanRedirectPage() {
 
   return (
     <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center px-6">
-      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#7C3AED] to-[#4F46E5] flex items-center justify-center mb-6 glow-primary">
+      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#2B7AB8] to-[#1E5F8A] flex items-center justify-center mb-6 glow-primary">
         <span className="font-heading text-2xl font-bold">UP</span>
       </div>
-      <Loader2 className="w-8 h-8 text-[#7C3AED] animate-spin mb-4" />
+      <Loader2 className="w-8 h-8 text-[#2B7AB8] animate-spin mb-4" />
       {recipientName ? (
-        <p className="text-white text-lg mb-2">Pagamento a <span className="text-[#CCFF00]">{recipientName}</span></p>
+        <p className="text-white text-lg mb-2">Pagamento a <span className="text-[#E85A24]">{recipientName}</span></p>
       ) : (
         <p className="text-[#A1A1AA]">Caricamento...</p>
       )}

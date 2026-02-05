@@ -232,13 +232,13 @@ export default function ScannerPage() {
               placeholder="Es: UP1234ABCD5678"
               value={manualCode}
               onChange={(e) => setManualCode(e.target.value.toUpperCase())}
-              className="h-12 bg-[#050505] border-white/10 focus:border-[#7C3AED] rounded-xl mb-4 font-mono"
+              className="h-12 bg-[#050505] border-white/10 focus:border-[#2B7AB8] rounded-xl mb-4 font-mono"
               data-testid="manual-code-input"
               onKeyDown={(e) => e.key === 'Enter' && handleManualSubmit()}
             />
             <Button
               onClick={handleManualSubmit}
-              className="w-full h-12 rounded-full bg-[#7C3AED] hover:bg-[#6D28D9]"
+              className="w-full h-12 rounded-full bg-[#2B7AB8] hover:bg-[#236699]"
               data-testid="manual-submit-btn"
             >
               Continua
