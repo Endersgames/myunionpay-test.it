@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth, API } from "@/App";
-import axios from "axios";
-import { ArrowLeft, Bell, Send, Users, Wallet, AlertCircle } from "lucide-react";
+import { useAuth } from "@/App";
+import { ArrowLeft, Send, Users, Wallet, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,11 +9,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 
+// Firestore
+import { 
+  getWallet, 
+  getMerchantByUserId,
+  sendNotification,
+  PROFILE_TAGS 
+} from "@/lib/firestore";
+
 export default function SendNotificationPage() {
   const navigate = useNavigate();
-  const { token } = useAuth();
-  const [availableTags, setAvailableTags] = useState([]);
+  const { user, refreshUser } = useAuth();
   const [wallet, setWallet] = useState(null);
+  const [merchant, setMerchant] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   
@@ -27,22 +34,24 @@ export default function SendNotificationPage() {
 
   // Estimate recipients (simplified)
   const estimatedRecipients = formData.target_tags.length > 0 ? 
-    Math.floor(Math.random() * 50) + 10 : 0;
-  const totalCost = estimatedRecipients * formData.reward_amount;
+    Math.floor(Math.random() * 50) + 10 : "Tutti";
+  const totalCost = typeof estimatedRecipients === 'number' ? 
+    estimatedRecipients * formData.reward_amount : "Da calcolare";
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (user?.id) {
+      fetchData();
+    }
+  }, [user?.id]);
 
   const fetchData = async () => {
     try {
-      const headers = { Authorization: `Bearer ${token}` };
-      const [tagsRes, walletRes] = await Promise.all([
-        axios.get(`${API}/profile/tags`, { headers }),
-        axios.get(`${API}/wallet`, { headers })
+      const [walletData, merchantData] = await Promise.all([
+        getWallet(user.id),
+        getMerchantByUserId(user.id)
       ]);
-      setAvailableTags(tagsRes.data);
-      setWallet(walletRes.data);
+      setWallet(walletData);
+      setMerchant(merchantData);
     } catch (err) {
       console.error("Fetch error:", err);
     }
@@ -63,16 +72,24 @@ export default function SendNotificationPage() {
       toast.error("Compila titolo e messaggio");
       return;
     }
-    // Tags are optional - if none selected, sends to ALL users
+    
+    if (!merchant) {
+      toast.error("Devi essere un merchant per inviare notifiche");
+      return;
+    }
     
     setSending(true);
     try {
-      const headers = { Authorization: `Bearer ${token}` };
-      const response = await axios.post(`${API}/notifications/send`, formData, { headers });
-      toast.success(`Notifica inviata a ${response.data.total_recipients} utenti!`);
+      const result = await sendNotification(
+        merchant.id,
+        merchant.business_name,
+        user.id,
+        formData
+      );
+      toast.success(`Notifica inviata a ${result.total_recipients} utenti!`);
       navigate("/merchant-dashboard");
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Errore nell'invio");
+      toast.error(err.message || "Errore nell'invio");
     }
     setSending(false);
   };
@@ -110,7 +127,7 @@ export default function SendNotificationPage() {
             <div>
               <p className="font-semibold text-[#FF3B30]">Saldo Basso</p>
               <p className="text-sm text-[#A1A1AA]">
-                Il tuo saldo è €{wallet.balance.toFixed(2)}. Ricarica per inviare notifiche.
+                Il tuo saldo è {wallet.balance.toFixed(2)} UP. Ricarica per inviare notifiche.
               </p>
             </div>
           </div>
@@ -149,7 +166,7 @@ export default function SendNotificationPage() {
               Seleziona interessi specifici oppure lascia vuoto per inviare a TUTTI gli utenti
             </p>
             <div className="flex flex-wrap gap-2">
-              {availableTags.map((tag) => (
+              {PROFILE_TAGS.map((tag) => (
                 <button
                   key={tag}
                   onClick={() => toggleTag(tag)}
@@ -167,7 +184,7 @@ export default function SendNotificationPage() {
             <div className="flex items-center justify-between">
               <Label>Reward per Utente</Label>
               <span className="font-mono text-[#CCFF00] font-bold">
-                €{formData.reward_amount.toFixed(2)}
+                {formData.reward_amount.toFixed(2)} UP
               </span>
             </div>
             <Slider
@@ -180,8 +197,8 @@ export default function SendNotificationPage() {
               data-testid="reward-slider"
             />
             <div className="flex justify-between text-xs text-[#A1A1AA]">
-              <span>€0.01</span>
-              <span>€1.00</span>
+              <span>0.01 UP</span>
+              <span>1.00 UP</span>
             </div>
           </div>
 
@@ -198,7 +215,7 @@ export default function SendNotificationPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-[#A1A1AA]">Reward per utente</span>
-                <span className="font-mono">€{formData.reward_amount.toFixed(2)}</span>
+                <span className="font-mono">{formData.reward_amount.toFixed(2)} UP</span>
               </div>
               <div className="h-px bg-white/10 my-2" />
               <div className="flex justify-between font-semibold">
@@ -206,7 +223,9 @@ export default function SendNotificationPage() {
                   <Wallet className="w-4 h-4 text-[#7C3AED]" />
                   Costo Totale Stimato
                 </span>
-                <span className="font-mono text-[#7C3AED]">€{totalCost.toFixed(2)}</span>
+                <span className="font-mono text-[#7C3AED]">
+                  {typeof totalCost === 'number' ? `${totalCost.toFixed(2)} UP` : totalCost}
+                </span>
               </div>
             </div>
           </div>
@@ -214,7 +233,7 @@ export default function SendNotificationPage() {
           {/* Submit Button */}
           <Button
             onClick={handleSubmit}
-            disabled={sending || formData.target_tags.length === 0}
+            disabled={sending || !formData.title || !formData.message}
             className="w-full h-14 rounded-full bg-[#7C3AED] hover:bg-[#6D28D9] text-lg font-semibold glow-primary disabled:opacity-50"
             data-testid="send-notification-submit-btn"
           >
