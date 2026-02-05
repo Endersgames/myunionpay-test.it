@@ -123,7 +123,7 @@ export default function LoginPage() {
 
         <p className="text-center text-[#A1A1AA] mt-8">
           Non hai un account?{" "}
-          <Link to="/register" className="text-[#7C3AED] hover:underline" data-testid="register-link">
+          <Link to="/register" className="text-[#2B7AB8] hover:underline" data-testid="register-link">
             Registrati
           </Link>
         </p>
