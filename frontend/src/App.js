@@ -144,7 +144,7 @@ function App() {
           <Route path="/scan" element={<ProtectedRoute><ScannerPage /></ProtectedRoute>} />
           <Route path="/pay/:qrCode" element={<ProtectedRoute><PaymentPage /></ProtectedRoute>} />
           <Route path="/marketplace" element={<ProtectedRoute><MarketplacePage /></ProtectedRoute>} />
-          <Route path="/merchant/:id" element={<ProtectedRoute><MerchantDetailPage /></ProtectedRoute>} />
+          <Route path="/merchant/:id" element={<MerchantDetailPage />} />
           <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
           <Route path="/merchant-dashboard" element={<ProtectedRoute><MerchantDashboardPage /></ProtectedRoute>} />
