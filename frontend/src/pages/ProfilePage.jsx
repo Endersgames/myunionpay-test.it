@@ -9,12 +9,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import BottomNav from "@/components/BottomNav";
 
-// Firestore
-import { 
-  updateUserTags, 
-  getReferralStats,
-  PROFILE_TAGS 
-} from "@/lib/firestore";
+// API
+import { profileAPI, referralAPI, PROFILE_TAGS } from "@/lib/api";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -32,8 +28,11 @@ export default function ProfilePage() {
 
   const fetchData = async () => {
     try {
-      setMyTags(user?.profile_tags || []);
-      const refStats = await getReferralStats(user.id, user);
+      const [tagsData, refStats] = await Promise.all([
+        profileAPI.getMyTags(),
+        referralAPI.getStats()
+      ]);
+      setMyTags(tagsData.tags || []);
       setReferralStats(refStats);
     } catch (err) {
       console.error("Profile fetch error:", err);
@@ -49,7 +48,7 @@ export default function ProfilePage() {
     setMyTags(newTags);
     
     try {
-      await updateUserTags(user.id, newTags);
+      await profileAPI.updateTags(newTags);
       await refreshUser();
       toast.success("Interessi aggiornati");
     } catch (err) {
@@ -97,18 +96,18 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-white pb-safe">
       {/* Header */}
       <div className="px-6 pt-8 pb-4">
-        <h1 className="font-heading text-2xl font-bold mb-6">Profilo</h1>
+        <h1 className="font-heading text-2xl font-bold mb-6 text-[#1A1A1A]">Profilo</h1>
 
         {/* User Card */}
         <div className="bg-[#F5F5F5] rounded-2xl p-5 border border-black/5 mb-6">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#2B7AB8] to-[#1E5F8A] flex items-center justify-center">
-              <span className="font-heading text-2xl font-bold">
+              <span className="font-heading text-2xl font-bold text-white">
                 {user?.full_name?.charAt(0).toUpperCase()}
               </span>
             </div>
             <div>
-              <h2 className="font-semibold text-lg">{user?.full_name}</h2>
+              <h2 className="font-semibold text-lg text-[#1A1A1A]">{user?.full_name}</h2>
               <p className="text-sm text-[#6B7280]">{user?.email}</p>
               <p className="text-sm text-[#6B7280]">{user?.phone}</p>
             </div>
@@ -120,7 +119,7 @@ export default function ProfilePage() {
               <p className="text-xs text-[#6B7280]">UP Points</p>
             </div>
             <div className="flex-1 bg-white rounded-xl p-3 text-center">
-              <p className="font-mono text-xl font-bold">{referralStats?.total_referrals || 0}</p>
+              <p className="font-mono text-xl font-bold text-[#1A1A1A]">{referralStats?.total_referrals || 0}</p>
               <p className="text-xs text-[#6B7280]">Invitati</p>
             </div>
           </div>
@@ -130,7 +129,7 @@ export default function ProfilePage() {
         <div className="bg-[#F5F5F5] rounded-2xl p-5 border border-black/5 mb-6">
           <div className="flex items-center gap-3 mb-4">
             <Users className="w-5 h-5 text-[#E85A24]" />
-            <h3 className="font-semibold">Invita Amici</h3>
+            <h3 className="font-semibold text-[#1A1A1A]">Invita Amici</h3>
           </div>
           <p className="text-sm text-[#6B7280] mb-4">
             Condividi il tuo codice e guadagna 1 UP per ogni amico che si registra!
@@ -164,7 +163,7 @@ export default function ProfilePage() {
             <div className="flex items-center gap-3">
               <Tag className="w-5 h-5 text-[#2B7AB8]" />
               <div className="text-left">
-                <h3 className="font-semibold">I Miei Interessi</h3>
+                <h3 className="font-semibold text-[#1A1A1A]">I Miei Interessi</h3>
                 <p className="text-sm text-[#6B7280]">
                   {myTags.length > 0 ? `${myTags.length} selezionati` : "Nessuno selezionato"}
                 </p>
@@ -204,7 +203,7 @@ export default function ProfilePage() {
             <div className="flex items-center gap-3">
               <Store className="w-5 h-5 text-[#E85A24]" />
               <div className="text-left">
-                <h3 className="font-semibold">Dashboard Merchant</h3>
+                <h3 className="font-semibold text-[#1A1A1A]">Dashboard Merchant</h3>
                 <p className="text-sm text-[#6B7280]">Gestisci il tuo negozio</p>
               </div>
             </div>
@@ -219,7 +218,7 @@ export default function ProfilePage() {
             <div className="flex items-center gap-3">
               <Store className="w-5 h-5 text-[#2B7AB8]" />
               <div className="text-left">
-                <h3 className="font-semibold">Diventa Merchant</h3>
+                <h3 className="font-semibold text-[#1A1A1A]">Diventa Merchant</h3>
                 <p className="text-sm text-[#6B7280]">Registra la tua attività</p>
               </div>
             </div>

@@ -5,8 +5,8 @@ import { ArrowLeft, Check, User, Store, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-// Firestore
-import { getUserByQRCode, sendPayment } from "@/lib/firestore";
+// API
+import { paymentAPI } from "@/lib/api";
 
 export default function PaymentPage() {
   const navigate = useNavigate();
@@ -26,17 +26,8 @@ export default function PaymentPage() {
 
   const fetchRecipient = async () => {
     try {
-      const userData = await getUserByQRCode(qrCode);
-      if (userData) {
-        setRecipient({
-          type: 'user',
-          name: userData.full_name,
-          qr_code: userData.qr_code,
-          user_id: userData.id
-        });
-      } else {
-        setError("QR code non valido");
-      }
+      const userData = await paymentAPI.getUserByQR(qrCode);
+      setRecipient(userData);
     } catch (err) {
       console.error("Error fetching recipient:", err);
       setError("QR code non valido");
@@ -69,13 +60,7 @@ export default function PaymentPage() {
     
     setSending(true);
     try {
-      await sendPayment(
-        user.id,
-        user.full_name,
-        qrCode,
-        numAmount,
-        note || null
-      );
+      await paymentAPI.sendPayment(qrCode, numAmount, note || null);
       
       setSuccess(true);
       toast.success("Pagamento inviato!");
