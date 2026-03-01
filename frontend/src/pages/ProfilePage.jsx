@@ -3,20 +3,21 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/App";
 import { 
   User, Copy, Share2, 
-  LogOut, Store, Users, Tag, ChevronRight
+  LogOut, Store, Users, Tag, ChevronRight, Smartphone, Wifi, Phone, Signal
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import BottomNav from "@/components/BottomNav";
 
 // API
-import { profileAPI, referralAPI, PROFILE_TAGS } from "@/lib/api";
+import { profileAPI, referralAPI, simAPI, PROFILE_TAGS } from "@/lib/api";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
   const { user, logout, refreshUser } = useAuth();
   const [myTags, setMyTags] = useState([]);
   const [referralStats, setReferralStats] = useState(null);
+  const [sim, setSim] = useState(null);
   const [showTags, setShowTags] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -28,12 +29,14 @@ export default function ProfilePage() {
 
   const fetchData = async () => {
     try {
-      const [tagsData, refStats] = await Promise.all([
+      const [tagsData, refStats, simData] = await Promise.all([
         profileAPI.getMyTags(),
-        referralAPI.getStats()
+        referralAPI.getStats(),
+        simAPI.getMySim()
       ]);
       setMyTags(tagsData.tags || []);
       setReferralStats(refStats);
+      setSim(simData);
     } catch (err) {
       console.error("Profile fetch error:", err);
     }
