@@ -167,6 +167,13 @@ export const notificationAPI = {
     });
   },
 
+  async preview(data) {
+    return apiRequest('/notifications/preview', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
   async getMyNotifications() {
     return apiRequest('/notifications/me');
   },
