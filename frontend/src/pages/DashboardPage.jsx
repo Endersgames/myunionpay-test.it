@@ -9,14 +9,8 @@ import {
 import { Button } from "@/components/ui/button";
 import BottomNav from "@/components/BottomNav";
 
-// Firestore
-import { 
-  getWallet, 
-  depositToWallet, 
-  getPaymentHistory, 
-  getUnreadNotificationCount,
-  subscribeToWallet
-} from "@/lib/firestore";
+// API
+import { walletAPI, paymentAPI, notificationAPI } from "@/lib/api";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -29,12 +23,6 @@ export default function DashboardPage() {
   useEffect(() => {
     if (user?.id) {
       fetchData();
-      
-      const unsubscribe = subscribeToWallet(user.id, (walletData) => {
-        setWallet(walletData);
-      });
-      
-      return () => unsubscribe();
     }
   }, [user?.id]);
 
@@ -42,15 +30,15 @@ export default function DashboardPage() {
     if (!user?.id) return;
     
     try {
-      const [walletData, txData, notifCount] = await Promise.all([
-        getWallet(user.id),
-        getPaymentHistory(user.id),
-        getUnreadNotificationCount(user.id)
+      const [walletData, txData, notifData] = await Promise.all([
+        walletAPI.getWallet(),
+        paymentAPI.getHistory(),
+        notificationAPI.getUnreadCount()
       ]);
       
       setWallet(walletData);
       setTransactions(txData.slice(0, 5));
-      setUnreadCount(notifCount);
+      setUnreadCount(notifData.count);
     } catch (err) {
       console.error("Dashboard fetch error:", err);
     }
@@ -59,7 +47,8 @@ export default function DashboardPage() {
 
   const handleDeposit = async () => {
     try {
-      await depositToWallet(user.id, 50, user.full_name);
+      const updatedWallet = await walletAPI.deposit(50);
+      setWallet(updatedWallet);
       toast.success("Deposito di 50 UP effettuato!");
       fetchData();
     } catch (err) {

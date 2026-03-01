@@ -5,13 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
-
-// Firebase Auth
-import { auth } from "@/lib/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { useAuth } from "@/App";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -26,24 +24,12 @@ export default function LoginPage() {
     setLoading(true);
     
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await login(email, password);
       toast.success("Bentornato!");
-      setTimeout(() => navigate("/dashboard"), 100);
+      navigate("/dashboard");
     } catch (err) {
       console.error("Login error:", err);
-      
-      let errorMessage = "Credenziali non valide";
-      if (err.code === "auth/user-not-found") {
-        errorMessage = "Utente non trovato";
-      } else if (err.code === "auth/wrong-password") {
-        errorMessage = "Password errata";
-      } else if (err.code === "auth/invalid-email") {
-        errorMessage = "Email non valida";
-      } else if (err.code === "auth/too-many-requests") {
-        errorMessage = "Troppi tentativi. Riprova più tardi";
-      }
-      
-      toast.error(errorMessage);
+      toast.error(err.message || "Credenziali non valide");
       setLoading(false);
     }
   };
