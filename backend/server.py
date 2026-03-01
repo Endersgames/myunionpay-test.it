@@ -116,7 +116,9 @@ class NotificationCreate(BaseModel):
     title: str
     message: str
     target_tags: List[str]
-    reward_amount: float  # 0.01 to 1.00
+    reward_amount: float  # 0.01 to 3.00
+    target_cap: Optional[str] = None  # CAP for location filtering
+    target_all_italy: bool = True  # If true, send to all Italy
 
 class NotificationResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
