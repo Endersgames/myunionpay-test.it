@@ -485,27 +485,74 @@ async def get_merchant_categories():
 # NOTIFICATION ROUTES
 # ========================
 
+class NotificationPreviewRequest(BaseModel):
+    target_tags: List[str]
+    target_cap: Optional[str] = None
+    target_all_italy: bool = True
+
+class NotificationPreviewResponse(BaseModel):
+    total_users: int
+    users: List[dict]
+
+@api_router.post("/notifications/preview", response_model=NotificationPreviewResponse)
+async def preview_notification_targets(data: NotificationPreviewRequest, user: dict = Depends(get_current_user)):
+    """Preview users that will receive the notification"""
+    merchant = await db.merchants.find_one({"user_id": user["id"]}, {"_id": 0})
+    if not merchant:
+        raise HTTPException(status_code=403, detail="Solo i merchant possono inviare notifiche")
+    
+    # Build query
+    query_conditions = [{"id": {"$ne": user["id"]}}]  # Exclude merchant
+    
+    # Filter by tags if specified
+    if data.target_tags and len(data.target_tags) > 0:
+        query_conditions.append({"profile_tags": {"$in": data.target_tags}})
+    
+    # Filter by CAP if not all Italy
+    if not data.target_all_italy and data.target_cap:
+        query_conditions.append({"cap": data.target_cap})
+    
+    query = {"$and": query_conditions} if len(query_conditions) > 1 else query_conditions[0]
+    
+    # Get users with limited info
+    target_users = await db.users.find(
+        query, 
+        {"_id": 0, "id": 1, "full_name": 1, "cap": 1, "profile_tags": 1}
+    ).to_list(1000)
+    
+    return NotificationPreviewResponse(
+        total_users=len(target_users),
+        users=[{
+            "id": u["id"],
+            "full_name": u["full_name"],
+            "cap": u.get("cap", "N/A"),
+            "tags": u.get("profile_tags", [])[:3]  # Limit tags shown
+        } for u in target_users[:20]]  # Show max 20 users in preview
+    )
+
 @api_router.post("/notifications/send", response_model=NotificationResponse)
 async def send_notification(data: NotificationCreate, user: dict = Depends(get_current_user)):
     merchant = await db.merchants.find_one({"user_id": user["id"]}, {"_id": 0})
     if not merchant:
         raise HTTPException(status_code=403, detail="Solo i merchant possono inviare notifiche")
     
-    if data.reward_amount < 0.01 or data.reward_amount > 1.00:
-        raise HTTPException(status_code=400, detail="Importo reward deve essere tra 0.01€ e 1.00€")
+    if data.reward_amount < 0.01 or data.reward_amount > 3.00:
+        raise HTTPException(status_code=400, detail="Importo reward deve essere tra 0.01 e 3.00 UP")
     
-    # Find target users - only fetch id field for security and performance
+    # Build query
+    query_conditions = [{"id": {"$ne": user["id"]}}]  # Exclude merchant
+    
+    # Filter by tags if specified
     if data.target_tags and len(data.target_tags) > 0:
-        # Filter by tags - users must have at least one matching tag
-        target_query = {"profile_tags": {"$in": data.target_tags}}
-    else:
-        # No tags selected = broadcast to ALL users (except the merchant)
-        target_query = {"id": {"$ne": user["id"]}}
+        query_conditions.append({"profile_tags": {"$in": data.target_tags}})
     
-    target_users = await db.users.find(target_query, {"_id": 0, "id": 1}).to_list(10000)
+    # Filter by CAP if not all Italy
+    if not data.target_all_italy and data.target_cap:
+        query_conditions.append({"cap": data.target_cap})
     
-    # Exclude the merchant from recipients
-    target_users = [u for u in target_users if u["id"] != user["id"]]
+    query = {"$and": query_conditions} if len(query_conditions) > 1 else query_conditions[0]
+    
+    target_users = await db.users.find(query, {"_id": 0, "id": 1}).to_list(10000)
     
     total_recipients = len(target_users)
     total_cost = total_recipients * data.reward_amount
