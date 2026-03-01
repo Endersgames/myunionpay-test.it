@@ -183,7 +183,13 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         raise HTTPException(status_code=401, detail="Invalid token")
 
 def generate_qr_code() -> str:
-    return f"UP{uuid.uuid4().hex[:12].upper()}"
+    """Generate QR code in format: MYU + 12 digits + 2 letters + 3 digits"""
+    import random
+    import string
+    digits_12 = ''.join(random.choices(string.digits, k=12))
+    letters_2 = ''.join(random.choices(string.ascii_uppercase, k=2))
+    digits_3 = ''.join(random.choices(string.digits, k=3))
+    return f"MYU{digits_12}{letters_2}{digits_3}"
 
 def generate_referral_code() -> str:
     return f"REF{secrets.token_hex(4).upper()}"
