@@ -149,7 +149,7 @@ export default function PaymentPage() {
           <div>
             <p className="font-semibold text-lg">{recipient?.name}</p>
             <p className="text-sm text-[#6B7280]">
-              {recipient?.type === 'merchant' ? 'Merchant' : 'Utente My Union Pay'}
+              {recipient?.type === 'merchant' ? 'Merchant' : 'Utente Myunionpaytest.it'}
             </p>
           </div>
         </div>

@@ -74,7 +74,7 @@ export default function ScanRedirectPage() {
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
       <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#2B7AB8] to-[#1E5F8A] flex items-center justify-center mb-6 glow-primary">
-        <img src="/logo.png" alt="My Union Pay" className="h-10 w-auto" />
+        <img src="/logo.png" alt="Myunionpaytest.it" className="h-10 w-auto" />
       </div>
       <Loader2 className="w-8 h-8 text-[#2B7AB8] animate-spin mb-4" />
       {recipientName ? (

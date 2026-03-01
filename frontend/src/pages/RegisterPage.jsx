@@ -47,7 +47,7 @@ export default function RegisterPage() {
         toast.success("Bonus referral applicato! +1 UP per te e per chi ti ha invitato");
       }
       
-      toast.success("Account creato! Benvenuto in My Union Pay");
+      toast.success("Account creato! Benvenuto in Myunionpaytest.it");
       
       const destination = redirectTo || "/dashboard";
       navigate(destination);
@@ -77,7 +77,7 @@ export default function RegisterPage() {
 
         <div className="mb-8">
           <h1 className="font-heading text-3xl font-bold mb-2 text-[#1A1A1A]">Crea Account</h1>
-          <p className="text-[#6B7280]">Unisciti a My Union Pay in pochi secondi</p>
+          <p className="text-[#6B7280]">Unisciti a Myunionpaytest.it in pochi secondi</p>
         </div>
 
         {formData.referral_code && (

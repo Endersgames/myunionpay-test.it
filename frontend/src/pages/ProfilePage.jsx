@@ -67,7 +67,7 @@ export default function ProfilePage() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Unisciti a My Union Pay",
+          title: "Unisciti a Myunionpaytest.it",
           text: `Registrati con il mio codice referral e guadagna 1 UP!`,
           url
         });
