@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/App";
 import { 
   ArrowLeft, Phone, MessageSquare, Wifi, 
-  Calendar, User, Mail, CreditCard, RefreshCw
+  Calendar, User, Mail, CreditCard, RefreshCw, Copy, Eye, EyeOff
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -16,31 +16,29 @@ import { simAPI } from "@/lib/api";
 const CircularProgress = ({ value, max, label, sublabel, color, isUnlimited }) => {
   const percentage = isUnlimited ? 100 : Math.min((value / max) * 100, 100);
   const remaining = isUnlimited ? "Illimitati" : `${(max - value).toFixed(max >= 100 ? 0 : 2)}`;
-  const radius = 45;
+  const radius = 40;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   return (
     <div className="flex flex-col items-center">
-      <div className="relative w-28 h-28">
+      <div className="relative w-24 h-24">
         <svg className="w-full h-full transform -rotate-90">
-          {/* Background circle */}
           <circle
-            cx="56"
-            cy="56"
+            cx="48"
+            cy="48"
             r={radius}
             fill="none"
             stroke="#E5E5E5"
-            strokeWidth="8"
+            strokeWidth="6"
           />
-          {/* Progress circle */}
           <circle
-            cx="56"
-            cy="56"
+            cx="48"
+            cy="48"
             r={radius}
             fill="none"
             stroke={color}
-            strokeWidth="8"
+            strokeWidth="6"
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset}
             strokeLinecap="round"
@@ -48,18 +46,13 @@ const CircularProgress = ({ value, max, label, sublabel, color, isUnlimited }) =
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-bold text-[#1A1A1A]">
+          <span className="text-xl font-bold text-[#1A1A1A]">
             {isUnlimited ? "∞" : remaining}
           </span>
           <span className="text-xs text-[#6B7280]">{sublabel}</span>
         </div>
       </div>
-      <p className="mt-2 font-semibold text-[#1A1A1A]">{label}</p>
-      {!isUnlimited && (
-        <p className="text-xs text-[#6B7280]">
-          {value.toFixed(max >= 100 ? 0 : 2)} / {max} usati
-        </p>
-      )}
+      <p className="mt-2 font-semibold text-sm text-[#1A1A1A]">{label}</p>
     </div>
   );
 };
@@ -70,6 +63,12 @@ export default function SimDashboardPage() {
   const [sim, setSim] = useState(null);
   const [loading, setLoading] = useState(true);
   const [simulating, setSimulating] = useState(false);
+  const [showCardNumber, setShowCardNumber] = useState(false);
+
+  // Fake card number based on phone
+  const cardNumber = sim?.phone_number ? 
+    `4532 ${sim.phone_number.slice(-8, -4) || '1234'} ${sim.phone_number.slice(-4) || '5678'} ${Math.floor(Math.random() * 9000) + 1000}` :
+    '4532 •••• •••• ••••';
 
   useEffect(() => {
     fetchSim();
@@ -108,19 +107,23 @@ export default function SimDashboardPage() {
   const formatDate = (dateStr) => {
     return new Date(dateStr).toLocaleDateString('it-IT', {
       day: 'numeric',
-      month: 'long',
+      month: 'short',
       year: 'numeric'
     });
   };
 
   const formatPhoneNumber = (phone) => {
     if (!phone) return "";
-    // Format as +39 XXX XXX XXXX
     const cleaned = phone.replace(/\D/g, '');
     if (cleaned.length === 10) {
       return `+39 ${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6)}`;
     }
     return phone;
+  };
+
+  const copyCardNumber = () => {
+    navigator.clipboard.writeText(cardNumber.replace(/\s/g, ''));
+    toast.success("Numero carta copiato!");
   };
 
   if (loading) {
@@ -131,55 +134,93 @@ export default function SimDashboardPage() {
     );
   }
 
-  if (!sim) {
-    return null;
-  }
+  if (!sim) return null;
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] pb-safe">
+    <div className="min-h-screen bg-[#F5F5F5] pb-safe">
       {/* Header */}
-      <div className="bg-gradient-to-br from-[#2B7AB8] to-[#1E5F8A] text-white px-6 pt-8 pb-12 rounded-b-3xl">
+      <div className="bg-gradient-to-br from-[#1A1A1A] to-[#2D2D2D] text-white px-6 pt-8 pb-6">
         <button 
           onClick={() => navigate("/profile")}
-          className="flex items-center gap-2 text-white/80 hover:text-white mb-6 transition-colors"
+          className="flex items-center gap-2 text-white/60 hover:text-white mb-6 transition-colors"
           data-testid="back-btn"
         >
           <ArrowLeft className="w-5 h-5" />
           <span>Profilo</span>
         </button>
 
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <p className="text-white/70 text-sm">La tua linea mobile</p>
-            <h1 className="font-heading text-2xl font-bold">{sim.plan_name}</h1>
-          </div>
-          <div className="text-right">
-            <p className="text-white/70 text-sm">Credito</p>
-            <p className="font-mono text-2xl font-bold">0,10 €</p>
-          </div>
-        </div>
-
-        {/* Status Badge */}
-        <div className="flex items-center gap-2">
-          <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="font-heading text-2xl font-bold">Conto UP</h1>
+          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
             sim.status === 'active' ? 'bg-green-500' : 'bg-yellow-500'
           }`}>
-            {sim.status === 'active' ? 'Attiva' : 'In attivazione'}
+            {sim.status === 'active' ? 'Attivo' : 'In attivazione'}
           </span>
-          {sim.portability_status === 'in_corso' && (
-            <span className="px-3 py-1 rounded-full text-sm font-semibold bg-[#E85A24]">
-              Portabilità in corso
-            </span>
-          )}
+        </div>
+        <p className="text-white/60 text-sm">{user?.full_name}</p>
+      </div>
+
+      {/* Card Section */}
+      <div className="px-6 -mt-2">
+        <div className="bg-gradient-to-br from-[#2B7AB8] to-[#1E5F8A] rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
+          {/* Card pattern */}
+          <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+          
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-8">
+              <img src="/logo.png" alt="UP" className="h-8" />
+              <span className="text-xs text-white/60 font-medium">DEBIT</span>
+            </div>
+            
+            {/* Card Number */}
+            <div className="mb-6">
+              <div className="flex items-center gap-3">
+                <span className="font-mono text-xl tracking-widest">
+                  {showCardNumber ? cardNumber : '•••• •••• •••• ' + cardNumber.slice(-4)}
+                </span>
+                <button onClick={() => setShowCardNumber(!showCardNumber)} className="text-white/60 hover:text-white">
+                  {showCardNumber ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+                <button onClick={copyCardNumber} className="text-white/60 hover:text-white">
+                  <Copy className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="flex items-end justify-between">
+              <div>
+                <p className="text-white/50 text-xs mb-1">INTESTATARIO</p>
+                <p className="font-medium uppercase">{user?.full_name}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-white/50 text-xs mb-1">SCADENZA</p>
+                <p className="font-mono font-medium">12/28</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="px-6 -mt-6">
-        {/* Usage Cards */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm mb-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="font-semibold text-lg text-[#1A1A1A]">I tuoi consumi</h2>
+      {/* Balance */}
+      <div className="px-6 mt-6">
+        <div className="bg-white rounded-2xl p-5 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[#6B7280]">Saldo disponibile</span>
+            <span className="text-xs text-[#6B7280]">Ultimo accesso: oggi</span>
+          </div>
+          <p className="font-mono text-4xl font-bold text-[#1A1A1A]">€ 0,10</p>
+        </div>
+      </div>
+
+      {/* SIM Usage */}
+      <div className="px-6 mt-6">
+        <div className="bg-white rounded-2xl p-5 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="font-semibold text-[#1A1A1A]">La tua SIM</h2>
+              <p className="text-sm text-[#6B7280]">{formatPhoneNumber(sim.phone_number)}</p>
+            </div>
             <Button
               onClick={simulateUsage}
               disabled={simulating}
@@ -187,17 +228,16 @@ export default function SimDashboardPage() {
               size="sm"
               className="text-[#2B7AB8]"
             >
-              <RefreshCw className={`w-4 h-4 mr-1 ${simulating ? 'animate-spin' : ''}`} />
-              Aggiorna
+              <RefreshCw className={`w-4 h-4 ${simulating ? 'animate-spin' : ''}`} />
             </Button>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-2">
             <CircularProgress
               value={0}
               max={1}
               label="Minuti"
-              sublabel="minuti"
+              sublabel=""
               color="#2B7AB8"
               isUnlimited={true}
             />
@@ -205,118 +245,69 @@ export default function SimDashboardPage() {
               value={sim.sms_used}
               max={sim.sms_total}
               label="SMS"
-              sublabel="SMS"
+              sublabel={`/${sim.sms_total}`}
               color="#E85A24"
               isUnlimited={false}
             />
             <CircularProgress
               value={sim.gb_used}
               max={sim.gb_total}
-              label="Internet"
-              sublabel="GB"
+              label="GB"
+              sublabel={`/${sim.gb_total}`}
               color="#10B981"
               isUnlimited={false}
             />
           </div>
 
-          <div className="mt-6 pt-4 border-t border-gray-100">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-[#6B7280]">Scadenza offerta</span>
-              <span className="font-semibold text-[#1A1A1A]">{formatDate(sim.expiry_date)}</span>
-            </div>
+          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-sm">
+            <span className="text-[#6B7280]">Piano: {sim.plan_name}</span>
+            <span className="font-semibold text-[#E85A24]">{sim.plan_price.toFixed(2)}€/mese</span>
           </div>
         </div>
+      </div>
 
-        {/* Plan Details */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm mb-6">
-          <h2 className="font-semibold text-lg mb-4 text-[#1A1A1A]">Il tuo piano include</h2>
+      {/* Account Details */}
+      <div className="px-6 mt-6 mb-6">
+        <div className="bg-white rounded-2xl p-5 shadow-sm">
+          <h2 className="font-semibold mb-4 text-[#1A1A1A]">Dettagli Account</h2>
           <div className="space-y-4">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-[#2B7AB8]/10 flex items-center justify-center">
-                <Phone className="w-5 h-5 text-[#2B7AB8]" />
-              </div>
-              <div>
-                <p className="font-medium text-[#1A1A1A]">Minuti illimitati</p>
-                <p className="text-sm text-[#6B7280]">Verso tutti i numeri nazionali</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-[#E85A24]/10 flex items-center justify-center">
-                <MessageSquare className="w-5 h-5 text-[#E85A24]" />
-              </div>
-              <div>
-                <p className="font-medium text-[#1A1A1A]">100 SMS</p>
-                <p className="text-sm text-[#6B7280]">Verso tutti i numeri nazionali</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
-                <Wifi className="w-5 h-5 text-green-600" />
-              </div>
-              <div>
-                <p className="font-medium text-[#1A1A1A]">240 GB in 4G/5G</p>
-                <p className="text-sm text-[#6B7280]">Navigazione ad alta velocità</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Account Info */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm mb-6">
-          <h2 className="font-semibold text-lg mb-4 text-[#1A1A1A]">Dati account</h2>
-          <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-[#F5F5F5] flex items-center justify-center">
                 <Phone className="w-5 h-5 text-[#6B7280]" />
               </div>
-              <div>
-                <p className="text-sm text-[#6B7280]">Numero di telefono</p>
-                <p className="font-mono font-semibold text-[#1A1A1A]">{formatPhoneNumber(sim.phone_number)}</p>
+              <div className="flex-1">
+                <p className="text-xs text-[#6B7280]">Numero</p>
+                <p className="font-mono font-medium text-[#1A1A1A]">{formatPhoneNumber(sim.phone_number)}</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
-                <User className="w-5 h-5 text-[#6B7280]" />
-              </div>
-              <div>
-                <p className="text-sm text-[#6B7280]">Intestatario</p>
-                <p className="font-semibold text-[#1A1A1A]">{user?.full_name}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-[#F5F5F5] flex items-center justify-center">
                 <Mail className="w-5 h-5 text-[#6B7280]" />
               </div>
-              <div>
-                <p className="text-sm text-[#6B7280]">Email</p>
-                <p className="font-semibold text-[#1A1A1A]">{user?.email}</p>
+              <div className="flex-1">
+                <p className="text-xs text-[#6B7280]">Email</p>
+                <p className="font-medium text-[#1A1A1A]">{user?.email}</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-[#F5F5F5] flex items-center justify-center">
                 <Calendar className="w-5 h-5 text-[#6B7280]" />
               </div>
-              <div>
-                <p className="text-sm text-[#6B7280]">Data attivazione</p>
-                <p className="font-semibold text-[#1A1A1A]">{formatDate(sim.activation_date)}</p>
+              <div className="flex-1">
+                <p className="text-xs text-[#6B7280]">Attivato il</p>
+                <p className="font-medium text-[#1A1A1A]">{formatDate(sim.activation_date)}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-[#F5F5F5] flex items-center justify-center">
+                <CreditCard className="w-5 h-5 text-[#6B7280]" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs text-[#6B7280]">Prossimo rinnovo</p>
+                <p className="font-medium text-[#1A1A1A]">{formatDate(sim.expiry_date)}</p>
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Cost */}
-        <div className="bg-gradient-to-r from-[#E85A24] to-[#D14E1A] rounded-2xl p-6 text-white mb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <CreditCard className="w-6 h-6" />
-            <span className="font-semibold">Costo mensile</span>
-          </div>
-          <div className="flex items-baseline gap-1">
-            <span className="text-4xl font-bold">{sim.plan_price.toFixed(2)}</span>
-            <span className="text-xl">€/mese</span>
-          </div>
-          <p className="text-white/80 text-sm mt-2">
-            Prossimo rinnovo: {formatDate(sim.expiry_date)}
-          </p>
         </div>
       </div>
 
