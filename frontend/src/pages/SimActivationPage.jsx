@@ -137,7 +137,7 @@ export default function SimActivationPage() {
               <div className="bg-white/10 rounded-xl p-4">
                 <Smartphone className="w-6 h-6 text-[#2B7AB8] mb-2" />
                 <p className="font-semibold">SIM Omaggio</p>
-                <p className="text-xs text-white/60">240GB + Min illimitati</p>
+                <p className="text-xs text-white/60">100GB + Min illimitati</p>
               </div>
             </div>
             
@@ -163,7 +163,7 @@ export default function SimActivationPage() {
               </div>
               <div className="text-center">
                 <Wifi className="w-6 h-6 mx-auto mb-1 text-green-600" />
-                <p className="text-sm font-semibold text-[#1A1A1A]">240 GB</p>
+                <p className="text-sm font-semibold text-[#1A1A1A]">100 GB</p>
                 <p className="text-xs text-[#6B7280]">Internet</p>
               </div>
             </div>
@@ -433,7 +433,7 @@ export default function SimActivationPage() {
               </div>
               <div className="flex items-center gap-3">
                 <Smartphone className="w-5 h-5 text-[#2B7AB8]" />
-                <span>SIM con 240GB, minuti illimitati, 100 SMS</span>
+                <span>SIM con 100GB, minuti illimitati, 100 SMS</span>
               </div>
               <div className="flex items-center gap-3">
                 <Shield className="w-5 h-5 text-green-500" />
