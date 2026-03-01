@@ -37,11 +37,12 @@ App PWA per pagamenti P2P con sistema di wallet digitale, marketplace merchant, 
 - QR Code (generazione, scansione, condivisione)
 - Merchant (registrazione, marketplace, categorie, dettaglio pubblico)
 - Notifiche (profilate per merchant, preview, reward)
-- Profilo (tag interessi, referral stats)
+- Profilo (tag interessi, referral stats, task)
 - Referral (codice = QR code, bonus +1 UP)
 - Conto UP (carta virtuale, IBAN, saldo EUR, top-up, bonifico, conversione EUR->UP)
 - PWA Install Prompt (aggressivo su scan QR)
 - Merchant QR Scan (Menu / Installa ed Ordina / Paga)
+- Task Verifica Residenza (upload fattura energia/gas per +5 UP)
 
 ## Branding
 - Nome: **Myunionpaytest.it**
@@ -66,7 +67,7 @@ App PWA per pagamenti P2P con sistema di wallet digitale, marketplace merchant, 
 - GET /api/profile/tags, /api/profile/my-tags, PUT /api/profile/tags
 - GET /api/referrals/stats
 - GET /api/sim/my-sim, POST /api/sim/activate, /api/sim/deposit-eur, /api/sim/bonifico, /api/sim/convert-to-up
-- GET /api/sim/transactions
+- GET/POST /api/tasks, POST /api/tasks/{id}/upload
 
 ## Backlog
 
