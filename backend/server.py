@@ -224,7 +224,7 @@ async def register(data: UserCreate):
     
     user_id = str(uuid.uuid4())
     qr_code = generate_qr_code()
-    referral_code = generate_referral_code()
+    referral_code = qr_code  # Referral code is the same as QR code
     
     user_doc = {
         "id": user_id,
