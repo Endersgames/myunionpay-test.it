@@ -108,17 +108,20 @@ export default function QRCodePage() {
           </div>
 
           {/* Referral Info */}
-          <div className="bg-[#F5F5F5] rounded-2xl p-5 border border-[#E85A24]/20">
+          <div className="bg-gradient-to-br from-[#E85A24]/10 to-[#E85A24]/5 rounded-2xl p-5 border border-[#E85A24]/20">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-full bg-[#E85A24]/20 flex items-center justify-center">
                 <Users className="w-5 h-5 text-[#E85A24]" />
               </div>
-              <h3 className="font-semibold">Per Nuovi Utenti</h3>
+              <h3 className="font-semibold text-[#1A1A1A]">Per Nuovi Utenti</h3>
             </div>
-            <p className="text-sm text-[#6B7280]">
-              Chi non ha l'app viene invitato a registrarsi con il tuo referral. 
-              <span className="text-[#E85A24] font-semibold"> +1 UP</span> per entrambi!
+            <p className="text-sm text-[#6B7280] mb-3">
+              Chi scansiona e non ha l'app verrà guidato all'<span className="text-[#E85A24] font-semibold">installazione automatica</span> e alla registrazione con il tuo referral.
             </p>
+            <div className="bg-white rounded-xl p-3 flex items-center justify-between">
+              <span className="text-sm text-[#6B7280]">Bonus per entrambi</span>
+              <span className="font-mono font-bold text-[#E85A24]">+1 UP</span>
+            </div>
           </div>
         </div>
       </div>
