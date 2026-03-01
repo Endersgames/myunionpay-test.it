@@ -92,8 +92,11 @@ async def send_notification(data: NotificationCreate, user: dict = Depends(get_c
 
     await db.notifications.insert_one(notification_doc)
 
+    # Bulk insert notifications and update wallets
+    now = datetime.now(timezone.utc).isoformat()
+    notif_docs = []
     for target_user in target_users:
-        user_notif_doc = {
+        notif_docs.append({
             "id": str(uuid.uuid4()),
             "notification_id": notification_id,
             "user_id": target_user["id"],
@@ -102,11 +105,23 @@ async def send_notification(data: NotificationCreate, user: dict = Depends(get_c
             "message": data.message,
             "reward_amount": data.reward_amount,
             "is_read": False,
-            "created_at": datetime.now(timezone.utc).isoformat()
-        }
-        await db.user_notifications.insert_one(user_notif_doc)
-        await db.wallets.update_one({"user_id": target_user["id"]}, {"$inc": {"balance": data.reward_amount}})
+            "created_at": now
+        })
 
+    if notif_docs:
+        await db.user_notifications.insert_many(notif_docs)
+
+    # Bulk wallet update
+    from pymongo import UpdateOne
+    wallet_ops = [
+        UpdateOne({"user_id": u["id"]}, {"$inc": {"balance": data.reward_amount}})
+        for u in target_users
+    ]
+    if wallet_ops:
+        await db.wallets.bulk_write(wallet_ops)
+
+    # Send push notifications (non-blocking, errors are logged)
+    for target_user in target_users:
         try:
             await send_push_notification(
                 user_id=target_user["id"],
