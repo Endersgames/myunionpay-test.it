@@ -19,6 +19,8 @@ export default function ProfilePage() {
   const [myTags, setMyTags] = useState([]);
   const [referralStats, setReferralStats] = useState(null);
   const [sim, setSim] = useState(null);
+  const [tasks, setTasks] = useState([]);
+  const [uploadingTask, setUploadingTask] = useState(null);
   const [showTags, setShowTags] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -30,14 +32,16 @@ export default function ProfilePage() {
 
   const fetchData = async () => {
     try {
-      const [tagsData, refStats, simData] = await Promise.all([
+      const [tagsData, refStats, simData, tasksData] = await Promise.all([
         profileAPI.getMyTags(),
         referralAPI.getStats(),
-        simAPI.getMySim()
+        simAPI.getMySim(),
+        tasksAPI.getMyTasks()
       ]);
       setMyTags(tagsData.tags || []);
       setReferralStats(refStats);
       setSim(simData);
+      setTasks(tasksData || []);
     } catch (err) {
       console.error("Profile fetch error:", err);
     }
