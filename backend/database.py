@@ -15,7 +15,7 @@ JWT_ALGORITHM = "HS256"
 
 VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
 VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
-VAPID_EMAIL = os.environ.get('VAPID_EMAIL', 'mailto:noreply@myunionpaytest.it')
+VAPID_EMAIL = os.environ.get('VAPID_EMAIL', 'mailto:noreply@myunionpay-test.it')
 
 PROFILE_TAGS = [
     "tech", "fashion", "food", "fitness", "travel",
