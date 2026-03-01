@@ -1,14 +1,18 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/App";
-import { Download, Smartphone, CheckCircle, ArrowRight, Share, Plus } from "lucide-react";
+import { 
+  Download, Smartphone, CheckCircle, ArrowRight, Share, Plus, 
+  Store, UtensilsCrossed, ShoppingBag, Gift, Menu
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // API
-import { paymentAPI } from "@/lib/api";
+import { paymentAPI, merchantAPI } from "@/lib/api";
 
 /**
  * Smart QR Landing Page with Strong PWA Install Prompt
+ * - Detects if QR belongs to a merchant (shows menu option)
  * - Prompts to install the app before proceeding
  * - If user is logged in → redirect to payment page
  * - If user is NOT logged in → redirect to register with referral
@@ -19,6 +23,8 @@ export default function ScanRedirectPage() {
   const { user, loading: authLoading } = useAuth();
   const [error, setError] = useState(null);
   const [recipientName, setRecipientName] = useState("");
+  const [recipientType, setRecipientType] = useState("user"); // "user" or "merchant"
+  const [merchantData, setMerchantData] = useState(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
@@ -27,16 +33,13 @@ export default function ScanRedirectPage() {
 
   // Check if already installed or can be installed
   useEffect(() => {
-    // Check if running as installed PWA
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
                          window.navigator.standalone === true;
     setIsInstalled(isStandalone);
 
-    // Check if iOS
     const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     setIsIOS(iOS);
 
-    // Listen for beforeinstallprompt
     const handleBeforeInstall = (e) => {
       e.preventDefault();
       deferredPromptRef.current = e;
@@ -47,16 +50,9 @@ export default function ScanRedirectPage() {
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
 
-    // If not installed and not iOS with deferred prompt, show install
     if (!isStandalone) {
-      // Small delay to check for install prompt
       setTimeout(() => {
-        if (!deferredPromptRef.current && iOS) {
-          setShowInstallPrompt(true);
-        } else if (!deferredPromptRef.current) {
-          // Android/Desktop without prompt - maybe already installable
-          setShowInstallPrompt(true);
-        }
+        setShowInstallPrompt(true);
       }, 500);
     }
 
@@ -67,11 +63,41 @@ export default function ScanRedirectPage() {
   useEffect(() => {
     const fetchRecipient = async () => {
       try {
+        // First check if it's a user QR
         const qrOwner = await paymentAPI.getReferralFromQR(qrCode);
         if (qrOwner) {
           setRecipientName(qrOwner.name);
+          setRecipientType(qrOwner.type || "user");
+          
+          // If it's a merchant, get more details
+          if (qrOwner.type === "merchant" || qrOwner.is_merchant) {
+            try {
+              // Try to get merchant data
+              const merchants = await merchantAPI.getAll();
+              const merchant = merchants.find(m => m.qr_code === qrCode);
+              if (merchant) {
+                setMerchantData(merchant);
+                setRecipientType("merchant");
+              }
+            } catch (e) {
+              console.log("No merchant data");
+            }
+          }
         } else {
-          setError("QR Code non valido");
+          // Check if it's a merchant QR directly
+          try {
+            const merchants = await merchantAPI.getAll();
+            const merchant = merchants.find(m => m.qr_code === qrCode);
+            if (merchant) {
+              setRecipientName(merchant.business_name);
+              setRecipientType("merchant");
+              setMerchantData(merchant);
+            } else {
+              setError("QR Code non valido");
+            }
+          } catch (e) {
+            setError("QR Code non valido");
+          }
         }
       } catch (err) {
         console.error("QR error:", err);
@@ -104,6 +130,13 @@ export default function ScanRedirectPage() {
       navigate(`/pay/${qrCode}`, { replace: true });
     } else {
       navigate(`/register?ref=${qrCode}&redirect=/pay/${qrCode}`, { replace: true });
+    }
+  };
+
+  // View menu (for merchants)
+  const handleViewMenu = () => {
+    if (merchantData) {
+      navigate(`/merchant/${merchantData.id}`);
     }
   };
 
@@ -180,7 +213,100 @@ export default function ScanRedirectPage() {
     );
   }
 
-  // Main Install Prompt Screen
+  // MERCHANT QR - Show Menu/Order options
+  if (recipientType === "merchant" && showInstallPrompt && !isInstalled) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#1A1A1A] to-[#2D2D2D] flex flex-col px-6 py-8 text-white">
+        {/* Header */}
+        <div className="text-center mb-6">
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#E85A24] to-[#D14E1A] flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <Store className="w-10 h-10" />
+          </div>
+          <h1 className="font-heading text-2xl font-bold mb-1">{recipientName}</h1>
+          {merchantData && (
+            <p className="text-white/60 text-sm">{merchantData.category}</p>
+          )}
+        </div>
+
+        {/* Merchant Info Card */}
+        {merchantData && (
+          <div className="bg-white/10 rounded-2xl p-4 mb-6">
+            <p className="text-white/80 text-sm line-clamp-2">{merchantData.description}</p>
+            <p className="text-white/50 text-xs mt-2">{merchantData.address}</p>
+          </div>
+        )}
+
+        {/* Action Cards */}
+        <div className="flex-1 space-y-4">
+          {/* View Menu Option */}
+          <button
+            onClick={handleViewMenu}
+            className="w-full bg-white/10 hover:bg-white/15 rounded-2xl p-5 text-left transition-colors"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-xl bg-[#2B7AB8]/30 flex items-center justify-center">
+                <Menu className="w-7 h-7 text-[#2B7AB8]" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-lg">Visualizza il Menu</p>
+                <p className="text-white/60 text-sm">Scopri le offerte e i prodotti</p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-white/40" />
+            </div>
+          </button>
+
+          {/* Install & Order with Discount */}
+          <button
+            onClick={handleInstall}
+            className="w-full bg-gradient-to-r from-[#E85A24] to-[#D14E1A] rounded-2xl p-5 text-left relative overflow-hidden"
+          >
+            {/* Discount Badge */}
+            <div className="absolute top-3 right-3 bg-white/20 backdrop-blur px-3 py-1 rounded-full">
+              <span className="text-xs font-bold">-1 UP</span>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
+                <ShoppingBag className="w-7 h-7" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-lg">Installa ed Ordina</p>
+                <p className="text-white/80 text-sm">con 1 UP di sconto!</p>
+              </div>
+            </div>
+            
+            <div className="mt-4 pt-4 border-t border-white/20 flex items-center gap-3">
+              <Gift className="w-5 h-5 text-white/80" />
+              <span className="text-sm text-white/80">+ Guadagna 1 UP bonus alla registrazione</span>
+            </div>
+          </button>
+
+          {/* Pay Directly */}
+          <button
+            onClick={handleContinue}
+            className="w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl p-5 text-left transition-colors"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-xl bg-green-500/20 flex items-center justify-center">
+                <UtensilsCrossed className="w-7 h-7 text-green-500" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-lg">Paga Direttamente</p>
+                <p className="text-white/60 text-sm">Continua nel browser</p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-white/40" />
+            </div>
+          </button>
+        </div>
+
+        <p className="text-center text-xs text-white/40 mt-6">
+          Myunionpaytest.it • Paga. Guadagna. Unisciti.
+        </p>
+      </div>
+    );
+  }
+
+  // USER QR - Standard Install Prompt
   if (showInstallPrompt && !isInstalled) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#1A1A1A] to-[#2D2D2D] flex flex-col px-6 py-8 text-white">
@@ -274,7 +400,9 @@ export default function ScanRedirectPage() {
       
       {recipientName ? (
         <>
-          <p className="text-white/60 mb-2">Pagamento a</p>
+          <p className="text-white/60 mb-2">
+            {recipientType === "merchant" ? "Negozio" : "Pagamento a"}
+          </p>
           <p className="text-2xl font-bold text-[#E85A24] mb-4">{recipientName}</p>
         </>
       ) : (
@@ -283,13 +411,12 @@ export default function ScanRedirectPage() {
       
       <p className="text-white/60 text-sm">Caricamento...</p>
       
-      {/* Auto-continue after short delay if already installed */}
       {isInstalled && recipientName && (
         <Button
           onClick={handleContinue}
           className="mt-6 rounded-full bg-[#2B7AB8] hover:bg-[#236699]"
         >
-          Continua al pagamento
+          Continua
           <ArrowRight className="w-4 h-4 ml-2" />
         </Button>
       )}
