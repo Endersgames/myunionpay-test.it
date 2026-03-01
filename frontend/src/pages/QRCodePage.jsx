@@ -26,8 +26,8 @@ export default function QRCodePage() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "My Union Pay - Pagami o Unisciti",
-          text: `Scansiona per pagarmi o registrati su My Union Pay! Codice: ${qrCode}`,
+          title: "Myunionpaytest.it - Pagami o Unisciti",
+          text: `Scansiona per pagarmi o scarica Myunionpaytest.it! Codice: ${qrCode}`,
           url: qrUrl
         });
       } catch (err) {
