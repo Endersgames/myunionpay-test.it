@@ -148,7 +148,7 @@ export default function ScanRedirectPage() {
           <div className="w-20 h-20 rounded-2xl bg-[#2B7AB8] flex items-center justify-center mb-6">
             <Smartphone className="w-10 h-10" />
           </div>
-          <h2 className="font-heading text-2xl font-bold mb-2 text-center">Installa Myunionpaytest.it</h2>
+          <h2 className="font-heading text-2xl font-bold mb-2 text-center">Installa myunionpay-test.it</h2>
           <p className="text-white/60 text-center mb-8">Segui questi semplici passi:</p>
           
           <div className="w-full max-w-sm space-y-4">
@@ -282,7 +282,7 @@ export default function ScanRedirectPage() {
         </div>
 
         <p className="text-center text-xs text-white/40 mt-6">
-          Myunionpaytest.it • Paga. Guadagna. Unisciti.
+          myunionpay-test.it • Paga. Guadagna. Unisciti.
         </p>
       </div>
     );
@@ -297,7 +297,7 @@ export default function ScanRedirectPage() {
           <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-[#2B7AB8] to-[#1E5F8A] flex items-center justify-center mx-auto mb-4 shadow-lg">
             <img src="/logo.png" alt="UP" className="h-14 w-auto" />
           </div>
-          <h1 className="font-heading text-3xl font-bold mb-2">Myunionpaytest.it</h1>
+          <h1 className="font-heading text-3xl font-bold mb-2">myunionpay-test.it</h1>
           <p className="text-white/60">Paga. Guadagna. Unisciti.</p>
         </div>
 
