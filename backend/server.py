@@ -4,6 +4,7 @@ import os
 import logging
 
 from database import client
+from services.seed import seed_test_data
 
 # Import all route modules
 from routes.auth import router as auth_router
@@ -72,6 +73,10 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+@app.on_event("startup")
+async def startup_event():
+    await seed_test_data()
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
