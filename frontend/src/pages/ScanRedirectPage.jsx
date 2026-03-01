@@ -245,7 +245,7 @@ export default function ScanRedirectPage() {
             className="w-full h-14 rounded-full bg-[#E85A24] hover:bg-[#D14E1A] text-lg font-semibold"
           >
             <Download className="w-5 h-5 mr-2" />
-            Installa App Gratis
+            Installa Gratis e guadagna +1 UP
           </Button>
           
           <Button
