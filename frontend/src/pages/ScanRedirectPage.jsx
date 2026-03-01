@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 // API
-import { paymentAPI, merchantAPI } from "@/lib/api";
+import { paymentAPI } from "@/lib/api";
 
 /**
  * Smart QR Landing Page with Strong PWA Install Prompt
