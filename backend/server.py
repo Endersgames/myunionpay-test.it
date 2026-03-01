@@ -155,6 +155,43 @@ class PushSubscription(BaseModel):
     keys: dict
 
 # ========================
+# SIM MODELS
+# ========================
+
+class SimActivationRequest(BaseModel):
+    plan_type: str = "SMART_240"  # Piano da 15.99€
+    portability: bool = True
+    current_operator: Optional[str] = None
+    phone_to_port: Optional[str] = None
+    # Dati personali
+    fiscal_code: str
+    birth_date: str
+    birth_place: str
+    address: str
+    cap: str
+    city: str
+    document_type: str  # "carta_identita", "patente", "passaporto"
+    document_number: str
+
+class SimResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    user_id: str
+    phone_number: str
+    plan_name: str
+    plan_price: float
+    minutes_total: int  # -1 = unlimited
+    minutes_used: int
+    sms_total: int
+    sms_used: int
+    gb_total: float
+    gb_used: float
+    activation_date: str
+    expiry_date: str
+    status: str  # "active", "pending", "suspended"
+    portability_status: Optional[str] = None
+
+# ========================
 # AUTH HELPERS
 # ========================
 
