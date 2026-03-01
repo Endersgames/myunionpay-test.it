@@ -221,6 +221,29 @@ export const referralAPI = {
 };
 
 // ========================
+// SIM API
+// ========================
+
+export const simAPI = {
+  async getMySim() {
+    return apiRequest('/sim/my-sim');
+  },
+
+  async activate(data) {
+    return apiRequest('/sim/activate', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async useData() {
+    return apiRequest('/sim/use-data', {
+      method: 'POST',
+    });
+  }
+};
+
+// ========================
 // PUSH NOTIFICATIONS API
 // ========================
 
