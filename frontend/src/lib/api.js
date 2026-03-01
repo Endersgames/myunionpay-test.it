@@ -1,5 +1,6 @@
 // API Service - Backend REST API integration
-const API_URL = process.env.REACT_APP_BACKEND_URL;
+// Use current domain for API calls (supports custom domains)
+const API_URL = window.location.origin;
 
 // Token management
 let authToken = localStorage.getItem('auth_token');
