@@ -255,7 +255,7 @@ export default function ProfilePage() {
                 </div>
                 <div className="bg-white/10 rounded-lg p-3 text-center">
                   <Smartphone className="w-5 h-5 mx-auto mb-1 text-[#2B7AB8]" />
-                  <p className="text-xs font-medium">SIM 240GB</p>
+                  <p className="text-xs font-medium">SIM 100GB</p>
                   <p className="text-xs text-white/50">In omaggio</p>
                 </div>
               </div>
