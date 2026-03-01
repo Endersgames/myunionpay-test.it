@@ -5,8 +5,8 @@ import { ArrowLeft, MapPin, QrCode, Send, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import QRCode from "@/components/QRCode";
 
-// Firestore
-import { getMerchantById } from "@/lib/firestore";
+// API
+import { merchantAPI } from "@/lib/api";
 
 const CATEGORY_IMAGES = {
   "Ristorante": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",
@@ -36,7 +36,7 @@ export default function MerchantDetailPage() {
 
   const fetchMerchant = async () => {
     try {
-      const merchantData = await getMerchantById(id);
+      const merchantData = await merchantAPI.getById(id);
       setMerchant(merchantData);
     } catch (err) {
       console.error("Merchant fetch error:", err);
@@ -96,7 +96,7 @@ export default function MerchantDetailPage() {
           <span className="text-xs px-3 py-1 bg-[#2B7AB8]/20 text-[#2B7AB8] rounded-full">
             {merchant.category}
           </span>
-          <h1 className="font-heading text-3xl font-bold mt-3 mb-2">{merchant.business_name}</h1>
+          <h1 className="font-heading text-3xl font-bold mt-3 mb-2 text-[#1A1A1A]">{merchant.business_name}</h1>
           <p className="text-[#6B7280] flex items-center gap-2">
             <MapPin className="w-4 h-4" />
             {merchant.address}
@@ -118,7 +118,7 @@ export default function MerchantDetailPage() {
           <Button
             onClick={() => setShowQR(!showQR)}
             variant="outline"
-            className="w-full h-14 rounded-full border-black/20 bg-transparent hover:bg-white/5"
+            className="w-full h-14 rounded-full border-black/20 bg-transparent hover:bg-[#F5F5F5] text-[#1A1A1A]"
             data-testid="show-qr-btn"
           >
             <QrCode className="w-5 h-5 mr-2" />
@@ -128,23 +128,23 @@ export default function MerchantDetailPage() {
 
         {/* QR Code Display */}
         {showQR && (
-          <div className="bg-white rounded-2xl p-6 flex flex-col items-center mb-8 animate-slideUp">
+          <div className="bg-white rounded-2xl p-6 flex flex-col items-center mb-8 animate-slideUp shadow-lg">
             <QRCode value={merchant.qr_code} size={180} />
-            <p className="font-mono text-[#050505] mt-4 text-sm">{merchant.qr_code}</p>
+            <p className="font-mono text-[#2B7AB8] mt-4 text-sm">{merchant.qr_code}</p>
           </div>
         )}
 
         {/* Info Card */}
         <div className="bg-[#F5F5F5] rounded-2xl p-5 border border-black/5 mb-8">
-          <h3 className="font-semibold mb-3">Informazioni</h3>
+          <h3 className="font-semibold mb-3 text-[#1A1A1A]">Informazioni</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-[#6B7280]">Categoria</span>
-              <span>{merchant.category}</span>
+              <span className="text-[#1A1A1A]">{merchant.category}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-[#6B7280]">ID Merchant</span>
-              <span className="font-mono text-xs">{merchant.id.slice(0, 8)}...</span>
+              <span className="font-mono text-xs text-[#1A1A1A]">{merchant.id.slice(0, 8)}...</span>
             </div>
           </div>
         </div>

@@ -4,8 +4,8 @@ import { useAuth } from "@/App";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-// Firestore
-import { getUserByQRCode } from "@/lib/firestore";
+// API
+import { paymentAPI } from "@/lib/api";
 
 /**
  * Smart QR Landing Page
@@ -25,14 +25,14 @@ export default function ScanRedirectPage() {
     const handleRedirect = async () => {
       try {
         // Get user info from QR code
-        const qrOwner = await getUserByQRCode(qrCode);
+        const qrOwner = await paymentAPI.getReferralFromQR(qrCode);
         
         if (!qrOwner) {
           setError("QR Code non valido o scaduto");
           return;
         }
         
-        setRecipientName(qrOwner.full_name);
+        setRecipientName(qrOwner.name);
 
         if (user) {
           // User is logged in → go directly to payment
@@ -59,7 +59,7 @@ export default function ScanRedirectPage() {
         <div className="w-16 h-16 rounded-2xl bg-[#FF3B30]/20 flex items-center justify-center mb-6">
           <span className="text-3xl">❌</span>
         </div>
-        <h2 className="font-heading text-xl font-bold mb-2">Errore</h2>
+        <h2 className="font-heading text-xl font-bold mb-2 text-[#1A1A1A]">Errore</h2>
         <p className="text-[#6B7280] text-center mb-6">{error}</p>
         <Button
           onClick={() => navigate("/")}
@@ -78,7 +78,7 @@ export default function ScanRedirectPage() {
       </div>
       <Loader2 className="w-8 h-8 text-[#2B7AB8] animate-spin mb-4" />
       {recipientName ? (
-        <p className="text-white text-lg mb-2">Pagamento a <span className="text-[#E85A24]">{recipientName}</span></p>
+        <p className="text-[#1A1A1A] text-lg mb-2">Pagamento a <span className="text-[#E85A24]">{recipientName}</span></p>
       ) : (
         <p className="text-[#6B7280]">Caricamento...</p>
       )}

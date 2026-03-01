@@ -9,13 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 
-// Firestore
-import { 
-  getWallet, 
-  getMerchantByUserId,
-  sendNotification,
-  PROFILE_TAGS 
-} from "@/lib/firestore";
+// API
+import { walletAPI, merchantAPI, notificationAPI, PROFILE_TAGS } from "@/lib/api";
 
 export default function SendNotificationPage() {
   const navigate = useNavigate();
@@ -47,8 +42,8 @@ export default function SendNotificationPage() {
   const fetchData = async () => {
     try {
       const [walletData, merchantData] = await Promise.all([
-        getWallet(user.id),
-        getMerchantByUserId(user.id)
+        walletAPI.getWallet(),
+        merchantAPI.getMyMerchant()
       ]);
       setWallet(walletData);
       setMerchant(merchantData);
@@ -80,12 +75,7 @@ export default function SendNotificationPage() {
     
     setSending(true);
     try {
-      const result = await sendNotification(
-        merchant.id,
-        merchant.business_name,
-        user.id,
-        formData
-      );
+      const result = await notificationAPI.send(formData);
       toast.success(`Notifica inviata a ${result.total_recipients} utenti!`);
       navigate("/merchant-dashboard");
     } catch (err) {
@@ -115,7 +105,7 @@ export default function SendNotificationPage() {
           <span>Dashboard</span>
         </button>
 
-        <h1 className="font-heading text-2xl font-bold mb-2">Invia Notifica</h1>
+        <h1 className="font-heading text-2xl font-bold mb-2 text-[#1A1A1A]">Invia Notifica</h1>
         <p className="text-[#6B7280]">Raggiungi i tuoi clienti con notifiche profilate</p>
       </div>
 
@@ -136,32 +126,32 @@ export default function SendNotificationPage() {
         {/* Form */}
         <div className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="title">Titolo Notifica *</Label>
+            <Label htmlFor="title" className="text-[#1A1A1A]">Titolo Notifica *</Label>
             <Input
               id="title"
               placeholder="Es: Offerta speciale oggi!"
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              className="h-12 bg-[#F5F5F5] border-black/10 focus:border-[#2B7AB8] rounded-xl"
+              className="h-12 bg-[#F5F5F5] border-black/10 focus:border-[#2B7AB8] rounded-xl text-[#1A1A1A]"
               data-testid="title-input"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="message">Messaggio *</Label>
+            <Label htmlFor="message" className="text-[#1A1A1A]">Messaggio *</Label>
             <Textarea
               id="message"
               placeholder="Descrivi la tua offerta o messaggio..."
               value={formData.message}
               onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
-              className="bg-[#F5F5F5] border-black/10 focus:border-[#2B7AB8] rounded-xl min-h-[100px]"
+              className="bg-[#F5F5F5] border-black/10 focus:border-[#2B7AB8] rounded-xl min-h-[100px] text-[#1A1A1A]"
               data-testid="message-input"
             />
           </div>
 
           {/* Target Tags */}
           <div className="space-y-3">
-            <Label>Target Utenti (opzionale)</Label>
+            <Label className="text-[#1A1A1A]">Target Utenti (opzionale)</Label>
             <p className="text-sm text-[#6B7280]">
               Seleziona interessi specifici oppure lascia vuoto per inviare a TUTTI gli utenti
             </p>
@@ -182,7 +172,7 @@ export default function SendNotificationPage() {
           {/* Reward Amount */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label>Reward per Utente</Label>
+              <Label className="text-[#1A1A1A]">Reward per Utente</Label>
               <span className="font-mono text-[#E85A24] font-bold">
                 {formData.reward_amount.toFixed(2)} UP
               </span>
@@ -204,22 +194,22 @@ export default function SendNotificationPage() {
 
           {/* Cost Summary */}
           <div className="bg-[#F5F5F5] rounded-2xl p-5 border border-black/5">
-            <h3 className="font-semibold mb-4">Riepilogo Costi</h3>
+            <h3 className="font-semibold mb-4 text-[#1A1A1A]">Riepilogo Costi</h3>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-[#6B7280] flex items-center gap-2">
                   <Users className="w-4 h-4" />
                   Destinatari stimati
                 </span>
-                <span className="font-mono">{estimatedRecipients}</span>
+                <span className="font-mono text-[#1A1A1A]">{estimatedRecipients}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#6B7280]">Reward per utente</span>
-                <span className="font-mono">{formData.reward_amount.toFixed(2)} UP</span>
+                <span className="font-mono text-[#1A1A1A]">{formData.reward_amount.toFixed(2)} UP</span>
               </div>
-              <div className="h-px bg-white/10 my-2" />
+              <div className="h-px bg-black/5 my-2" />
               <div className="flex justify-between font-semibold">
-                <span className="flex items-center gap-2">
+                <span className="flex items-center gap-2 text-[#1A1A1A]">
                   <Wallet className="w-4 h-4 text-[#2B7AB8]" />
                   Costo Totale Stimato
                 </span>
