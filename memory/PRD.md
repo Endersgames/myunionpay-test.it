@@ -26,9 +26,11 @@ App PWA per pagamenti P2P con sistema di wallet digitale, marketplace merchant, 
     referrals.py     # /referrals/stats
     sim.py           # /sim/* (Conto UP: activate, deposit-eur, bonifico, convert-to-up)
     qr.py            # /qr/referral/{qr_code}
+    tasks.py         # /tasks, /tasks/{id}/upload (verifica residenza)
   services/
     auth.py          # hash_password, verify_password, create_token, get_current_user, generate_qr_code
     push.py          # send_push_notification
+  uploads/           # Uploaded task documents
 ```
 
 ## Funzionalita Implementate
