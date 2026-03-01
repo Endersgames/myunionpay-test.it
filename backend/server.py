@@ -903,6 +903,140 @@ async def use_sim_data(user: dict = Depends(get_current_user)):
     return {"gb_used": round(gb_used, 2), "sms_used": sms_used}
 
 # ========================
+# CONTO UP - BONIFICI E CONVERSIONE
+# ========================
+
+class BonificoRequest(BaseModel):
+    recipient_iban: str
+    recipient_name: str
+    amount: float
+    description: str
+
+class DepositRequest(BaseModel):
+    amount: float
+
+class ConvertToUPRequest(BaseModel):
+    eur_amount: float
+
+@api_router.post("/sim/deposit-eur")
+async def deposit_eur(data: DepositRequest, user: dict = Depends(get_current_user)):
+    """Deposit EUR to Conto UP (demo)"""
+    sim = await db.sims.find_one({"user_id": user["id"]})
+    if not sim:
+        raise HTTPException(status_code=404, detail="Nessun Conto UP trovato")
+    
+    if data.amount <= 0 or data.amount > 10000:
+        raise HTTPException(status_code=400, detail="Importo non valido (1-10000€)")
+    
+    new_balance = sim.get("eur_balance", 0) + data.amount
+    await db.sims.update_one({"user_id": user["id"]}, {"$set": {"eur_balance": new_balance}})
+    
+    # Log transaction
+    tx_doc = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "type": "deposit",
+        "amount": data.amount,
+        "currency": "EUR",
+        "description": "Ricarica Conto UP",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.conto_transactions.insert_one(tx_doc)
+    
+    return {"success": True, "new_balance": new_balance}
+
+@api_router.post("/sim/bonifico")
+async def create_bonifico(data: BonificoRequest, user: dict = Depends(get_current_user)):
+    """Create a bank transfer (bonifico)"""
+    sim = await db.sims.find_one({"user_id": user["id"]})
+    if not sim:
+        raise HTTPException(status_code=404, detail="Nessun Conto UP trovato")
+    
+    eur_balance = sim.get("eur_balance", 0)
+    if data.amount <= 0:
+        raise HTTPException(status_code=400, detail="Importo non valido")
+    if data.amount > eur_balance:
+        raise HTTPException(status_code=400, detail=f"Saldo insufficiente. Disponibile: €{eur_balance:.2f}")
+    
+    # Deduct from balance
+    new_balance = eur_balance - data.amount
+    await db.sims.update_one({"user_id": user["id"]}, {"$set": {"eur_balance": new_balance}})
+    
+    # Log transaction
+    tx_doc = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "type": "bonifico",
+        "amount": -data.amount,
+        "currency": "EUR",
+        "recipient_iban": data.recipient_iban,
+        "recipient_name": data.recipient_name,
+        "description": data.description,
+        "status": "completed",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.conto_transactions.insert_one(tx_doc)
+    
+    return {
+        "success": True, 
+        "message": f"Bonifico di €{data.amount:.2f} a {data.recipient_name} completato",
+        "new_balance": new_balance,
+        "transaction_id": tx_doc["id"]
+    }
+
+@api_router.post("/sim/convert-to-up")
+async def convert_eur_to_up(data: ConvertToUPRequest, user: dict = Depends(get_current_user)):
+    """Convert EUR balance to UP tokens (1 EUR = 1 UP)"""
+    sim = await db.sims.find_one({"user_id": user["id"]})
+    if not sim:
+        raise HTTPException(status_code=404, detail="Nessun Conto UP trovato")
+    
+    eur_balance = sim.get("eur_balance", 0)
+    if data.eur_amount <= 0:
+        raise HTTPException(status_code=400, detail="Importo non valido")
+    if data.eur_amount > eur_balance:
+        raise HTTPException(status_code=400, detail=f"Saldo EUR insufficiente. Disponibile: €{eur_balance:.2f}")
+    
+    # Conversion rate: 1 EUR = 1 UP
+    up_amount = data.eur_amount
+    
+    # Deduct EUR
+    new_eur_balance = eur_balance - data.eur_amount
+    await db.sims.update_one({"user_id": user["id"]}, {"$set": {"eur_balance": new_eur_balance}})
+    
+    # Add UP to wallet
+    await db.wallets.update_one({"user_id": user["id"]}, {"$inc": {"balance": up_amount}})
+    wallet = await db.wallets.find_one({"user_id": user["id"]}, {"_id": 0})
+    
+    # Log transaction
+    tx_doc = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "type": "conversion",
+        "eur_amount": -data.eur_amount,
+        "up_amount": up_amount,
+        "description": f"Conversione €{data.eur_amount:.2f} → {up_amount:.2f} UP",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.conto_transactions.insert_one(tx_doc)
+    
+    return {
+        "success": True,
+        "message": f"Convertiti €{data.eur_amount:.2f} in {up_amount:.2f} UP",
+        "new_eur_balance": new_eur_balance,
+        "new_up_balance": wallet["balance"]
+    }
+
+@api_router.get("/sim/transactions")
+async def get_conto_transactions(user: dict = Depends(get_current_user)):
+    """Get Conto UP transaction history"""
+    transactions = await db.conto_transactions.find(
+        {"user_id": user["id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+    return transactions
+
+# ========================
 # STATUS ROUTES
 # ========================
 
