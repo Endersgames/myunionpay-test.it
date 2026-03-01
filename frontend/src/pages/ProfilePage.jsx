@@ -156,6 +156,75 @@ export default function ProfilePage() {
           </Button>
         </div>
 
+        {/* SIM Card Section */}
+        {sim ? (
+          <button
+            onClick={() => navigate("/sim-dashboard")}
+            className="w-full bg-gradient-to-r from-[#2B7AB8] to-[#1E5F8A] rounded-2xl p-5 mb-6 text-white text-left"
+            data-testid="sim-dashboard-btn"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <Signal className="w-6 h-6" />
+                <div>
+                  <h3 className="font-semibold">La tua SIM</h3>
+                  <p className="text-sm text-white/70">{sim.plan_name}</p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-white/70" />
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="bg-white/10 rounded-lg p-2">
+                <Phone className="w-4 h-4 mx-auto mb-1 opacity-70" />
+                <p className="text-xs font-semibold">Illimitati</p>
+              </div>
+              <div className="bg-white/10 rounded-lg p-2">
+                <p className="text-xs font-semibold">{sim.sms_total - sim.sms_used}</p>
+                <p className="text-xs opacity-70">SMS</p>
+              </div>
+              <div className="bg-white/10 rounded-lg p-2">
+                <p className="text-xs font-semibold">{(sim.gb_total - sim.gb_used).toFixed(1)}</p>
+                <p className="text-xs opacity-70">GB</p>
+              </div>
+            </div>
+          </button>
+        ) : (
+          <div className="bg-[#F5F5F5] rounded-2xl p-5 border border-black/5 mb-6">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#E85A24] to-[#D14E1A] flex items-center justify-center">
+                <Smartphone className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-[#1A1A1A]">Attiva una SIM</h3>
+                <p className="text-sm text-[#6B7280]">Voce e dati a partire da 15,99€/mese</p>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl p-4 mb-4">
+              <p className="font-semibold text-[#1A1A1A] mb-2">SMART X TE 240 TOP</p>
+              <div className="flex items-center gap-4 text-sm text-[#6B7280]">
+                <span className="flex items-center gap-1">
+                  <Phone className="w-4 h-4" /> Illimitati
+                </span>
+                <span className="flex items-center gap-1">
+                  <Wifi className="w-4 h-4" /> 240 GB
+                </span>
+              </div>
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                <span className="text-[#6B7280]">Solo</span>
+                <span className="font-mono text-2xl font-bold text-[#E85A24]">15,99€</span>
+              </div>
+            </div>
+            <Button
+              onClick={() => navigate("/sim-activation")}
+              className="w-full h-12 rounded-full bg-[#E85A24] hover:bg-[#D14E1A] text-white"
+              data-testid="activate-sim-btn"
+            >
+              <Smartphone className="w-4 h-4 mr-2" />
+              Attiva Ora
+            </Button>
+          </div>
+        )}
+
         {/* Profile Tags */}
         <div className="bg-[#F5F5F5] rounded-2xl p-5 border border-black/5 mb-6">
           <button 
