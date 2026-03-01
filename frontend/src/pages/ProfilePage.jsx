@@ -177,6 +177,88 @@ export default function ProfilePage() {
           </Button>
         </div>
 
+        {/* Tasks Section */}
+        <div className="bg-[#F5F5F5] rounded-2xl p-5 border border-black/5 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <ClipboardCheck className="w-5 h-5 text-[#2B7AB8]" />
+            <h3 className="font-semibold text-[#1A1A1A]">Task</h3>
+          </div>
+
+          {tasks.length === 0 ? (
+            <p className="text-sm text-[#6B7280]">Nessun task disponibile</p>
+          ) : (
+            <div className="space-y-3">
+              {tasks.map((task) => (
+                <div
+                  key={task.id}
+                  className={`rounded-xl p-4 border ${
+                    task.status === "verified"
+                      ? "bg-green-50 border-green-200"
+                      : "bg-white border-black/5"
+                  }`}
+                  data-testid={`task-${task.task_type}`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
+                      task.status === "verified"
+                        ? "bg-green-100"
+                        : "bg-[#E85A24]/10"
+                    }`}>
+                      {task.status === "verified" ? (
+                        <CheckCircle2 className="w-5 h-5 text-green-600" />
+                      ) : (
+                        <FileCheck className="w-5 h-5 text-[#E85A24]" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <h4 className="font-semibold text-sm text-[#1A1A1A]">{task.title}</h4>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                          task.status === "verified"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-[#E85A24]/10 text-[#E85A24]"
+                        }`}>
+                          {task.status === "verified" ? "Completato" : `+${task.reward_up} UP`}
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#6B7280] mb-3">{task.description}</p>
+
+                      {task.status === "verified" ? (
+                        <div className="flex items-center gap-2 text-green-600">
+                          <Zap className="w-4 h-4" />
+                          <span className="text-xs font-medium">
+                            +{task.reward_up} UP ricevuti
+                            {task.file_name && ` - ${task.file_name}`}
+                          </span>
+                        </div>
+                      ) : (
+                        <label
+                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium cursor-pointer transition-colors ${
+                            uploadingTask === task.id
+                              ? "bg-gray-200 text-gray-500"
+                              : "bg-[#E85A24] text-white hover:bg-[#D14E1A]"
+                          }`}
+                          data-testid={`upload-btn-${task.task_type}`}
+                        >
+                          <Upload className="w-4 h-4" />
+                          {uploadingTask === task.id ? "Caricamento..." : "Carica Fattura"}
+                          <input
+                            type="file"
+                            accept="image/*,.pdf"
+                            className="hidden"
+                            onChange={(e) => handleFileUpload(task.id, e)}
+                            disabled={uploadingTask === task.id}
+                          />
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Conto UP Section */}
         {sim ? (
           <button
