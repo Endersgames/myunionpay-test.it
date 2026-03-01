@@ -276,7 +276,6 @@ export default function ProfilePage() {
             </div>
           </div>
         )}
-        )}
 
         {/* Profile Tags */}
         <div className="bg-[#F5F5F5] rounded-2xl p-5 border border-black/5 mb-6">
