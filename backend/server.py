@@ -793,6 +793,110 @@ async def get_referral_stats(user: dict = Depends(get_current_user)):
     }
 
 # ========================
+# SIM ROUTES
+# ========================
+
+@api_router.get("/sim/my-sim")
+async def get_my_sim(user: dict = Depends(get_current_user)):
+    """Get user's SIM card info"""
+    sim = await db.sims.find_one({"user_id": user["id"]}, {"_id": 0})
+    if not sim:
+        return None
+    return sim
+
+@api_router.post("/sim/activate")
+async def activate_sim(data: SimActivationRequest, user: dict = Depends(get_current_user)):
+    """Activate a new SIM card"""
+    # Check if user already has a SIM
+    existing_sim = await db.sims.find_one({"user_id": user["id"]})
+    if existing_sim:
+        raise HTTPException(status_code=400, detail="Hai già una SIM attiva")
+    
+    # Check wallet balance for activation cost (15.99 UP)
+    wallet = await db.wallets.find_one({"user_id": user["id"]}, {"_id": 0})
+    activation_cost = 15.99
+    if wallet["balance"] < activation_cost:
+        raise HTTPException(status_code=400, detail=f"Saldo insufficiente. Servono {activation_cost} UP")
+    
+    # Deduct activation cost
+    await db.wallets.update_one({"user_id": user["id"]}, {"$inc": {"balance": -activation_cost}})
+    
+    # Generate phone number (or use ported number)
+    if data.portability and data.phone_to_port:
+        phone_number = data.phone_to_port
+        portability_status = "in_corso"
+    else:
+        # Generate new number starting with 35341 (like Tiscali)
+        import random
+        phone_number = f"35341{random.randint(10000, 99999)}{random.randint(0, 9)}"
+        portability_status = None
+    
+    # Calculate expiry (30 days from now)
+    from datetime import timedelta
+    activation_date = datetime.now(timezone.utc)
+    expiry_date = activation_date + timedelta(days=30)
+    
+    sim_doc = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "phone_number": phone_number,
+        "plan_name": "SMART X TE 240 TOP",
+        "plan_price": 15.99,
+        "minutes_total": -1,  # -1 = unlimited
+        "minutes_used": 0,
+        "sms_total": 100,
+        "sms_used": 0,
+        "gb_total": 240.0,
+        "gb_used": 0.0,
+        "activation_date": activation_date.isoformat(),
+        "expiry_date": expiry_date.isoformat(),
+        "status": "active",
+        "portability_status": portability_status,
+        # Personal data
+        "fiscal_code": data.fiscal_code,
+        "birth_date": data.birth_date,
+        "birth_place": data.birth_place,
+        "address": data.address,
+        "cap": data.cap,
+        "city": data.city,
+        "document_type": data.document_type,
+        "document_number": data.document_number,
+        "current_operator": data.current_operator,
+        "created_at": activation_date.isoformat()
+    }
+    
+    await db.sims.insert_one(sim_doc)
+    
+    # Update user's phone if portability
+    if data.portability and data.phone_to_port:
+        await db.users.update_one({"id": user["id"]}, {"$set": {"phone": phone_number}})
+    
+    return {
+        "success": True,
+        "message": "SIM attivata con successo!",
+        "sim": {k: v for k, v in sim_doc.items() if k != "_id"}
+    }
+
+@api_router.post("/sim/use-data")
+async def use_sim_data(user: dict = Depends(get_current_user)):
+    """Simulate data usage (for demo)"""
+    sim = await db.sims.find_one({"user_id": user["id"]})
+    if not sim:
+        raise HTTPException(status_code=404, detail="Nessuna SIM trovata")
+    
+    import random
+    # Simulate random usage
+    gb_used = min(sim["gb_used"] + random.uniform(0.1, 2.0), sim["gb_total"])
+    sms_used = min(sim["sms_used"] + random.randint(0, 3), sim["sms_total"])
+    
+    await db.sims.update_one(
+        {"user_id": user["id"]},
+        {"$set": {"gb_used": round(gb_used, 2), "sms_used": sms_used}}
+    )
+    
+    return {"gb_used": round(gb_used, 2), "sms_used": sms_used}
+
+# ========================
 # STATUS ROUTES
 # ========================
 
