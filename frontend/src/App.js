@@ -3,10 +3,8 @@ import "@/App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 
-// Firebase
-import { auth } from "@/lib/firebase";
-import { onAuthStateChanged } from "firebase/auth";
-import { getUserProfile } from "@/lib/firestore";
+// API Service
+import { authAPI, setAuthToken, getAuthToken, clearAuth } from "@/lib/api";
 
 // Pages
 import LandingPage from "@/pages/LandingPage";
@@ -32,53 +30,64 @@ export const useAuth = () => useContext(AuthContext);
 
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [firebaseUser, setFirebaseUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Listen to Firebase auth state changes
+  // Check for existing token on mount
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
-      setFirebaseUser(fbUser);
-      
-      if (fbUser) {
-        // Fetch user profile from Firestore
+    const initAuth = async () => {
+      const token = getAuthToken();
+      if (token) {
         try {
-          const profile = await getUserProfile(fbUser.uid);
-          setUser(profile);
+          const userData = await authAPI.getMe();
+          setUser(userData);
         } catch (error) {
-          console.error("Error fetching user profile:", error);
+          console.error("Auth check failed:", error);
+          clearAuth();
           setUser(null);
         }
-      } else {
-        setUser(null);
       }
-      
       setLoading(false);
-    });
+    };
 
-    return () => unsubscribe();
+    initAuth();
   }, []);
 
-  const refreshUser = async () => {
-    if (firebaseUser) {
-      const profile = await getUserProfile(firebaseUser.uid);
-      setUser(profile);
-      return profile;
-    }
-    return null;
+  const login = async (email, password) => {
+    const result = await authAPI.login(email, password);
+    const userData = await authAPI.getMe();
+    setUser(userData);
+    return result;
   };
 
-  const logout = async () => {
-    await auth.signOut();
+  const register = async (data) => {
+    const result = await authAPI.register(data);
+    const userData = await authAPI.getMe();
+    setUser(userData);
+    return result;
+  };
+
+  const logout = () => {
+    authAPI.logout();
     setUser(null);
-    setFirebaseUser(null);
+  };
+
+  const refreshUser = async () => {
+    try {
+      const userData = await authAPI.getMe();
+      setUser(userData);
+      return userData;
+    } catch (error) {
+      console.error("Refresh user failed:", error);
+      return null;
+    }
   };
 
   return (
     <AuthContext.Provider value={{ 
       user, 
-      firebaseUser,
       loading, 
+      login,
+      register,
       logout, 
       refreshUser,
       setUser
@@ -94,8 +103,8 @@ const ProtectedRoute = ({ children }) => {
   
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#050505]">
-        <div className="w-8 h-8 border-2 border-[#7C3AED] border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="w-8 h-8 border-2 border-[#2B7AB8] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -115,11 +124,11 @@ function App() {
         <Toaster 
           position="top-center" 
           richColors 
-          theme="dark"
+          theme="light"
           toastOptions={{
             style: {
-              background: '#121212',
-              border: '1px solid rgba(255,255,255,0.1)',
+              background: '#ffffff',
+              border: '1px solid rgba(0,0,0,0.1)',
             }
           }}
         />
