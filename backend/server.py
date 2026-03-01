@@ -191,8 +191,9 @@ def generate_qr_code() -> str:
     digits_3 = ''.join(random.choices(string.digits, k=3))
     return f"MYU{digits_12}{letters_2}{digits_3}"
 
-def generate_referral_code() -> str:
-    return f"REF{secrets.token_hex(4).upper()}"
+def generate_referral_code(qr_code: str) -> str:
+    """Referral code is the same as QR code"""
+    return qr_code
 
 # Common profile tags
 PROFILE_TAGS = [
