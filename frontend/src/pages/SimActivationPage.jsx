@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/App";
 import { 
   ArrowLeft, Smartphone, Check, Wifi, MessageSquare, 
-  Phone, Shield, ChevronRight, CreditCard
+  Phone, Shield, ChevronRight, CreditCard, Gift, MapPin, Truck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,15 +27,22 @@ export default function SimActivationPage() {
   const [loading, setLoading] = useState(false);
   
   const [formData, setFormData] = useState({
-    portability: true,
+    // Portability
+    portability: false,
     current_operator: "",
     phone_to_port: "",
+    // Personal data
     fiscal_code: "",
     birth_date: "",
     birth_place: "",
-    address: "",
-    cap: "",
-    city: "",
+    // Shipping address
+    shipping_name: user?.full_name || "",
+    shipping_address: "",
+    shipping_cap: "",
+    shipping_city: "",
+    shipping_province: "",
+    shipping_phone: user?.phone || "",
+    // Document
     document_type: "carta_identita",
     document_number: ""
   });
@@ -47,8 +54,13 @@ export default function SimActivationPage() {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      await simAPI.activate(formData);
-      toast.success("SIM attivata con successo!");
+      await simAPI.activate({
+        ...formData,
+        address: formData.shipping_address,
+        cap: formData.shipping_cap,
+        city: formData.shipping_city
+      });
+      toast.success("Conto UP attivato con successo!");
       await refreshUser();
       navigate("/sim-dashboard");
     } catch (err) {
@@ -66,8 +78,13 @@ export default function SimActivationPage() {
 
   const validateStep2 = () => {
     return formData.fiscal_code && formData.birth_date && formData.birth_place &&
-           formData.address && formData.cap && formData.city &&
            formData.document_type && formData.document_number;
+  };
+
+  const validateStep3 = () => {
+    return formData.shipping_name && formData.shipping_address && 
+           formData.shipping_cap && formData.shipping_city && 
+           formData.shipping_province && formData.shipping_phone;
   };
 
   return (
@@ -85,7 +102,7 @@ export default function SimActivationPage() {
 
         {/* Progress */}
         <div className="flex gap-2 mb-6">
-          {[1, 2, 3].map((s) => (
+          {[1, 2, 3, 4].map((s) => (
             <div 
               key={s}
               className={`h-1.5 flex-1 rounded-full transition-colors ${
@@ -99,41 +116,56 @@ export default function SimActivationPage() {
       {/* Step 1: Piano e Portabilità */}
       {step === 1 && (
         <div className="px-6 animate-slideUp">
-          <h1 className="font-heading text-2xl font-bold mb-2 text-[#1A1A1A]">Attiva la tua SIM</h1>
-          <p className="text-[#6B7280] mb-6">Scegli il tuo piano e le opzioni</p>
+          <h1 className="font-heading text-2xl font-bold mb-2 text-[#1A1A1A]">Attiva il Conto UP</h1>
+          <p className="text-[#6B7280] mb-6">Card + SIM voce e dati in omaggio</p>
 
-          {/* Piano */}
-          <div className="bg-gradient-to-br from-[#2B7AB8] to-[#1E5F8A] rounded-2xl p-6 mb-6 text-white">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-medium opacity-80">Piano Selezionato</span>
-              <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-semibold">
-                SMART X TE 240 TOP
-              </span>
+          {/* Card Preview */}
+          <div className="bg-gradient-to-br from-[#1A1A1A] to-[#2D2D2D] rounded-2xl p-5 mb-6 text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+            
+            <div className="flex items-center gap-2 mb-4">
+              <Gift className="w-5 h-5 text-[#E85A24]" />
+              <span className="text-sm font-medium text-[#E85A24]">Incluso nel Conto UP</span>
             </div>
-            <div className="flex items-baseline gap-1 mb-4">
-              <span className="text-4xl font-bold">15,99</span>
-              <span className="text-xl">€/mese</span>
-            </div>
-            <div className="grid grid-cols-3 gap-4 mb-4">
-              <div className="text-center">
-                <Phone className="w-6 h-6 mx-auto mb-1 opacity-80" />
-                <p className="text-sm font-semibold">Illimitati</p>
-                <p className="text-xs opacity-70">Minuti</p>
+            
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="bg-white/10 rounded-xl p-4">
+                <CreditCard className="w-6 h-6 text-[#E85A24] mb-2" />
+                <p className="font-semibold">Card UP</p>
+                <p className="text-xs text-white/60">Carta di debito fisica</p>
               </div>
-              <div className="text-center">
-                <MessageSquare className="w-6 h-6 mx-auto mb-1 opacity-80" />
-                <p className="text-sm font-semibold">100</p>
-                <p className="text-xs opacity-70">SMS</p>
-              </div>
-              <div className="text-center">
-                <Wifi className="w-6 h-6 mx-auto mb-1 opacity-80" />
-                <p className="text-sm font-semibold">240 GB</p>
-                <p className="text-xs opacity-70">Internet 4G/5G</p>
+              <div className="bg-white/10 rounded-xl p-4">
+                <Smartphone className="w-6 h-6 text-[#2B7AB8] mb-2" />
+                <p className="font-semibold">SIM Omaggio</p>
+                <p className="text-xs text-white/60">240GB + Min illimitati</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 text-sm opacity-80">
-              <Shield className="w-4 h-4" />
-              <span>Attivazione e spedizione gratuite</span>
+            
+            <div className="flex items-center justify-between">
+              <span className="text-white/60">Attivazione una tantum</span>
+              <span className="font-mono text-2xl font-bold text-[#E85A24]">15,99€</span>
+            </div>
+          </div>
+
+          {/* SIM Details */}
+          <div className="bg-[#F5F5F5] rounded-2xl p-5 border border-black/5 mb-6">
+            <h3 className="font-semibold mb-3 text-[#1A1A1A]">La tua SIM include:</h3>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="text-center">
+                <Phone className="w-6 h-6 mx-auto mb-1 text-[#2B7AB8]" />
+                <p className="text-sm font-semibold text-[#1A1A1A]">Illimitati</p>
+                <p className="text-xs text-[#6B7280]">Minuti</p>
+              </div>
+              <div className="text-center">
+                <MessageSquare className="w-6 h-6 mx-auto mb-1 text-[#E85A24]" />
+                <p className="text-sm font-semibold text-[#1A1A1A]">100</p>
+                <p className="text-xs text-[#6B7280]">SMS</p>
+              </div>
+              <div className="text-center">
+                <Wifi className="w-6 h-6 mx-auto mb-1 text-green-600" />
+                <p className="text-sm font-semibold text-[#1A1A1A]">240 GB</p>
+                <p className="text-xs text-[#6B7280]">Internet</p>
+              </div>
             </div>
           </div>
 
@@ -201,7 +233,7 @@ export default function SimActivationPage() {
       {step === 2 && (
         <div className="px-6 animate-slideUp">
           <h1 className="font-heading text-2xl font-bold mb-2 text-[#1A1A1A]">I tuoi dati</h1>
-          <p className="text-[#6B7280] mb-6">Inserisci i dati per l'attivazione</p>
+          <p className="text-[#6B7280] mb-6">Dati per l'attivazione del conto</p>
 
           <div className="space-y-4">
             <div className="space-y-2">
@@ -235,41 +267,6 @@ export default function SimActivationPage() {
                   onChange={handleChange("birth_place")}
                   className="h-12 bg-[#F5F5F5] border-black/10 rounded-xl text-[#1A1A1A]"
                   data-testid="birth-place-input"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-[#1A1A1A]">Indirizzo di Residenza</Label>
-              <Input
-                placeholder="Via Roma 1"
-                value={formData.address}
-                onChange={handleChange("address")}
-                className="h-12 bg-[#F5F5F5] border-black/10 rounded-xl text-[#1A1A1A]"
-                data-testid="address-input"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-[#1A1A1A]">CAP</Label>
-                <Input
-                  placeholder="00186"
-                  value={formData.cap}
-                  onChange={handleChange("cap")}
-                  className="h-12 bg-[#F5F5F5] border-black/10 rounded-xl text-[#1A1A1A]"
-                  maxLength={5}
-                  data-testid="cap-input"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-[#1A1A1A]">Città</Label>
-                <Input
-                  placeholder="Roma"
-                  value={formData.city}
-                  onChange={handleChange("city")}
-                  className="h-12 bg-[#F5F5F5] border-black/10 rounded-xl text-[#1A1A1A]"
-                  data-testid="city-input"
                 />
               </div>
             </div>
@@ -315,27 +312,146 @@ export default function SimActivationPage() {
         </div>
       )}
 
-      {/* Step 3: Riepilogo e Conferma */}
+      {/* Step 3: Indirizzo di Spedizione */}
       {step === 3 && (
+        <div className="px-6 animate-slideUp">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 rounded-xl bg-[#E85A24]/10 flex items-center justify-center">
+              <Truck className="w-6 h-6 text-[#E85A24]" />
+            </div>
+            <div>
+              <h1 className="font-heading text-2xl font-bold text-[#1A1A1A]">Spedizione</h1>
+              <p className="text-[#6B7280]">Dove vuoi ricevere Card e SIM?</p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-[#1A1A1A]">Nome e Cognome</Label>
+              <Input
+                placeholder="Mario Rossi"
+                value={formData.shipping_name}
+                onChange={handleChange("shipping_name")}
+                className="h-12 bg-[#F5F5F5] border-black/10 rounded-xl text-[#1A1A1A]"
+                data-testid="shipping-name-input"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-[#1A1A1A]">Indirizzo</Label>
+              <Input
+                placeholder="Via Roma 1, Scala A, Interno 5"
+                value={formData.shipping_address}
+                onChange={handleChange("shipping_address")}
+                className="h-12 bg-[#F5F5F5] border-black/10 rounded-xl text-[#1A1A1A]"
+                data-testid="shipping-address-input"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-[#1A1A1A]">CAP</Label>
+                <Input
+                  placeholder="00186"
+                  value={formData.shipping_cap}
+                  onChange={handleChange("shipping_cap")}
+                  className="h-12 bg-[#F5F5F5] border-black/10 rounded-xl text-[#1A1A1A]"
+                  maxLength={5}
+                  data-testid="shipping-cap-input"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[#1A1A1A]">Provincia</Label>
+                <Input
+                  placeholder="RM"
+                  value={formData.shipping_province}
+                  onChange={handleChange("shipping_province")}
+                  className="h-12 bg-[#F5F5F5] border-black/10 rounded-xl text-[#1A1A1A] uppercase"
+                  maxLength={2}
+                  data-testid="shipping-province-input"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-[#1A1A1A]">Città</Label>
+              <Input
+                placeholder="Roma"
+                value={formData.shipping_city}
+                onChange={handleChange("shipping_city")}
+                className="h-12 bg-[#F5F5F5] border-black/10 rounded-xl text-[#1A1A1A]"
+                data-testid="shipping-city-input"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-[#1A1A1A]">Telefono per il corriere</Label>
+              <Input
+                type="tel"
+                placeholder="+39 333 1234567"
+                value={formData.shipping_phone}
+                onChange={handleChange("shipping_phone")}
+                className="h-12 bg-[#F5F5F5] border-black/10 rounded-xl text-[#1A1A1A]"
+                data-testid="shipping-phone-input"
+              />
+            </div>
+          </div>
+
+          <div className="bg-[#2B7AB8]/10 rounded-xl p-4 mt-6 flex items-start gap-3">
+            <Shield className="w-5 h-5 text-[#2B7AB8] flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium text-[#1A1A1A]">Spedizione gratuita</p>
+              <p className="text-sm text-[#6B7280]">Consegna in 3-5 giorni lavorativi con corriere espresso</p>
+            </div>
+          </div>
+
+          <Button
+            onClick={() => setStep(4)}
+            disabled={!validateStep3()}
+            className="w-full h-14 rounded-full bg-[#2B7AB8] hover:bg-[#236699] text-lg font-semibold mt-6 disabled:opacity-50"
+            data-testid="next-step-3"
+          >
+            Continua
+            <ChevronRight className="w-5 h-5 ml-2" />
+          </Button>
+        </div>
+      )}
+
+      {/* Step 4: Riepilogo e Conferma */}
+      {step === 4 && (
         <div className="px-6 animate-slideUp">
           <h1 className="font-heading text-2xl font-bold mb-2 text-[#1A1A1A]">Conferma Ordine</h1>
           <p className="text-[#6B7280] mb-6">Verifica i dati prima di procedere</p>
 
-          {/* Piano Riepilogo */}
-          <div className="bg-[#F5F5F5] rounded-2xl p-5 border border-black/5 mb-4">
-            <h3 className="font-semibold mb-3 text-[#1A1A1A]">Piano Scelto</h3>
-            <div className="flex items-center justify-between">
+          {/* What you get */}
+          <div className="bg-gradient-to-br from-[#1A1A1A] to-[#2D2D2D] rounded-2xl p-5 mb-4 text-white">
+            <h3 className="font-semibold mb-3">Il tuo Conto UP include:</h3>
+            <div className="space-y-2">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-[#2B7AB8]/10 flex items-center justify-center">
-                  <Smartphone className="w-6 h-6 text-[#2B7AB8]" />
-                </div>
-                <div>
-                  <p className="font-semibold text-[#1A1A1A]">SMART X TE 240 TOP</p>
-                  <p className="text-sm text-[#6B7280]">Illimitati + 100 SMS + 240 GB</p>
-                </div>
+                <CreditCard className="w-5 h-5 text-[#E85A24]" />
+                <span>Card UP fisica (spedizione gratuita)</span>
               </div>
-              <span className="font-mono text-xl font-bold text-[#2B7AB8]">15,99€</span>
+              <div className="flex items-center gap-3">
+                <Smartphone className="w-5 h-5 text-[#2B7AB8]" />
+                <span>SIM con 240GB, minuti illimitati, 100 SMS</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Shield className="w-5 h-5 text-green-500" />
+                <span>Conto UP con IBAN italiano</span>
+              </div>
             </div>
+          </div>
+
+          {/* Shipping Address */}
+          <div className="bg-[#F5F5F5] rounded-2xl p-5 border border-black/5 mb-4">
+            <div className="flex items-center gap-2 mb-3">
+              <MapPin className="w-5 h-5 text-[#E85A24]" />
+              <h3 className="font-semibold text-[#1A1A1A]">Indirizzo di Spedizione</h3>
+            </div>
+            <p className="text-[#1A1A1A]">{formData.shipping_name}</p>
+            <p className="text-[#6B7280]">{formData.shipping_address}</p>
+            <p className="text-[#6B7280]">{formData.shipping_cap} {formData.shipping_city} ({formData.shipping_province})</p>
+            <p className="text-[#6B7280]">Tel: {formData.shipping_phone}</p>
           </div>
 
           {/* Portabilità Riepilogo */}
@@ -351,7 +467,7 @@ export default function SimActivationPage() {
             </div>
           )}
 
-          {/* Dati Personali Riepilogo */}
+          {/* Dati Personali */}
           <div className="bg-[#F5F5F5] rounded-2xl p-5 border border-black/5 mb-6">
             <h3 className="font-semibold mb-3 text-[#1A1A1A]">Dati Personali</h3>
             <div className="space-y-2 text-sm">
@@ -360,8 +476,8 @@ export default function SimActivationPage() {
                 <span className="font-mono text-[#1A1A1A]">{formData.fiscal_code}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#6B7280]">Indirizzo</span>
-                <span className="text-[#1A1A1A]">{formData.address}, {formData.cap} {formData.city}</span>
+                <span className="text-[#6B7280]">Nato a</span>
+                <span className="text-[#1A1A1A]">{formData.birth_place}, {formData.birth_date}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#6B7280]">Documento</span>
@@ -370,15 +486,14 @@ export default function SimActivationPage() {
             </div>
           </div>
 
-          {/* Pagamento */}
-          <div className="bg-[#2B7AB8]/5 rounded-2xl p-5 border border-[#2B7AB8]/20 mb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <CreditCard className="w-5 h-5 text-[#2B7AB8]" />
-              <h3 className="font-semibold text-[#1A1A1A]">Pagamento</h3>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-[#6B7280]">Addebito dal tuo wallet UP</span>
-              <span className="font-mono text-2xl font-bold text-[#2B7AB8]">15,99 UP</span>
+          {/* Total */}
+          <div className="bg-[#2B7AB8]/10 rounded-2xl p-5 border border-[#2B7AB8]/20 mb-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-[#1A1A1A]">Totale da pagare</p>
+                <p className="text-sm text-[#6B7280]">Addebito dal wallet UP</p>
+              </div>
+              <span className="font-mono text-3xl font-bold text-[#2B7AB8]">15,99€</span>
             </div>
           </div>
 
@@ -393,7 +508,7 @@ export default function SimActivationPage() {
             ) : (
               <>
                 <Check className="w-5 h-5 mr-2" />
-                Conferma e Attiva
+                Attiva Conto UP
               </>
             )}
           </Button>
