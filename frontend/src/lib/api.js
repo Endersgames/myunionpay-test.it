@@ -240,6 +240,31 @@ export const simAPI = {
     return apiRequest('/sim/use-data', {
       method: 'POST',
     });
+  },
+
+  async depositEur(amount) {
+    return apiRequest('/sim/deposit-eur', {
+      method: 'POST',
+      body: JSON.stringify({ amount }),
+    });
+  },
+
+  async createBonifico(data) {
+    return apiRequest('/sim/bonifico', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async convertToUp(eurAmount) {
+    return apiRequest('/sim/convert-to-up', {
+      method: 'POST',
+      body: JSON.stringify({ eur_amount: eurAmount }),
+    });
+  },
+
+  async getTransactions() {
+    return apiRequest('/sim/transactions');
   }
 };
 
