@@ -291,6 +291,39 @@ export const pushAPI = {
   }
 };
 
+// ========================
+// TASKS API
+// ========================
+
+export const tasksAPI = {
+  async getMyTasks() {
+    return apiRequest('/tasks');
+  },
+
+  async uploadDocument(taskId, file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const headers = {};
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`;
+    }
+
+    const response = await fetch(`${API_URL}/api/tasks/${taskId}/upload`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Errore di rete' }));
+      throw new Error(error.detail || 'Errore del server');
+    }
+
+    return response.json();
+  }
+};
+
 // Common constants
 export const PROFILE_TAGS = [
   "tech", "fashion", "food", "fitness", "travel", 
