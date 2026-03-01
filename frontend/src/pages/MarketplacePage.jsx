@@ -5,8 +5,8 @@ import { Store, Search, ChevronRight, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import BottomNav from "@/components/BottomNav";
 
-// Firestore
-import { getMerchants, MERCHANT_CATEGORIES } from "@/lib/firestore";
+// API
+import { merchantAPI, MERCHANT_CATEGORIES } from "@/lib/api";
 
 const CATEGORY_IMAGES = {
   "Ristorante": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400",
@@ -36,7 +36,7 @@ export default function MarketplacePage() {
 
   const fetchData = async () => {
     try {
-      const merchantsData = await getMerchants();
+      const merchantsData = await merchantAPI.getAll();
       setMerchants(merchantsData);
     } catch (err) {
       console.error("Marketplace fetch error:", err);
@@ -64,7 +64,7 @@ export default function MarketplacePage() {
     <div className="min-h-screen bg-white pb-safe">
       {/* Header */}
       <div className="px-6 pt-8 pb-4">
-        <h1 className="font-heading text-2xl font-bold mb-2">Marketplace</h1>
+        <h1 className="font-heading text-2xl font-bold mb-2 text-[#1A1A1A]">Marketplace</h1>
         <p className="text-[#6B7280] mb-6">Scopri i merchant affiliati</p>
 
         {/* Search */}
@@ -74,7 +74,7 @@ export default function MarketplacePage() {
             placeholder="Cerca negozi..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-12 pl-12 bg-[#F5F5F5] border-black/10 focus:border-[#2B7AB8] rounded-xl"
+            className="h-12 pl-12 bg-[#F5F5F5] border-black/10 focus:border-[#2B7AB8] rounded-xl text-[#1A1A1A]"
             data-testid="search-input"
           />
         </div>
@@ -131,7 +131,7 @@ export default function MarketplacePage() {
                 <div className="p-4">
                   <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="font-semibold text-lg mb-1">{merchant.business_name}</h3>
+                      <h3 className="font-semibold text-lg mb-1 text-[#1A1A1A]">{merchant.business_name}</h3>
                       <p className="text-sm text-[#6B7280] line-clamp-1">{merchant.description}</p>
                     </div>
                     <ChevronRight className="w-5 h-5 text-[#6B7280] flex-shrink-0 mt-1" />

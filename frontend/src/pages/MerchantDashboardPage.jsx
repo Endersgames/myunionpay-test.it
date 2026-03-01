@@ -13,13 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import QRCode from "@/components/QRCode";
 
-// Firestore
-import { 
-  getWallet, 
-  getMerchantByUserId, 
-  createMerchant,
-  MERCHANT_CATEGORIES 
-} from "@/lib/firestore";
+// API
+import { walletAPI, merchantAPI, MERCHANT_CATEGORIES } from "@/lib/api";
 
 export default function MerchantDashboardPage() {
   const navigate = useNavigate();
@@ -47,11 +42,11 @@ export default function MerchantDashboardPage() {
 
   const fetchData = async () => {
     try {
-      const walletData = await getWallet(user.id);
+      const walletData = await walletAPI.getWallet();
       setWallet(walletData);
 
       if (user?.is_merchant) {
-        const merchantData = await getMerchantByUserId(user.id);
+        const merchantData = await merchantAPI.getMyMerchant();
         setMerchant(merchantData);
       } else {
         setShowForm(true);
@@ -82,7 +77,7 @@ export default function MerchantDashboardPage() {
     
     setSubmitting(true);
     try {
-      const merchantData = await createMerchant(user.id, formData);
+      const merchantData = await merchantAPI.create(formData);
       setMerchant(merchantData);
       setShowForm(false);
       await refreshUser();
@@ -114,7 +109,7 @@ export default function MerchantDashboardPage() {
           <span>Profilo</span>
         </button>
 
-        <h1 className="font-heading text-2xl font-bold mb-2">
+        <h1 className="font-heading text-2xl font-bold mb-2 text-[#1A1A1A]">
           {showForm && !merchant ? "Registra Negozio" : "Dashboard Merchant"}
         </h1>
         <p className="text-[#6B7280]">
@@ -129,19 +124,19 @@ export default function MerchantDashboardPage() {
         <div className="px-6">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="business_name">Nome Attività *</Label>
+              <Label htmlFor="business_name" className="text-[#1A1A1A]">Nome Attività *</Label>
               <Input
                 id="business_name"
                 placeholder="Es: Caffè Roma"
                 value={formData.business_name}
                 onChange={handleChange("business_name")}
-                className="h-12 bg-[#F5F5F5] border-black/10 focus:border-[#2B7AB8] rounded-xl"
+                className="h-12 bg-[#F5F5F5] border-black/10 focus:border-[#2B7AB8] rounded-xl text-[#1A1A1A]"
                 data-testid="business-name-input"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category">Categoria *</Label>
+              <Label htmlFor="category" className="text-[#1A1A1A]">Categoria *</Label>
               <Select value={formData.category} onValueChange={handleCategoryChange}>
                 <SelectTrigger 
                   className="h-12 bg-[#F5F5F5] border-black/10 focus:border-[#2B7AB8] rounded-xl"
@@ -158,37 +153,37 @@ export default function MerchantDashboardPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Descrizione *</Label>
+              <Label htmlFor="description" className="text-[#1A1A1A]">Descrizione *</Label>
               <Textarea
                 id="description"
                 placeholder="Descrivi la tua attività..."
                 value={formData.description}
                 onChange={handleChange("description")}
-                className="bg-[#F5F5F5] border-black/10 focus:border-[#2B7AB8] rounded-xl min-h-[100px]"
+                className="bg-[#F5F5F5] border-black/10 focus:border-[#2B7AB8] rounded-xl min-h-[100px] text-[#1A1A1A]"
                 data-testid="description-input"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="address">Indirizzo *</Label>
+              <Label htmlFor="address" className="text-[#1A1A1A]">Indirizzo *</Label>
               <Input
                 id="address"
                 placeholder="Via Roma 1, Milano"
                 value={formData.address}
                 onChange={handleChange("address")}
-                className="h-12 bg-[#F5F5F5] border-black/10 focus:border-[#2B7AB8] rounded-xl"
+                className="h-12 bg-[#F5F5F5] border-black/10 focus:border-[#2B7AB8] rounded-xl text-[#1A1A1A]"
                 data-testid="address-input"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="image_url">URL Immagine (opzionale)</Label>
+              <Label htmlFor="image_url" className="text-[#1A1A1A]">URL Immagine (opzionale)</Label>
               <Input
                 id="image_url"
                 placeholder="https://..."
                 value={formData.image_url}
                 onChange={handleChange("image_url")}
-                className="h-12 bg-[#F5F5F5] border-black/10 focus:border-[#2B7AB8] rounded-xl"
+                className="h-12 bg-[#F5F5F5] border-black/10 focus:border-[#2B7AB8] rounded-xl text-[#1A1A1A]"
                 data-testid="image-url-input"
               />
             </div>
@@ -217,7 +212,7 @@ export default function MerchantDashboardPage() {
                 <Store className="w-7 h-7 text-[#E85A24]" />
               </div>
               <div className="flex-1">
-                <h2 className="font-semibold text-lg">{merchant.business_name}</h2>
+                <h2 className="font-semibold text-lg text-[#1A1A1A]">{merchant.business_name}</h2>
                 <p className="text-sm text-[#6B7280]">{merchant.category}</p>
                 <p className="text-sm text-[#6B7280] flex items-center gap-1 mt-1">
                   <MapPin className="w-3 h-3" />
@@ -230,7 +225,7 @@ export default function MerchantDashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-[#6B7280]">Saldo Wallet</p>
-                  <p className="font-mono text-2xl font-bold">{wallet?.balance?.toFixed(2) || "0.00"} UP</p>
+                  <p className="font-mono text-2xl font-bold text-[#1A1A1A]">{wallet?.balance?.toFixed(2) || "0.00"} UP</p>
                 </div>
                 <Wallet className="w-8 h-8 text-[#2B7AB8]" />
               </div>
@@ -246,7 +241,7 @@ export default function MerchantDashboardPage() {
               <div className="flex items-center gap-3">
                 <QrCode className="w-5 h-5 text-[#2B7AB8]" />
                 <div className="text-left">
-                  <h3 className="font-semibold">QR Code Cassa</h3>
+                  <h3 className="font-semibold text-[#1A1A1A]">QR Code Cassa</h3>
                   <p className="text-sm text-[#6B7280]">Mostra ai clienti per ricevere pagamenti</p>
                 </div>
               </div>

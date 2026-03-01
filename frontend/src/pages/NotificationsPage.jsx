@@ -4,8 +4,8 @@ import { useAuth } from "@/App";
 import { Bell, Check, Gift, Store } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 
-// Firestore
-import { getUserNotifications, markNotificationRead } from "@/lib/firestore";
+// API
+import { notificationAPI } from "@/lib/api";
 
 export default function NotificationsPage() {
   const navigate = useNavigate();
@@ -21,7 +21,7 @@ export default function NotificationsPage() {
 
   const fetchNotifications = async () => {
     try {
-      const notifs = await getUserNotifications(user.id);
+      const notifs = await notificationAPI.getMyNotifications();
       setNotifications(notifs);
     } catch (err) {
       console.error("Notifications fetch error:", err);
@@ -31,7 +31,7 @@ export default function NotificationsPage() {
 
   const markAsRead = async (id) => {
     try {
-      await markNotificationRead(id);
+      await notificationAPI.markAsRead(id);
       setNotifications(prev => 
         prev.map(n => n.id === id ? { ...n, is_read: true } : n)
       );
@@ -65,7 +65,7 @@ export default function NotificationsPage() {
     <div className="min-h-screen bg-white pb-safe">
       {/* Header */}
       <div className="px-6 pt-8 pb-4">
-        <h1 className="font-heading text-2xl font-bold mb-2">Notifiche</h1>
+        <h1 className="font-heading text-2xl font-bold mb-2 text-[#1A1A1A]">Notifiche</h1>
         <p className="text-[#6B7280]">Le tue notifiche dai merchant</p>
       </div>
 
@@ -100,8 +100,8 @@ export default function NotificationsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="font-semibold text-sm">{notif.merchant_name}</p>
-                        <p className="font-medium mt-1">{notif.title}</p>
+                        <p className="font-semibold text-sm text-[#1A1A1A]">{notif.merchant_name}</p>
+                        <p className="font-medium mt-1 text-[#1A1A1A]">{notif.title}</p>
                       </div>
                       <span className="text-xs text-[#6B7280] flex-shrink-0">
                         {formatDate(notif.created_at)}
