@@ -3,14 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/App";
 import { 
   User, Copy, Share2, 
-  LogOut, Store, Users, Tag, ChevronRight, Smartphone, Wifi, Phone, Signal, CreditCard, Gift
+  LogOut, Store, Users, Tag, ChevronRight, Smartphone, Wifi, Phone, Signal, CreditCard, Gift,
+  ClipboardCheck, Upload, FileCheck, Zap, CheckCircle2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import BottomNav from "@/components/BottomNav";
 
 // API
-import { profileAPI, referralAPI, simAPI, PROFILE_TAGS } from "@/lib/api";
+import { profileAPI, referralAPI, simAPI, tasksAPI, PROFILE_TAGS } from "@/lib/api";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
