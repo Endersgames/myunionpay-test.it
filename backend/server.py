@@ -16,6 +16,7 @@ from routes.push import router as push_router
 from routes.referrals import router as referrals_router
 from routes.sim import router as sim_router
 from routes.qr import router as qr_router
+from routes.tasks import router as tasks_router
 
 # Create the main app
 app = FastAPI(title="UpPay API", version="2.0.0")
@@ -34,6 +35,7 @@ api_router.include_router(push_router)
 api_router.include_router(referrals_router)
 api_router.include_router(sim_router)
 api_router.include_router(qr_router)
+api_router.include_router(tasks_router)
 
 
 # ========================
