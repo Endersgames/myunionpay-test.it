@@ -1,7 +1,7 @@
 {
-  "short_name": "My Union Pay",
-  "name": "My Union Pay - Paga. Guadagna. Unisciti.",
-  "description": "App PWA per pagamenti peer-to-peer tramite QR Code",
+  "short_name": "MyUnionPayTest",
+  "name": "Myunionpaytest.it - Paga. Guadagna. Unisciti.",
+  "description": "App PWA per pagamenti peer-to-peer tramite QR Code - Myunionpaytest.it",
   "icons": [
     {
       "src": "favicon.ico",
