@@ -63,41 +63,23 @@ export default function ScanRedirectPage() {
   useEffect(() => {
     const fetchRecipient = async () => {
       try {
-        // First check if it's a user QR
         const qrOwner = await paymentAPI.getReferralFromQR(qrCode);
         if (qrOwner) {
           setRecipientName(qrOwner.name);
           setRecipientType(qrOwner.type || "user");
           
-          // If it's a merchant, get more details
-          if (qrOwner.type === "merchant" || qrOwner.is_merchant) {
-            try {
-              // Try to get merchant data
-              const merchants = await merchantAPI.getAll();
-              const merchant = merchants.find(m => m.qr_code === qrCode);
-              if (merchant) {
-                setMerchantData(merchant);
-                setRecipientType("merchant");
-              }
-            } catch (e) {
-              console.log("No merchant data");
-            }
+          if (qrOwner.type === "merchant" && qrOwner.merchant_id) {
+            setMerchantData({
+              id: qrOwner.merchant_id,
+              business_name: qrOwner.name,
+              category: qrOwner.merchant_category || "",
+              description: qrOwner.merchant_description || "",
+              address: qrOwner.merchant_address || "",
+              qr_code: qrCode,
+            });
           }
         } else {
-          // Check if it's a merchant QR directly
-          try {
-            const merchants = await merchantAPI.getAll();
-            const merchant = merchants.find(m => m.qr_code === qrCode);
-            if (merchant) {
-              setRecipientName(merchant.business_name);
-              setRecipientType("merchant");
-              setMerchantData(merchant);
-            } else {
-              setError("QR Code non valido");
-            }
-          } catch (e) {
-            setError("QR Code non valido");
-          }
+          setError("QR Code non valido");
         }
       } catch (err) {
         console.error("QR error:", err);
