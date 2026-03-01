@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/App";
 import { 
   User, Copy, Share2, 
-  LogOut, Store, Users, Tag, ChevronRight, Smartphone, Wifi, Phone, Signal
+  LogOut, Store, Users, Tag, ChevronRight, Smartphone, Wifi, Phone, Signal, CreditCard, Gift
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
