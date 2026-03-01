@@ -162,6 +162,45 @@ export default function SimDashboardPage() {
 
       {/* Card Section */}
       <div className="px-6 -mt-2">
+        <div className="bg-gradient-to-br from-[#2B7AB8] to-[#1E5F8A] rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
+          {/* Card pattern */}
+          <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+          
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-8">
+              <img src="/logo.png" alt="UP" className="h-8" />
+              <span className="text-xs text-white/60 font-medium">DEBIT</span>
+            </div>
+            
+            {/* Card Number */}
+            <div className="mb-6">
+              <div className="flex items-center gap-3">
+                <span className="font-mono text-xl tracking-widest">
+                  {showCardNumber ? cardNumber : '•••• •••• •••• ' + cardNumber.slice(-4)}
+                </span>
+                <button onClick={() => setShowCardNumber(!showCardNumber)} className="text-white/60 hover:text-white">
+                  {showCardNumber ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+                <button onClick={copyCardNumber} className="text-white/60 hover:text-white">
+                  <Copy className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="flex items-end justify-between">
+              <div>
+                <p className="text-white/50 text-xs mb-1">INTESTATARIO</p>
+                <p className="font-medium uppercase">{user?.full_name}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-white/50 text-xs mb-1">SCADENZA</p>
+                <p className="font-mono font-medium">12/28</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* SIM Usage */}
       <div className="px-6 mt-6">
