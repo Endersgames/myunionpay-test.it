@@ -103,7 +103,7 @@ export default function QRCodePage() {
               <h3 className="font-semibold">Per Pagamenti</h3>
             </div>
             <p className="text-sm text-[#6B7280]">
-              Chi ha già My Union Pay può scansionare e pagarti direttamente con il tastierino numerico.
+              Chi ha già Myunionpaytest.it può scansionare e pagarti direttamente con il tastierino numerico.
             </p>
           </div>
 

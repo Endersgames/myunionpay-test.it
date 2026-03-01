@@ -24,7 +24,7 @@ async def send_push_notification(user_id: str, title: str, body: str, data: dict
         "icon": "/icon.svg",
         "badge": "/icon.svg",
         "data": data or {},
-        "tag": f"uppay-{datetime.now().timestamp()}"
+        "tag": f"myunionpay-{datetime.now().timestamp()}"
     })
 
     success = False

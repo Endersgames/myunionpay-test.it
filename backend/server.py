@@ -19,7 +19,7 @@ from routes.qr import router as qr_router
 from routes.tasks import router as tasks_router
 
 # Create the main app
-app = FastAPI(title="UpPay API", version="2.0.0")
+app = FastAPI(title="Myunionpaytest.it API", version="2.0.0")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
@@ -44,7 +44,7 @@ api_router.include_router(tasks_router)
 
 @api_router.get("/")
 async def root():
-    return {"message": "UpPay API v2.0", "status": "online"}
+    return {"message": "Myunionpaytest.it API v2.0", "status": "online"}
 
 @api_router.get("/health")
 async def health():
