@@ -92,6 +92,22 @@ export default function ProfilePage() {
     navigate("/");
   };
 
+  const handleFileUpload = async (taskId, e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingTask(taskId);
+    try {
+      const result = await tasksAPI.uploadDocument(taskId, file);
+      toast.success(result.message);
+      await fetchData();
+      await refreshUser();
+    } catch (err) {
+      toast.error(err.message || "Errore nel caricamento");
+    }
+    setUploadingTask(null);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
