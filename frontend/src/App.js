@@ -21,6 +21,8 @@ import ProfilePage from "@/pages/ProfilePage";
 import MerchantDashboardPage from "@/pages/MerchantDashboardPage";
 import SendNotificationPage from "@/pages/SendNotificationPage";
 import ScanRedirectPage from "@/pages/ScanRedirectPage";
+import SimActivationPage from "@/pages/SimActivationPage";
+import SimDashboardPage from "@/pages/SimDashboardPage";
 import ChromePromptBanner from "@/components/ChromePromptBanner";
 
 // Auth Context
