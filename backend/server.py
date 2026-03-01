@@ -836,10 +836,16 @@ async def activate_sim(data: SimActivationRequest, user: dict = Depends(get_curr
     activation_date = datetime.now(timezone.utc)
     expiry_date = activation_date + timedelta(days=30)
     
+    # Generate IBAN IT
+    import random
+    iban_code = f"IT{random.randint(10,99)}X{random.randint(10000,99999)}{random.randint(10000,99999)}{random.randint(100000000000,999999999999)}"
+    
     sim_doc = {
         "id": str(uuid.uuid4()),
         "user_id": user["id"],
         "phone_number": phone_number,
+        "iban": iban_code,
+        "eur_balance": 0.0,
         "plan_name": "SMART X TE 100 TOP",
         "plan_price": 15.99,
         "minutes_total": -1,  # -1 = unlimited
