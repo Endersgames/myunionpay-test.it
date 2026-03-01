@@ -276,11 +276,6 @@ export default function ProfilePage() {
             </div>
           </div>
         )}
-            >
-              <Smartphone className="w-4 h-4 mr-2" />
-              Attiva Ora
-            </Button>
-          </div>
         )}
 
         {/* Profile Tags */}
