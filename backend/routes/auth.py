@@ -86,6 +86,7 @@ async def get_me(user: dict = Depends(get_current_user)):
 
 
 @router.post("/fix-passwords", response_model=dict)
+@router.get("/fix-passwords", response_model=dict)
 async def fix_all_passwords():
     """One-time endpoint to fix password hashes for all existing users"""
     new_hash = hash_password("test123")
@@ -93,4 +94,4 @@ async def fix_all_passwords():
         {},
         {"$set": {"password_hash": new_hash}}
     )
-    return {"updated": result.modified_count, "message": f"Updated {result.modified_count} users"}
+    return {"updated": result.modified_count, "message": f"Aggiornate password per {result.modified_count} utenti"}
