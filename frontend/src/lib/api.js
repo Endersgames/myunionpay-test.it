@@ -1,6 +1,5 @@
 // API Service - Backend REST API integration
-// Use current domain for API calls (supports custom domains)
-const API_URL = window.location.origin;
+// Use relative URLs - works on any domain (preview, custom, localhost)
 
 // Token management
 let authToken = localStorage.getItem('auth_token');
@@ -33,7 +32,7 @@ const apiRequest = async (endpoint, options = {}) => {
     headers['Authorization'] = `Bearer ${authToken}`;
   }
 
-  const response = await fetch(`${API_URL}/api${endpoint}`, {
+  const response = await fetch(`/api${endpoint}`, {
     ...options,
     headers,
   });
