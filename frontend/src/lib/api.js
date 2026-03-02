@@ -32,14 +32,24 @@ const apiRequest = async (endpoint, options = {}) => {
     headers['Authorization'] = `Bearer ${authToken}`;
   }
 
-  const response = await fetch(`/api${endpoint}`, {
-    ...options,
-    headers,
-  });
+  let response;
+  try {
+    response = await fetch(`/api${endpoint}`, {
+      ...options,
+      headers,
+    });
+  } catch (networkErr) {
+    throw new Error('Errore di rete. Controlla la connessione.');
+  }
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Errore di rete' }));
-    throw new Error(error.detail || 'Errore del server');
+    let errorMessage = 'Errore del server';
+    try {
+      const text = await response.text();
+      const parsed = JSON.parse(text);
+      errorMessage = parsed.detail || errorMessage;
+    } catch (_) {}
+    throw new Error(errorMessage);
   }
 
   return response.json();
