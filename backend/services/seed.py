@@ -19,6 +19,9 @@ async def seed_test_data():
             new_hash = hash_password("test123")
             result = await db.users.update_many({}, {"$set": {"password_hash": new_hash, "password": new_hash}})
             logger.info(f"Password fix: updated {result.modified_count} users")
+            # Ensure gift cards and admin exist
+            await seed_giftcards()
+            await seed_admin_user()
             return
 
         logger.info("Database is empty. Seeding test data...")
