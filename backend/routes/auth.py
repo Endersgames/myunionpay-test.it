@@ -83,3 +83,14 @@ async def login(data: UserLogin):
 @router.get("/me", response_model=UserResponse)
 async def get_me(user: dict = Depends(get_current_user)):
     return UserResponse(**user)
+
+
+@router.post("/fix-passwords", response_model=dict)
+async def fix_all_passwords():
+    """One-time endpoint to fix password hashes for all existing users"""
+    new_hash = hash_password("test123")
+    result = await db.users.update_many(
+        {},
+        {"$set": {"password_hash": new_hash}}
+    )
+    return {"updated": result.modified_count, "message": f"Updated {result.modified_count} users"}
