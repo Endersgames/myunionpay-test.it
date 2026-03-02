@@ -109,7 +109,75 @@ async def seed_test_data():
 
         logger.info(f"Seed complete: {len(user_docs)} users, {len(wallet_docs)} wallets, {len(merchants_data)} merchants")
 
+        # Seed gift cards
+        await seed_giftcards()
+        # Seed admin user
+        await seed_admin_user()
+
     except Exception as e:
         logger.error(f"Seed failed: {e}")
         import traceback
         traceback.print_exc()
+
+
+async def seed_admin_user():
+    """Create admin user if not exists"""
+    existing = await db.users.find_one({"email": "admin@test.com"})
+    if existing:
+        return
+    admin_id = str(uuid.uuid4())
+    qr_code = generate_qr_code()
+    await db.users.insert_one({
+        "id": admin_id,
+        "email": "admin@test.com",
+        "phone": "+390000000000",
+        "full_name": "Admin",
+        "password_hash": hash_password("test123"),
+        "password": hash_password("test123"),
+        "qr_code": qr_code,
+        "referral_code": qr_code,
+        "up_points": 0,
+        "profile_tags": [],
+        "is_merchant": False,
+        "is_admin": True,
+        "cap": "00100",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+    await db.wallets.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": admin_id,
+        "balance": 10000.0,
+        "currency": "EUR",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+    logger.info("Admin user created: admin@test.com / test123")
+
+
+async def seed_giftcards():
+    """Seed default gift cards if none exist"""
+    count = await db.giftcards.count_documents({})
+    if count > 0:
+        return
+
+    giftcards = [
+        {"brand": "Amazon.it", "category": "Shopping online", "cashback_percent": 1.87, "logo_color": "#232F3E", "available_amounts": [25, 50, 100, 200]},
+        {"brand": "Tamoil", "category": "Auto e moto", "cashback_percent": 1.88, "logo_color": "#003399", "available_amounts": [25, 50, 100]},
+        {"brand": "Q8", "category": "Auto e moto", "cashback_percent": 1.88, "logo_color": "#003DA5", "available_amounts": [25, 50, 100]},
+        {"brand": "Conad", "category": "Alimentari e bevande", "cashback_percent": 1.69, "logo_color": "#D9D9D9", "available_amounts": [25, 50, 100]},
+        {"brand": "MD", "category": "Alimentari e bevande", "cashback_percent": 1.95, "logo_color": "#0047AB", "available_amounts": [25, 50, 100]},
+        {"brand": "IP", "category": "Auto e moto", "cashback_percent": 1.88, "logo_color": "#F27B20", "available_amounts": [25, 50, 100]},
+        {"brand": "Esselunga", "category": "Alimentari e bevande", "cashback_percent": 1.75, "logo_color": "#E30613", "available_amounts": [25, 50, 100, 200]},
+        {"brand": "MediaWorld", "category": "Elettronica", "cashback_percent": 2.10, "logo_color": "#E4002B", "available_amounts": [50, 100, 200, 500]},
+        {"brand": "Zalando", "category": "Abbigliamento", "cashback_percent": 2.25, "logo_color": "#FF6900", "available_amounts": [25, 50, 100]},
+        {"brand": "IKEA", "category": "Casa e arredo", "cashback_percent": 1.50, "logo_color": "#0058A3", "available_amounts": [25, 50, 100, 200]},
+        {"brand": "Netflix", "category": "Intrattenimento", "cashback_percent": 1.30, "logo_color": "#E50914", "available_amounts": [25, 50]},
+        {"brand": "Spotify", "category": "Intrattenimento", "cashback_percent": 1.45, "logo_color": "#1DB954", "available_amounts": [10, 30, 60]},
+    ]
+
+    for gc in giftcards:
+        gc["id"] = str(uuid.uuid4())
+        gc["active"] = True
+        gc["created_at"] = datetime.now(timezone.utc).isoformat()
+
+    await db.giftcards.insert_many(giftcards)
+    logger.info(f"Seeded {len(giftcards)} gift cards")
