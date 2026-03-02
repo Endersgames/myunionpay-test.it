@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { giftcardAPI } from "@/lib/api";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/App";
 import { Gift, ShoppingBag, Fuel, Tv, ShoppingCart, Home, Music, Shirt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";

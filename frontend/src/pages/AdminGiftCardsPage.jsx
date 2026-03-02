@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { giftcardAPI } from "@/lib/api";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/App";
 import { Settings, Gift, ChevronLeft, Save, ToggleLeft, ToggleRight, Percent } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
