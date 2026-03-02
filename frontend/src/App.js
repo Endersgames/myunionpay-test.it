@@ -23,6 +23,7 @@ import SendNotificationPage from "@/pages/SendNotificationPage";
 import ScanRedirectPage from "@/pages/ScanRedirectPage";
 import SimActivationPage from "@/pages/SimActivationPage";
 import SimDashboardPage from "@/pages/SimDashboardPage";
+import AdminGiftCardsPage from "@/pages/AdminGiftCardsPage";
 import ChromePromptBanner from "@/components/ChromePromptBanner";
 
 // Auth Context
