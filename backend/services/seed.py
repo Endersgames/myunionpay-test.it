@@ -8,11 +8,16 @@ from database import db
 
 async def seed_test_data():
     """Seed test data if the database is empty (first production deploy)"""
-    user_count = await db.users.count_documents({})
-    if user_count > 0:
-        return  # Data already exists
+    import logging
+    logger = logging.getLogger("seed")
 
-    print("Seeding test data for first deploy...")
+    try:
+        user_count = await db.users.count_documents({})
+        logger.info(f"Seed check: {user_count} users found in database")
+        if user_count > 0:
+            return
+
+        logger.info("Database is empty. Seeding test data...")
     password_hash = hash_password("test123")
 
     test_users = [
@@ -72,6 +77,7 @@ async def seed_test_data():
 
     await db.users.insert_many(user_docs)
     await db.wallets.insert_many(wallet_docs)
+    logger.info(f"Inserted {len(user_docs)} users and {len(wallet_docs)} wallets")
 
     # Create 5 merchants from the first 5 users
     merchants_data = [
@@ -99,3 +105,9 @@ async def seed_test_data():
         await db.users.update_one({"id": user_docs[i]["id"]}, {"$set": {"is_merchant": True}})
 
     print(f"Seeded {len(user_docs)} users, {len(wallet_docs)} wallets, {len(merchants_data)} merchants")
+    logger.info(f"Seed complete: {len(user_docs)} users, {len(wallet_docs)} wallets, {len(merchants_data)} merchants")
+
+  except Exception as e:
+    logger.error(f"Seed failed: {e}")
+    import traceback
+    traceback.print_exc()
