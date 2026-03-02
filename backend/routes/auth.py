@@ -73,7 +73,12 @@ async def register(data: UserCreate):
 @router.post("/login", response_model=dict)
 async def login(data: UserLogin):
     user = await db.users.find_one({"email": data.email}, {"_id": 0})
-    if not user or not verify_password(data.password, user["password_hash"]):
+    if not user:
+        raise HTTPException(status_code=401, detail="Credenziali non valide")
+
+    # Support both old field name "password" and new "password_hash"
+    stored_hash = user.get("password_hash") or user.get("password", "")
+    if not stored_hash or not verify_password(data.password, stored_hash):
         raise HTTPException(status_code=401, detail="Credenziali non valide")
 
     token = create_token(user["id"])
