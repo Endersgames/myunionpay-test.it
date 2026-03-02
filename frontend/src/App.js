@@ -152,6 +152,7 @@ function App() {
           <Route path="/send-notification" element={<ProtectedRoute><SendNotificationPage /></ProtectedRoute>} />
           <Route path="/sim-activation" element={<ProtectedRoute><SimActivationPage /></ProtectedRoute>} />
           <Route path="/sim-dashboard" element={<ProtectedRoute><SimDashboardPage /></ProtectedRoute>} />
+          <Route path="/admin/giftcards" element={<ProtectedRoute><AdminGiftCardsPage /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
