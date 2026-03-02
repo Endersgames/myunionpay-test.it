@@ -95,3 +95,21 @@ async def fix_all_passwords():
         {"$set": {"password_hash": new_hash}}
     )
     return {"updated": result.modified_count, "message": f"Aggiornate password per {result.modified_count} utenti"}
+
+
+@router.get("/debug-users", response_model=dict)
+async def debug_users():
+    """Debug: check user fields in database"""
+    users = await db.users.find({}, {"_id": 0}).to_list(50)
+    debug_info = []
+    for u in users:
+        has_password_hash = "password_hash" in u
+        has_password = "password" in u
+        debug_info.append({
+            "email": u.get("email", "?"),
+            "has_password_hash": has_password_hash,
+            "has_password": has_password,
+            "hash_preview": u.get("password_hash", "MISSING")[:20] if has_password_hash else "MISSING",
+            "fields": list(u.keys())[:10]
+        })
+    return {"total": len(users), "users": debug_info}
