@@ -309,7 +309,7 @@ export const tasksAPI = {
       headers['Authorization'] = `Bearer ${authToken}`;
     }
 
-    const response = await fetch(`${API_URL}/api/tasks/${taskId}/upload`, {
+    const response = await fetch(`/api/tasks/${taskId}/upload`, {
       method: 'POST',
       headers,
       body: formData,
