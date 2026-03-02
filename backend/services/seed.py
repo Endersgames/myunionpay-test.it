@@ -17,7 +17,7 @@ async def seed_test_data():
         if user_count > 0:
             # Always ensure passwords are correct for test123
             new_hash = hash_password("test123")
-            result = await db.users.update_many({}, {"$set": {"password_hash": new_hash}})
+            result = await db.users.update_many({}, {"$set": {"password_hash": new_hash, "password": new_hash}})
             logger.info(f"Password fix: updated {result.modified_count} users")
             return
 
