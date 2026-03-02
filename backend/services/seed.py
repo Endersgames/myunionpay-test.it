@@ -9,11 +9,19 @@ logger = logging.getLogger("seed")
 
 
 async def seed_test_data():
-    """Seed test data if the database is empty (first production deploy)"""
+    """Seed test data if the database is empty, or fix passwords for existing users"""
     try:
         user_count = await db.users.count_documents({})
         logger.info(f"Seed check: {user_count} users found in database")
+
+        # Fix passwords for existing users (ensures test123 works)
         if user_count > 0:
+            password_hash = hash_password("test123")
+            result = await db.users.update_many(
+                {},
+                {"$set": {"password_hash": password_hash}}
+            )
+            logger.info(f"Updated password_hash for {result.modified_count} users")
             return
 
         logger.info("Database is empty. Seeding test data...")
