@@ -4,7 +4,7 @@ import { useAuth } from "@/App";
 import { toast } from "sonner";
 import { 
   Wallet, QrCode, Scan, Bell, 
-  ArrowUpRight, ArrowDownLeft, Plus, TrendingUp
+  ArrowUpRight, ArrowDownLeft, Plus, TrendingUp, Settings
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BottomNav from "@/components/BottomNav";
@@ -138,6 +138,21 @@ export default function DashboardPage() {
 
         {/* Gift Cards */}
         <GiftCardSection />
+
+        {/* Admin Link */}
+        {user?.email === "admin@test.com" && (
+          <div className="mt-4 mb-2">
+            <Button
+              onClick={() => navigate("/admin/giftcards")}
+              variant="outline"
+              className="w-full h-12 rounded-xl border-[#1A1A1A] text-[#1A1A1A] font-semibold"
+              data-testid="admin-giftcards-btn"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Admin - Gestisci Gift Card
+            </Button>
+          </div>
+        )}
 
         {/* Recent Transactions */}
         <div className="mb-6">
