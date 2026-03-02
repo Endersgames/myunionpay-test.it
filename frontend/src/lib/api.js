@@ -334,6 +334,39 @@ export const tasksAPI = {
   }
 };
 
+// ========================
+// GIFT CARDS API
+// ========================
+
+export const giftcardAPI = {
+  async getAll() {
+    return apiRequest('/giftcards');
+  },
+
+  async purchase(giftcard_id, amount) {
+    return apiRequest('/giftcards/purchase', {
+      method: 'POST',
+      body: JSON.stringify({ giftcard_id, amount }),
+    });
+  },
+
+  async getMyPurchases() {
+    return apiRequest('/giftcards/my-purchases');
+  },
+
+  // Admin
+  async adminGetAll() {
+    return apiRequest('/giftcards/admin/all');
+  },
+
+  async adminUpdate(giftcard_id, data) {
+    return apiRequest(`/giftcards/admin/${giftcard_id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+};
+
 // Common constants
 export const PROFILE_TAGS = [
   "tech", "fashion", "food", "fitness", "travel", 
