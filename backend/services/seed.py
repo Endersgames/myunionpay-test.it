@@ -32,6 +32,8 @@ async def seed_test_data():
         {"full_name": "Davide Costa", "email": "davide.costa@test.com", "phone": "+393344234567"},
         {"full_name": "Sara Fontana", "email": "sara.fontana@test.com", "phone": "+393345234567"},
         {"full_name": "Fernando Tozzi", "email": "fernando.tozzi@test.com", "phone": "+393346234567"},
+        {"full_name": "Fernando Tozzi", "email": "fernando.tozzi84@gmail.com", "phone": "+393933649510"},
+        {"full_name": "Giovanni Pascoli", "email": "pascoli.gio@test.com", "phone": "+393770475123"},
     ]
 
     tags_pool = ["tech", "fashion", "food", "fitness", "travel", "music", "sports", "gaming", "beauty", "health"]
