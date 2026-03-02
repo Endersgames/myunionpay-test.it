@@ -11,6 +11,7 @@ import BottomNav from "@/components/BottomNav";
 
 // API
 import { walletAPI, paymentAPI, notificationAPI } from "@/lib/api";
+import GiftCardSection from "@/components/GiftCardSection";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -134,6 +135,9 @@ export default function DashboardPage() {
             <span className="text-sm text-[#6B7280]">Ricevi pagamenti</span>
           </button>
         </div>
+
+        {/* Gift Cards */}
+        <GiftCardSection />
 
         {/* Recent Transactions */}
         <div className="mb-6">
