@@ -45,6 +45,8 @@ App PWA per pagamenti P2P con sistema di wallet digitale, marketplace merchant, 
 - PWA Install Prompt (aggressivo su scan QR)
 - Merchant QR Scan (Menu / Installa ed Ordina / Paga)
 - Task Verifica Residenza (upload fattura energia/gas per +5 UP)
+- Gift Card con cashback (12 brand: Amazon, Tamoil, Q8, Conad, MD, IP, Esselunga, MediaWorld, Zalando, IKEA, Netflix, Spotify)
+- Admin Panel Gift Card (admin@test.com gestisce cashback % e on/off per ogni card)
 
 ## Branding
 - Nome: **Myunionpaytest.it**
