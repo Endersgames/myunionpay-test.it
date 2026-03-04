@@ -16,7 +16,7 @@ App PWA per pagamenti P2P con sistema di wallet digitale, marketplace merchant, 
   database.py        # MongoDB connection, config constants (JWT, VAPID, tags, categories)
   models/__init__.py # All Pydantic models (User, Wallet, Transaction, Merchant, etc.)
   routes/
-    auth.py          # /auth/register, /auth/login, /auth/me
+    auth.py          # /auth/register, /auth/login, /auth/me, /auth/verify-login-test, /auth/debug-users
     wallet.py        # /wallet, /wallet/deposit
     payments.py      # /payments/send, /payments/history, /payments/user/{qr}
     merchants.py     # /merchants CRUD, /merchants/categories/list
@@ -27,14 +27,16 @@ App PWA per pagamenti P2P con sistema di wallet digitale, marketplace merchant, 
     sim.py           # /sim/* (Conto UP: activate, deposit-eur, bonifico, convert-to-up)
     qr.py            # /qr/referral/{qr_code}
     tasks.py         # /tasks, /tasks/{id}/upload (verifica residenza)
+    giftcards.py     # /giftcards, /giftcards/purchase, admin endpoints
   services/
     auth.py          # hash_password, verify_password, create_token, get_current_user, generate_qr_code
     push.py          # send_push_notification
+    seed.py          # Seed test data, SEED_EMAILS list (only updates seed users' passwords)
   uploads/           # Uploaded task documents
 ```
 
 ## Funzionalita Implementate
-- Auth (registrazione, login, JWT)
+- Auth (registrazione, login con email case-insensitive, JWT)
 - Wallet (saldo, deposito, pagamenti P2P)
 - QR Code (generazione, scansione, condivisione)
 - Merchant (registrazione, marketplace, categorie, dettaglio pubblico)
@@ -45,8 +47,9 @@ App PWA per pagamenti P2P con sistema di wallet digitale, marketplace merchant, 
 - PWA Install Prompt (aggressivo su scan QR)
 - Merchant QR Scan (Menu / Installa ed Ordina / Paga)
 - Task Verifica Residenza (upload fattura energia/gas per +5 UP)
-- Gift Card con cashback (12 brand: Amazon, Tamoil, Q8, Conad, MD, IP, Esselunga, MediaWorld, Zalando, IKEA, Netflix, Spotify)
+- Gift Card con cashback (12 brand)
 - Admin Panel Gift Card (admin@test.com gestisce cashback % e on/off per ogni card)
+- Endpoint diagnostici auth (/verify-login-test, /debug-users, /fix-passwords)
 
 ## Branding
 - Nome: **Myunionpaytest.it**
@@ -55,11 +58,13 @@ App PWA per pagamenti P2P con sistema di wallet digitale, marketplace merchant, 
 
 ## Credenziali Test
 - Email: test@test.com / Password: test123
-- 16 utenti test, 5 merchant test
+- Admin: admin@test.com / Password: test123
+- 18 utenti seed, 5 merchant test
 
 ## API Endpoints (tutti con prefisso /api)
 - POST /api/auth/register, /api/auth/login
-- GET /api/auth/me
+- GET /api/auth/me, /api/auth/verify-login-test, /api/auth/debug-users
+- POST /api/auth/fix-passwords
 - GET /api/wallet, POST /api/wallet/deposit
 - POST /api/payments/send, GET /api/payments/history
 - GET /api/payments/user/{qr_code}
@@ -72,12 +77,17 @@ App PWA per pagamenti P2P con sistema di wallet digitale, marketplace merchant, 
 - GET /api/referrals/stats
 - GET /api/sim/my-sim, POST /api/sim/activate, /api/sim/deposit-eur, /api/sim/bonifico, /api/sim/convert-to-up
 - GET/POST /api/tasks, POST /api/tasks/{id}/upload
+- GET /api/giftcards, POST /api/giftcards/purchase
 
 ## Backlog
 
+### P1 - Alta Priorita
+- [ ] Completare feature Gift Card: pagamento in EUR (Conto UP o carta simulata), upload logo admin
+- [ ] Definire e implementare funzionalita Menu Merchant
+
 ### P2 - Media Priorita
-- [ ] Definire e implementare funzionalita Menu Merchant (struttura dati, API, UI per gestione menu)
 - [ ] Push Notifications reali con FastAPI/pywebpush
+- [ ] Integrazione gateway Fabrick.com (futuro)
 
 ### P3 - Bassa Priorita
 - [ ] Marketplace avanzato
@@ -86,7 +96,7 @@ App PWA per pagamenti P2P con sistema di wallet digitale, marketplace merchant, 
 ## Note
 - Le operazioni bancarie (top-up, bonifico, conversione) sono SIMULATE
 - Badge "Made with Emergent" non rimovibile (feature piattaforma)
-- File Firebase rimossi, dipendenza disinstallata
+- Il seed script aggiorna SOLO le password degli utenti seed (SEED_EMAILS), non di tutti gli utenti
 
 ---
 Ultimo aggiornamento: Marzo 2026

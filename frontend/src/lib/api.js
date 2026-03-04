@@ -43,12 +43,17 @@ const apiRequest = async (endpoint, options = {}) => {
   }
 
   if (!response.ok) {
-    let errorMessage = 'Errore del server';
+    let errorMessage;
     try {
-      const text = await response.text();
-      const parsed = JSON.parse(text);
-      errorMessage = parsed.detail || errorMessage;
+      const data = await response.json();
+      errorMessage = data.detail || data.message;
     } catch (_) {}
+    if (!errorMessage) {
+      if (response.status === 401) errorMessage = 'Credenziali non valide';
+      else if (response.status === 400) errorMessage = 'Dati non validi';
+      else if (response.status === 404) errorMessage = 'Risorsa non trovata';
+      else errorMessage = 'Errore del server';
+    }
     throw new Error(errorMessage);
   }
 
