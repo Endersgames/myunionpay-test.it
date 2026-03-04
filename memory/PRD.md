@@ -5,51 +5,58 @@ App PWA per pagamenti P2P con sistema di wallet digitale, marketplace merchant, 
 
 ## Stack Tecnologico
 - **Frontend**: React 19, Tailwind CSS, Shadcn/UI
-- **Backend**: FastAPI, MongoDB (pymongo/motor)
+- **Backend**: FastAPI, MongoDB (pymongo/motor), httpx (per chiamate API brand)
 - **PWA**: Service Worker, Manifest
 - **Auth**: JWT Bearer Token
 
-## Architettura Backend (v2.0 - Refactored)
+## Architettura Backend (v2.1)
 ```
 /app/backend/
-  server.py          # Entry point - app setup, middleware, router includes
-  database.py        # MongoDB connection, config constants (JWT, VAPID, tags, categories)
-  models/__init__.py # All Pydantic models (User, Wallet, Transaction, Merchant, etc.)
+  server.py          # Entry point
+  database.py        # MongoDB connection, config
+  models/__init__.py # Pydantic models
   routes/
-    auth.py          # /auth/register, /auth/login, /auth/me, /auth/verify-login-test, /auth/debug-users
-    wallet.py        # /wallet, /wallet/deposit
-    payments.py      # /payments/send, /payments/history, /payments/user/{qr}
-    merchants.py     # /merchants CRUD, /merchants/categories/list
-    notifications.py # /notifications/send, /notifications/me, /notifications/preview
-    profile.py       # /profile/tags, /profile/my-tags
-    push.py          # /push/vapid-key, /push/subscribe, /push/unsubscribe
-    referrals.py     # /referrals/stats
-    sim.py           # /sim/* (Conto UP: activate, deposit-eur, bonifico, convert-to-up)
-    qr.py            # /qr/referral/{qr_code}
-    tasks.py         # /tasks, /tasks/{id}/upload (verifica residenza)
-    giftcards.py     # /giftcards, /giftcards/purchase, admin endpoints
+    auth.py          # Login (case-insensitive), register, diagnostics
+    wallet.py        # Wallet CRUD
+    payments.py      # P2P payments
+    merchants.py     # Merchants CRUD
+    notifications.py # Notifications
+    profile.py       # User profile tags
+    push.py          # Push notifications
+    referrals.py     # Referral stats
+    sim.py           # Conto UP
+    qr.py            # QR code routing
+    tasks.py         # User tasks
+    giftcards.py     # Gift cards + Brand API integration + Admin CRUD
   services/
-    auth.py          # hash_password, verify_password, create_token, get_current_user, generate_qr_code
-    push.py          # send_push_notification
-    seed.py          # Seed test data, SEED_EMAILS list (only updates seed users' passwords)
-  uploads/           # Uploaded task documents
+    auth.py          # Password hashing, JWT, auth utils
+    push.py          # Push notification sender
+    seed.py          # DB seeder (only updates SEED_EMAILS passwords)
+  uploads/logos/     # Gift card logos
 ```
 
 ## Funzionalita Implementate
-- Auth (registrazione, login con email case-insensitive, JWT)
+- Auth (registrazione, login case-insensitive, JWT, diagnostics)
 - Wallet (saldo, deposito, pagamenti P2P)
 - QR Code (generazione, scansione, condivisione)
-- Merchant (registrazione, marketplace, categorie, dettaglio pubblico)
+- Merchant (registrazione, marketplace, categorie)
 - Notifiche (profilate per merchant, preview, reward)
 - Profilo (tag interessi, referral stats, task)
 - Referral (codice = QR code, bonus +1 UP)
-- Conto UP (carta virtuale, IBAN, saldo EUR, top-up, bonifico, conversione EUR->UP)
-- PWA Install Prompt (aggressivo su scan QR)
+- Conto UP (carta virtuale, IBAN, saldo EUR, top-up, bonifico, conversione)
+- PWA Install Prompt
 - Merchant QR Scan (Menu / Installa ed Ordina / Paga)
-- Task Verifica Residenza (upload fattura energia/gas per +5 UP)
-- Gift Card con cashback (12 brand)
-- Admin Panel Gift Card (admin@test.com gestisce cashback % e on/off per ogni card)
-- Endpoint diagnostici auth (/verify-login-test, /debug-users, /fix-passwords)
+- Task Verifica Residenza (upload fattura per +5 UP)
+- **Gift Card con integrazione API Brand**:
+  - Admin crea nuove gift card (brand, categoria, cashback, importi)
+  - Admin configura API per ogni brand (endpoint, API key, metodo, headers, body template)
+  - Admin testa API dal pannello
+  - Utente acquista gift card con EUR (Conto UP o carta collegata)
+  - Sistema chiama automaticamente API brand per ottenere codice attivazione
+  - Codice attivazione mostrato all'utente dopo acquisto con possibilita di copia
+  - Cashback accreditato in UP
+  - Admin gestisce cashback % e stato on/off per ogni card
+  - Upload logo manuale per ogni gift card
 
 ## Branding
 - Nome: **Myunionpaytest.it**
@@ -59,44 +66,32 @@ App PWA per pagamenti P2P con sistema di wallet digitale, marketplace merchant, 
 ## Credenziali Test
 - Email: test@test.com / Password: test123
 - Admin: admin@test.com / Password: test123
-- 18 utenti seed, 5 merchant test
 
-## API Endpoints (tutti con prefisso /api)
-- POST /api/auth/register, /api/auth/login
-- GET /api/auth/me, /api/auth/verify-login-test, /api/auth/debug-users
-- POST /api/auth/fix-passwords
-- GET /api/wallet, POST /api/wallet/deposit
-- POST /api/payments/send, GET /api/payments/history
-- GET /api/payments/user/{qr_code}
-- GET /api/qr/referral/{qr_code}
-- GET/POST /api/merchants, GET /api/merchants/me, /api/merchants/{id}
-- POST /api/notifications/send, /api/notifications/preview
-- GET /api/notifications/me, /api/notifications/unread-count
-- PUT /api/notifications/{id}/read
-- GET /api/profile/tags, /api/profile/my-tags, PUT /api/profile/tags
-- GET /api/referrals/stats
-- GET /api/sim/my-sim, POST /api/sim/activate, /api/sim/deposit-eur, /api/sim/bonifico, /api/sim/convert-to-up
-- GET/POST /api/tasks, POST /api/tasks/{id}/upload
-- GET /api/giftcards, POST /api/giftcards/purchase
+## API Endpoints Gift Card (nuovi)
+- POST /api/giftcards/admin/create - Crea nuova gift card
+- PUT /api/giftcards/admin/{id}/api-config - Configura API brand
+- POST /api/giftcards/admin/{id}/test-api - Testa API brand
+- POST /api/giftcards/admin/{id}/logo - Upload logo
+- POST /api/giftcards/purchase - Acquisto con chiamata API brand (restituisce activation_code)
 
 ## Backlog
 
 ### P1 - Alta Priorita
-- [ ] Completare feature Gift Card: pagamento in EUR (Conto UP o carta simulata), upload logo admin
-- [ ] Definire e implementare funzionalita Menu Merchant
+- [ ] Definire e implementare Menu Merchant (struttura dati, API, UI)
 
 ### P2 - Media Priorita
-- [ ] Push Notifications reali con FastAPI/pywebpush
-- [ ] Integrazione gateway Fabrick.com (futuro)
+- [ ] Push Notifications reali con pywebpush
+- [ ] Integrazione gateway Fabrick.com
 
 ### P3 - Bassa Priorita
 - [ ] Marketplace avanzato
 - [ ] Gamification / progressione utente
 
 ## Note
-- Le operazioni bancarie (top-up, bonifico, conversione) sono SIMULATE
+- Le operazioni bancarie sono SIMULATE
 - Badge "Made with Emergent" non rimovibile (feature piattaforma)
-- Il seed script aggiorna SOLO le password degli utenti seed (SEED_EMAILS), non di tutti gli utenti
+- API brand usa httpbin.org/post per test. In produzione usare API reali dei brand
+- Il seed script aggiorna SOLO le password degli utenti seed (SEED_EMAILS)
 
 ---
 Ultimo aggiornamento: Marzo 2026
