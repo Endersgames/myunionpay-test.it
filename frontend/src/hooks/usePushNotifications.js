@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
-import { API } from '@/App';
+import { getAuthToken } from '@/lib/api';
 
 const VAPID_PUBLIC_KEY = process.env.REACT_APP_VAPID_PUBLIC_KEY;
 
@@ -84,11 +83,16 @@ export function usePushNotifications(token) {
 
       // Send subscription to backend
       const subJson = subscription.toJSON();
-      await axios.post(`${API}/push/subscribe`, {
-        endpoint: subJson.endpoint,
-        keys: subJson.keys
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
+      await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          endpoint: subJson.endpoint,
+          keys: subJson.keys
+        })
       });
 
       setIsSubscribed(true);
@@ -112,8 +116,9 @@ export function usePushNotifications(token) {
       }
 
       // Remove from backend
-      await axios.delete(`${API}/push/unsubscribe`, {
-        headers: { Authorization: `Bearer ${token}` }
+      await fetch('/api/push/unsubscribe', {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
       });
 
       setIsSubscribed(false);
