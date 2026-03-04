@@ -16,7 +16,7 @@ const categoryIcons = {
   "Intrattenimento": Music,
 };
 
-export default function GiftCardSection() {
+export default function GiftCardSection({ onPurchase }) {
   const { refreshUser } = useAuth();
   const [cards, setCards] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
@@ -33,6 +33,7 @@ export default function GiftCardSection() {
       toast.success(`Gift Card ${selectedCard.brand} da ${amount}UP acquistata! Cashback: +${result.cashback_earned.toFixed(2)} UP`);
       setSelectedCard(null);
       await refreshUser();
+      if (onPurchase) onPurchase();
     } catch (err) {
       toast.error(err.message);
     }

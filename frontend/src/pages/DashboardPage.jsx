@@ -20,6 +20,7 @@ export default function DashboardPage() {
   const [transactions, setTransactions] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showAllTx, setShowAllTx] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -38,7 +39,7 @@ export default function DashboardPage() {
       ]);
       
       setWallet(walletData);
-      setTransactions(txData.slice(0, 5));
+      setTransactions(txData.slice(0, 15));
       setUnreadCount(notifData.count);
     } catch (err) {
       console.error("Dashboard fetch error:", err);
@@ -136,34 +137,27 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        {/* Gift Cards */}
-        <GiftCardSection />
-
-        {/* Admin Link */}
-        {user?.email === "admin@test.com" && (
-          <div className="mt-4 mb-2">
-            <Button
-              onClick={() => navigate("/admin/giftcards")}
-              variant="outline"
-              className="w-full h-12 rounded-xl border-[#1A1A1A] text-[#1A1A1A] font-semibold"
-              data-testid="admin-giftcards-btn"
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              Admin - Gestisci Gift Card
-            </Button>
-          </div>
-        )}
-
         {/* Recent Transactions */}
-        <div className="mb-6">
-          <h2 className="font-heading text-lg font-bold mb-4 text-[#1A1A1A]">Ultime Transazioni</h2>
+        <div className="mb-6" data-testid="transactions-section">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-heading text-lg font-bold text-[#1A1A1A]">Ultime Transazioni</h2>
+            {transactions.length > 3 && (
+              <button
+                onClick={() => setShowAllTx(!showAllTx)}
+                className="text-sm font-medium text-[#2B7AB8] hover:underline"
+                data-testid="expand-tx-btn"
+              >
+                {showAllTx ? "Mostra meno" : `Vedi tutte (${transactions.length})`}
+              </button>
+            )}
+          </div>
           {transactions.length === 0 ? (
             <div className="bg-[#F5F5F5] rounded-2xl p-6 text-center">
               <p className="text-[#6B7280]">Nessuna transazione ancora</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {transactions.map((tx) => {
+            <div className={`space-y-3 ${showAllTx ? "max-h-[400px] overflow-y-auto pr-1" : ""}`}>
+              {(showAllTx ? transactions : transactions.slice(0, 3)).map((tx) => {
                 const isReceived = tx.recipient_id === user?.id;
                 return (
                   <div 
@@ -194,6 +188,24 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
+
+        {/* Gift Cards */}
+        <GiftCardSection onPurchase={fetchData} />
+
+        {/* Admin Link */}
+        {user?.email === "admin@test.com" && (
+          <div className="mt-4 mb-2">
+            <Button
+              onClick={() => navigate("/admin/giftcards")}
+              variant="outline"
+              className="w-full h-12 rounded-xl border-[#1A1A1A] text-[#1A1A1A] font-semibold"
+              data-testid="admin-giftcards-btn"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Admin - Gestisci Gift Card
+            </Button>
+          </div>
+        )}
       </div>
 
       <BottomNav active="home" unreadCount={unreadCount} />
