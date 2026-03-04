@@ -115,7 +115,7 @@ export default function GiftCardSection({ onPurchase }) {
       </div>
 
       {/* Purchase Dialog */}
-      <Dialog open={!!selectedCard && !showLinkCard} onOpenChange={(open) => { if (!open) closePurchaseDialog(); }}>
+      <Dialog open={!!selectedCard} onOpenChange={(open) => { if (!open) closePurchaseDialog(); }}>
         <DialogContent className="max-w-sm mx-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
