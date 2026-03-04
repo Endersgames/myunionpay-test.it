@@ -49,13 +49,58 @@ async def send_payment(data: TransactionCreate, user: dict = Depends(get_current
     return TransactionResponse(**tx_doc)
 
 
-@router.get("/history", response_model=List[TransactionResponse])
+@router.get("/history")
 async def get_payment_history(user: dict = Depends(get_current_user)):
-    transactions = await db.transactions.find(
+    all_transactions = []
+
+    # P2P payments
+    p2p = await db.transactions.find(
         {"$or": [{"sender_id": user["id"]}, {"recipient_id": user["id"]}]},
         {"_id": 0}
     ).sort("created_at", -1).to_list(100)
-    return [TransactionResponse(**tx) for tx in transactions]
+    for tx in p2p:
+        is_sender = tx.get("sender_id") == user["id"]
+        all_transactions.append({
+            "id": tx.get("id", ""),
+            "type": "sent" if is_sender else "received",
+            "amount": tx["amount"],
+            "description": f"{'Inviato a' if is_sender else 'Ricevuto da'} {tx.get('recipient_name' if is_sender else 'sender_name', '?')}",
+            "note": tx.get("note", ""),
+            "created_at": tx.get("created_at", ""),
+        })
+
+    # GestPay card payments
+    gestpay = await db.gestpay_transactions.find(
+        {"user_id": user["id"]}, {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+    for tx in gestpay:
+        all_transactions.append({
+            "id": tx.get("shop_transaction_id", ""),
+            "type": "card_payment",
+            "amount": tx["amount"],
+            "description": tx.get("description", "Pagamento con carta"),
+            "note": f"Auth: {tx.get('authorization_code', '')}" if tx.get("success") else tx.get("error", ""),
+            "created_at": tx.get("created_at", ""),
+        })
+
+    # Gift card purchases
+    gc_purchases = await db.giftcard_purchases.find(
+        {"user_id": user["id"]}, {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+    for tx in gc_purchases:
+        all_transactions.append({
+            "id": tx.get("id", ""),
+            "type": "giftcard",
+            "amount": tx["amount"],
+            "description": f"Gift Card {tx.get('brand', '')} - {tx['amount']} EUR",
+            "note": f"Cashback: +{tx.get('cashback_earned', 0):.2f} UP",
+            "created_at": tx.get("created_at", ""),
+        })
+
+    # Sort all by date descending
+    all_transactions.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+
+    return all_transactions[:100]
 
 
 @router.get("/user/{qr_code}", response_model=dict)

@@ -4,7 +4,8 @@ import { useAuth } from "@/App";
 import { toast } from "sonner";
 import { 
   Wallet, QrCode, Scan, Bell, 
-  ArrowUpRight, ArrowDownLeft, Plus, TrendingUp, Settings
+  ArrowUpRight, ArrowDownLeft, Plus, TrendingUp, Settings,
+  CreditCard, Gift
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BottomNav from "@/components/BottomNav";
@@ -157,30 +158,56 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className={`space-y-3 ${showAllTx ? "max-h-[400px] overflow-y-auto pr-1" : ""}`}>
-              {(showAllTx ? transactions : transactions.slice(0, 3)).map((tx) => {
-                const isReceived = tx.recipient_id === user?.id;
+              {(showAllTx ? transactions : transactions.slice(0, 3)).map((tx, idx) => {
+                const isReceived = tx.type === "received";
+                const isCard = tx.type === "card_payment";
+                const isGift = tx.type === "giftcard";
+
+                let iconBg, icon, amountColor, amountPrefix, amountSuffix;
+                if (isReceived) {
+                  iconBg = "bg-[#E85A24]/10";
+                  icon = <ArrowDownLeft className="w-5 h-5 text-[#E85A24]" />;
+                  amountColor = "text-[#E85A24]";
+                  amountPrefix = "+";
+                  amountSuffix = "UP";
+                } else if (isCard) {
+                  iconBg = "bg-purple-100";
+                  icon = <CreditCard className="w-5 h-5 text-purple-600" />;
+                  amountColor = "text-purple-600";
+                  amountPrefix = "-";
+                  amountSuffix = "EUR";
+                } else if (isGift) {
+                  iconBg = "bg-green-100";
+                  icon = <Gift className="w-5 h-5 text-green-600" />;
+                  amountColor = "text-green-600";
+                  amountPrefix = "-";
+                  amountSuffix = "EUR";
+                } else {
+                  iconBg = "bg-[#2B7AB8]/10";
+                  icon = <ArrowUpRight className="w-5 h-5 text-[#2B7AB8]" />;
+                  amountColor = "text-[#1A1A1A]";
+                  amountPrefix = "-";
+                  amountSuffix = "UP";
+                }
+
                 return (
                   <div 
-                    key={tx.id}
+                    key={tx.id || idx}
                     className="bg-[#F5F5F5] rounded-xl p-4 flex items-center justify-between border border-black/5"
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isReceived ? 'bg-[#E85A24]/10' : 'bg-[#2B7AB8]/10'}`}>
-                        {isReceived ? (
-                          <ArrowDownLeft className="w-5 h-5 text-[#E85A24]" />
-                        ) : (
-                          <ArrowUpRight className="w-5 h-5 text-[#2B7AB8]" />
-                        )}
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${iconBg}`}>
+                        {icon}
                       </div>
                       <div>
-                        <p className="font-medium text-[#1A1A1A]">
-                          {isReceived ? tx.sender_name : tx.recipient_name}
+                        <p className="font-medium text-[#1A1A1A] text-sm">
+                          {tx.description || "Transazione"}
                         </p>
-                        <p className="text-sm text-[#6B7280]">{tx.note || "Pagamento"}</p>
+                        <p className="text-xs text-[#6B7280]">{tx.note || ""}</p>
                       </div>
                     </div>
-                    <p className={`font-mono font-bold ${isReceived ? 'text-[#E85A24]' : 'text-[#1A1A1A]'}`}>
-                      {isReceived ? '+' : '-'}{tx.amount.toFixed(2)} UP
+                    <p className={`font-mono font-bold text-sm ${amountColor}`}>
+                      {amountPrefix}{tx.amount?.toFixed(2)} {amountSuffix}
                     </p>
                   </div>
                 );
