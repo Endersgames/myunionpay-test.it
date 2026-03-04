@@ -343,15 +343,30 @@ export const giftcardAPI = {
     return apiRequest('/giftcards');
   },
 
-  async purchase(giftcard_id, amount) {
+  async purchase(giftcard_id, amount, payment_method) {
     return apiRequest('/giftcards/purchase', {
       method: 'POST',
-      body: JSON.stringify({ giftcard_id, amount }),
+      body: JSON.stringify({ giftcard_id, amount, payment_method }),
     });
   },
 
   async getMyPurchases() {
     return apiRequest('/giftcards/my-purchases');
+  },
+
+  async getLinkedCard() {
+    return apiRequest('/giftcards/linked-card');
+  },
+
+  async linkCard(data) {
+    return apiRequest('/giftcards/link-card', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async unlinkCard() {
+    return apiRequest('/giftcards/unlink-card', { method: 'DELETE' });
   },
 
   // Admin
@@ -364,6 +379,24 @@ export const giftcardAPI = {
       method: 'PUT',
       body: JSON.stringify(data),
     });
+  },
+
+  async adminUploadLogo(giftcard_id, file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const headers = {};
+    const token = getAuthToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await fetch(`/api/giftcards/admin/${giftcard_id}/logo`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+    if (!response.ok) {
+      const err = await response.text().catch(() => '');
+      try { throw new Error(JSON.parse(err).detail); } catch { throw new Error('Errore upload'); }
+    }
+    return response.json();
   }
 };
 
