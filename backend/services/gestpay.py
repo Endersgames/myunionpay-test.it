@@ -99,14 +99,21 @@ async def submit_payment(payment_token: str, card_number: str, exp_month: str, e
         error_code = data.get("error", {}).get("code", "")
         if error_code == "0":
             p = data.get("payload", {})
+            tx_result = p.get("transactionResult", "")
+            is_ok = tx_result == "OK"
+
+            if not is_ok:
+                logger.warning(f"GestPay transaction KO: result={tx_result}, errorCode={p.get('errorCode')}, desc={p.get('errorDescription')}")
+
             return {
-                "success": True,
-                "transaction_result": p.get("transactionResult"),
+                "success": is_ok,
+                "transaction_result": tx_result,
                 "bank_transaction_id": p.get("bankTransactionID"),
                 "authorization_code": p.get("authorizationCode"),
                 "payment_id": p.get("paymentID"),
                 "error_code": p.get("errorCode", "0"),
                 "error_description": p.get("errorDescription", ""),
+                "error": p.get("errorDescription", "Transazione rifiutata") if not is_ok else None,
             }
         else:
             error_desc = data.get("error", {}).get("description", "Errore pagamento")
