@@ -279,14 +279,20 @@ export default function GiftCardSection({ onPurchase }) {
                       placeholder="MM"
                       maxLength={2}
                       value={cardForm.exp_month}
-                      onChange={(e) => setCardForm({ ...cardForm, exp_month: e.target.value })}
+                      onChange={(e) => {
+                        const v = e.target.value.replace(/\D/g, '').slice(0, 2);
+                        setCardForm({ ...cardForm, exp_month: v });
+                      }}
                       data-testid="gc-exp-month"
                     />
                     <Input
                       placeholder="AA"
                       maxLength={4}
                       value={cardForm.exp_year}
-                      onChange={(e) => setCardForm({ ...cardForm, exp_year: e.target.value })}
+                      onChange={(e) => {
+                        const v = e.target.value.replace(/\D/g, '').slice(0, 4);
+                        setCardForm({ ...cardForm, exp_year: v });
+                      }}
                       data-testid="gc-exp-year"
                     />
                     <Input
@@ -294,10 +300,14 @@ export default function GiftCardSection({ onPurchase }) {
                       type="password"
                       maxLength={4}
                       value={cardForm.cvv}
-                      onChange={(e) => setCardForm({ ...cardForm, cvv: e.target.value })}
+                      onChange={(e) => {
+                        const v = e.target.value.replace(/\D/g, '').slice(0, 4);
+                        setCardForm({ ...cardForm, cvv: v });
+                      }}
                       data-testid="gc-cvv"
                     />
                   </div>
+                  <p className="text-[10px] text-[#6B7280]">Sandbox: usa Visa 4111 1111 1111 1111, scadenza 12/27, CVV 123</p>
                   <Button
                     className="w-full bg-[#E85A24] hover:bg-[#D14E1A]"
                     onClick={() => handlePurchase("card")}

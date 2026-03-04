@@ -66,14 +66,27 @@ async def submit_payment(payment_token: str, card_number: str, exp_month: str, e
     """
     url = f"{BASE_URL}/api/v1/payment/submit/"
 
+    # Clean and validate card data
+    clean_number = card_number.replace(" ", "").replace("-", "")
+    clean_month = ''.join(filter(str.isdigit, exp_month)).zfill(2)
+    clean_year_raw = ''.join(filter(str.isdigit, exp_year))
+    clean_year = clean_year_raw[-2:] if len(clean_year_raw) > 2 else clean_year_raw.zfill(2)
+    clean_cvv = ''.join(filter(str.isdigit, cvv))
+
+    month_int = int(clean_month) if clean_month.isdigit() else 0
+    if month_int < 1 or month_int > 12:
+        return {"success": False, "error": f"Mese scadenza non valido: {exp_month}"}
+
+    logger.info(f"GestPay submit: card=****{clean_number[-4:]}, exp={clean_month}/{clean_year}")
+
     payload = {
         "shopLogin": SHOP_LOGIN,
         "paymentTypeDetails": {
             "creditcard": {
-                "number": card_number.replace(" ", "").replace("-", ""),
-                "expMonth": exp_month.zfill(2),
-                "expYear": exp_year[-2:] if len(exp_year) > 2 else exp_year,
-                "CVV": cvv,
+                "number": clean_number,
+                "expMonth": clean_month,
+                "expYear": clean_year,
+                "CVV": clean_cvv,
             }
         },
     }
