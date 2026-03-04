@@ -1,8 +1,7 @@
-// Service Worker per My Union Pay PWA con Push Notifications
-const CACHE_NAME = 'myunionpay-v1';
+// Service Worker per myunionpay-test.it PWA con Push Notifications
+const CACHE_NAME = 'myunionpay-v2';
 const urlsToCache = [
   '/',
-  '/index.html',
   '/manifest.json',
   '/logo.png'
 ];
@@ -12,11 +11,11 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('My Union Pay: Cache opened');
+        console.log('myunionpay-test.it: Cache opened');
         return cache.addAll(urlsToCache);
       })
       .catch((err) => {
-        console.log('My Union Pay: Cache failed', err);
+        console.log('myunionpay-test.it: Cache failed', err);
       })
   );
   self.skipWaiting();
@@ -29,7 +28,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            console.log('My Union Pay: Removing old cache', cacheName);
+            console.log('myunionpay-test.it: Removing old cache', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -41,15 +40,20 @@ self.addEventListener('activate', (event) => {
 
 // Fetch event - network first, fallback to cache
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests and API calls
+  // Skip non-GET requests, API calls, and JS bundles (always fetch fresh)
   if (event.request.method !== 'GET' || event.request.url.includes('/api/')) {
+    return;
+  }
+
+  // Never cache JS/CSS bundles - always get fresh
+  if (event.request.url.includes('/static/js/') || event.request.url.includes('/static/css/')) {
+    event.respondWith(fetch(event.request));
     return;
   }
 
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Clone the response before caching
         if (response.status === 200) {
           const responseClone = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
@@ -59,7 +63,6 @@ self.addEventListener('fetch', (event) => {
         return response;
       })
       .catch(() => {
-        // Fallback to cache
         return caches.match(event.request);
       })
   );
