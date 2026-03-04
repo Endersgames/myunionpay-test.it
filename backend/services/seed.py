@@ -8,18 +8,31 @@ from database import db
 logger = logging.getLogger("seed")
 
 
+SEED_EMAILS = [
+    "test@test.com", "luca.bianchi@test.com", "giulia.rossi@test.com",
+    "marco.ferrari@test.com", "sofia.esposito@test.com", "alessandro.romano@test.com",
+    "francesca.colombo@test.com", "lorenzo.ricci@test.com", "elena.marino@test.com",
+    "andrea.greco@test.com", "valentina.conti@test.com", "matteo.gallo@test.com",
+    "chiara.mancini@test.com", "davide.costa@test.com", "sara.fontana@test.com",
+    "fernando.tozzi@test.com", "fernando.tozzi84@gmail.com", "pascoli.gio@test.com",
+    "admin@test.com",
+]
+
+
 async def seed_test_data():
-    """Seed test data if empty, or fix passwords on startup"""
+    """Seed test data if empty, or fix seed user passwords on startup"""
     try:
         user_count = await db.users.count_documents({})
         logger.info(f"Seed check: {user_count} users found in database")
 
         if user_count > 0:
-            # Always ensure passwords are correct for test123
+            # Only fix passwords for SEED users, not all users
             new_hash = hash_password("test123")
-            result = await db.users.update_many({}, {"$set": {"password_hash": new_hash, "password": new_hash}})
-            logger.info(f"Password fix: updated {result.modified_count} users")
-            # Ensure gift cards and admin exist
+            result = await db.users.update_many(
+                {"email": {"$in": SEED_EMAILS}},
+                {"$set": {"password_hash": new_hash}}
+            )
+            logger.info(f"Seed password fix: updated {result.modified_count} seed users")
             await seed_giftcards()
             await seed_admin_user()
             return
@@ -130,13 +143,13 @@ async def seed_admin_user():
         return
     admin_id = str(uuid.uuid4())
     qr_code = generate_qr_code()
+    password_hash = hash_password("test123")
     await db.users.insert_one({
         "id": admin_id,
         "email": "admin@test.com",
         "phone": "+390000000000",
         "full_name": "Admin",
-        "password_hash": hash_password("test123"),
-        "password": hash_password("test123"),
+        "password_hash": password_hash,
         "qr_code": qr_code,
         "referral_code": qr_code,
         "up_points": 0,

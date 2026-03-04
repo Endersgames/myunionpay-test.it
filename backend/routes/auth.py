@@ -1,17 +1,24 @@
 from fastapi import APIRouter, Depends, HTTPException
 import uuid
+import logging
+import re
 from datetime import datetime, timezone
 from database import db
 from models import UserCreate, UserLogin, UserResponse
 from services.auth import hash_password, verify_password, create_token, get_current_user, generate_qr_code
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+logger = logging.getLogger("auth")
 
 
 @router.post("/register", response_model=dict)
 async def register(data: UserCreate):
+    email_lower = data.email.strip().lower()
     existing = await db.users.find_one(
-        {"$or": [{"email": data.email}, {"phone": data.phone}]},
+        {"$or": [
+            {"email": re.compile(f"^{re.escape(email_lower)}$", re.IGNORECASE)},
+            {"phone": data.phone}
+        ]},
         {"_id": 0, "id": 1}
     )
     if existing:
@@ -23,7 +30,7 @@ async def register(data: UserCreate):
 
     user_doc = {
         "id": user_id,
-        "email": data.email,
+        "email": email_lower,
         "phone": data.phone,
         "full_name": data.full_name,
         "password_hash": hash_password(data.password),
@@ -72,16 +79,30 @@ async def register(data: UserCreate):
 
 @router.post("/login", response_model=dict)
 async def login(data: UserLogin):
-    user = await db.users.find_one({"email": data.email}, {"_id": 0})
-    if not user:
-        raise HTTPException(status_code=401, detail="Credenziali non valide")
+    email_lower = data.email.strip().lower()
+    logger.info(f"Login attempt for: {email_lower}")
 
-    # Support both old field name "password" and new "password_hash"
+    # Case-insensitive email lookup
+    user = await db.users.find_one(
+        {"email": re.compile(f"^{re.escape(email_lower)}$", re.IGNORECASE)},
+        {"_id": 0}
+    )
+    if not user:
+        logger.warning(f"Login failed: user not found for {email_lower}")
+        raise HTTPException(status_code=401, detail="Credenziali non valide - utente non trovato")
+
+    # Support both field names
     stored_hash = user.get("password_hash") or user.get("password", "")
-    if not stored_hash or not verify_password(data.password, stored_hash):
-        raise HTTPException(status_code=401, detail="Credenziali non valide")
+    if not stored_hash:
+        logger.error(f"Login failed: no password hash stored for {email_lower}")
+        raise HTTPException(status_code=401, detail="Credenziali non valide - password non configurata")
+
+    if not verify_password(data.password, stored_hash):
+        logger.warning(f"Login failed: wrong password for {email_lower}")
+        raise HTTPException(status_code=401, detail="Credenziali non valide - password errata")
 
     token = create_token(user["id"])
+    logger.info(f"Login success for: {email_lower}")
     return {"token": token, "user_id": user["id"]}
 
 
@@ -93,29 +114,54 @@ async def get_me(user: dict = Depends(get_current_user)):
 @router.post("/fix-passwords", response_model=dict)
 @router.get("/fix-passwords", response_model=dict)
 async def fix_all_passwords():
-    """Fix password hashes for all existing users"""
+    """Fix password hashes for all existing users - sets all to test123"""
     new_hash = hash_password("test123")
-    # Update both old and new field names
     result = await db.users.update_many(
         {},
-        {"$set": {"password_hash": new_hash, "password": new_hash}}
+        {"$set": {"password_hash": new_hash}}
     )
     return {"updated": result.modified_count, "message": f"Aggiornate password per {result.modified_count} utenti"}
 
 
 @router.get("/debug-users", response_model=dict)
 async def debug_users():
-    """Debug: check user fields in database"""
+    """Debug: check user fields and password hash status"""
     users = await db.users.find({}, {"_id": 0}).to_list(50)
     debug_info = []
     for u in users:
-        has_password_hash = "password_hash" in u
-        has_password = "password" in u
+        ph = u.get("password_hash", "")
         debug_info.append({
             "email": u.get("email", "?"),
-            "has_password_hash": has_password_hash,
-            "has_password": has_password,
-            "hash_preview": u.get("password_hash", "MISSING")[:20] if has_password_hash else "MISSING",
-            "fields": list(u.keys())[:10]
+            "has_password_hash": bool(ph),
+            "hash_valid_bcrypt": ph.startswith("$2") if ph else False,
+            "hash_length": len(ph) if ph else 0,
+            "has_id": bool(u.get("id")),
+            "fields": list(u.keys())[:12]
         })
     return {"total": len(users), "users": debug_info}
+
+
+@router.get("/verify-login-test", response_model=dict)
+async def verify_login_test():
+    """Diagnostic: verify that test@test.com can authenticate"""
+    user = await db.users.find_one({"email": "test@test.com"}, {"_id": 0})
+    if not user:
+        return {"status": "FAIL", "reason": "user not found", "email": "test@test.com"}
+
+    stored_hash = user.get("password_hash", "")
+    can_verify = False
+    if stored_hash:
+        try:
+            can_verify = verify_password("test123", stored_hash)
+        except Exception as e:
+            return {"status": "FAIL", "reason": f"verify error: {str(e)}", "hash_preview": stored_hash[:20]}
+
+    return {
+        "status": "OK" if can_verify else "FAIL",
+        "email": "test@test.com",
+        "user_exists": True,
+        "has_password_hash": bool(stored_hash),
+        "hash_is_bcrypt": stored_hash.startswith("$2") if stored_hash else False,
+        "password_verifies": can_verify,
+        "user_id": user.get("id", "MISSING")
+    }
