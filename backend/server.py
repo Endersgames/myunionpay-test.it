@@ -19,6 +19,7 @@ from routes.sim import router as sim_router
 from routes.qr import router as qr_router
 from routes.tasks import router as tasks_router
 from routes.giftcards import router as giftcards_router
+from routes.gestpay import router as gestpay_router
 
 # Create the main app
 app = FastAPI(title="myunionpay-test.it API", version="2.0.0")
@@ -39,6 +40,7 @@ api_router.include_router(sim_router)
 api_router.include_router(qr_router)
 api_router.include_router(tasks_router)
 api_router.include_router(giftcards_router)
+api_router.include_router(gestpay_router)
 
 
 # ========================
