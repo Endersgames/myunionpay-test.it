@@ -10,19 +10,9 @@ import { QRCodeSVG } from "qrcode.react";
  * @param {number} size - Size in pixels
  */
 export const QRCode = ({ value, size = 200 }) => {
-  // Get the production URL from environment
-  const getBaseUrl = () => {
-    const envUrl = process.env.REACT_APP_BACKEND_URL;
-    if (envUrl) {
-      return envUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
-    }
-    return window.location.origin;
-  };
-
-  const baseUrl = getBaseUrl();
-  
-  // Simple, scannable URL
-  const qrContent = `${baseUrl}/s/${value}`;
+  // Always use the current domain for QR codes
+  // This ensures QR codes work on any domain (preview, custom, localhost)
+  const qrContent = `${window.location.origin}/s/${value}`;
 
   return (
     <div data-testid="qr-code-container">
