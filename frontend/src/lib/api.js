@@ -43,16 +43,26 @@ const apiRequest = async (endpoint, options = {}) => {
   }
 
   if (!response.ok) {
-    let errorMessage;
-    try {
-      const data = await response.json();
-      errorMessage = data.detail || data.message;
-    } catch (_) {}
+    let errorMessage = '';
+    const responseText = await response.text().catch(() => '');
+    if (responseText) {
+      try {
+        const data = JSON.parse(responseText);
+        if (typeof data.detail === 'string') {
+          errorMessage = data.detail;
+        } else if (Array.isArray(data.detail)) {
+          errorMessage = data.detail.map(d => d.msg || d.message).join(', ');
+        } else if (data.message) {
+          errorMessage = data.message;
+        }
+      } catch (_) {
+        errorMessage = responseText.substring(0, 200);
+      }
+    }
     if (!errorMessage) {
       if (response.status === 401) errorMessage = 'Credenziali non valide';
-      else if (response.status === 400) errorMessage = 'Dati non validi';
-      else if (response.status === 404) errorMessage = 'Risorsa non trovata';
-      else errorMessage = 'Errore del server';
+      else if (response.status === 422) errorMessage = 'Dati mancanti o non validi';
+      else errorMessage = `Errore (${response.status})`;
     }
     throw new Error(errorMessage);
   }
