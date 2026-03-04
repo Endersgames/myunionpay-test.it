@@ -75,7 +75,11 @@ class GiftCardCreate(BaseModel):
 class GiftCardPurchase(BaseModel):
     giftcard_id: str
     amount: int
-    payment_method: str  # "conto_up" or "linked_card"
+    payment_method: str  # "conto_up" or "card"
+    card_number: Optional[str] = None
+    exp_month: Optional[str] = None
+    exp_year: Optional[str] = None
+    cvv: Optional[str] = None
 
 
 class GiftCardPurchaseResponse(BaseModel):
@@ -286,11 +290,40 @@ async def purchase_giftcard(data: GiftCardPurchase, user: dict = Depends(get_cur
             raise HTTPException(status_code=400, detail=f"Saldo EUR insufficiente. Disponibile: {eur_balance:.2f}")
         await db.sims.update_one({"user_id": user["id"]}, {"$inc": {"eur_balance": -data.amount}})
 
-    elif data.payment_method == "linked_card":
-        linked = await db.linked_cards.find_one({"user_id": user["id"]}, {"_id": 0})
-        if not linked:
-            raise HTTPException(status_code=400, detail="Nessuna carta collegata")
-        logger.info(f"Card payment: {data.amount} EUR from ****{linked['last_four']}")
+    elif data.payment_method == "card":
+        # Real payment through GestPay
+        if not data.card_number or not data.exp_month or not data.exp_year or not data.cvv:
+            raise HTTPException(status_code=400, detail="Dati carta richiesti per il pagamento")
+
+        from services.gestpay import process_card_payment
+        gestpay_result = await process_card_payment(
+            amount=float(data.amount),
+            card_number=data.card_number,
+            exp_month=data.exp_month,
+            exp_year=data.exp_year,
+            cvv=data.cvv,
+            buyer_email=user.get("email"),
+            buyer_name=user.get("full_name"),
+        )
+
+        if not gestpay_result["success"]:
+            raise HTTPException(status_code=400, detail=f"Pagamento rifiutato: {gestpay_result.get('error', 'Errore')}")
+
+        # Store GestPay transaction
+        await db.gestpay_transactions.insert_one({
+            "user_id": user["id"],
+            "type": "giftcard_purchase",
+            "amount": float(data.amount),
+            "description": f"Gift Card {card['brand']} - {data.amount} EUR",
+            "shop_transaction_id": gestpay_result.get("shop_transaction_id"),
+            "payment_id": gestpay_result.get("payment_id"),
+            "bank_transaction_id": gestpay_result.get("bank_transaction_id"),
+            "authorization_code": gestpay_result.get("authorization_code"),
+            "transaction_result": gestpay_result.get("transaction_result"),
+            "success": True,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        })
+        logger.info(f"GestPay payment OK for {card['brand']}: {gestpay_result.get('authorization_code')}")
 
     else:
         raise HTTPException(status_code=400, detail="Metodo di pagamento non valido")

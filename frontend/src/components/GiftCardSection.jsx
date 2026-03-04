@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { giftcardAPI, simAPI } from "@/lib/api";
 import { useAuth } from "@/App";
-import { Gift, ShoppingBag, Fuel, Tv, ShoppingCart, Home, Music, Shirt, CreditCard, Wallet, AlertCircle } from "lucide-react";
+import { Gift, ShoppingBag, Fuel, Tv, ShoppingCart, Home, Music, Shirt, CreditCard, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -24,23 +24,38 @@ export default function GiftCardSection({ onPurchase }) {
   const [selectedAmount, setSelectedAmount] = useState(null);
   const [purchasing, setPurchasing] = useState(false);
   const [sim, setSim] = useState(null);
-  const [linkedCard, setLinkedCard] = useState(null);
-  const [showLinkCard, setShowLinkCard] = useState(false);
-  const [linkForm, setLinkForm] = useState({ card_number: "", expiry: "", cvv: "", holder_name: "" });
-  const [linking, setLinking] = useState(false);
   const [purchaseResult, setPurchaseResult] = useState(null);
+  const [showCardForm, setShowCardForm] = useState(false);
+  const [cardForm, setCardForm] = useState({ card_number: "", exp_month: "", exp_year: "", cvv: "" });
 
   useEffect(() => {
     giftcardAPI.getAll().then(setCards).catch(() => {});
     simAPI.getMySim().then(setSim).catch(() => {});
-    giftcardAPI.getLinkedCard().then(setLinkedCard).catch(() => {});
   }, []);
 
   const handlePurchase = async (paymentMethod) => {
     setPurchasing(true);
     try {
-      const result = await giftcardAPI.purchase(selectedCard.id, selectedAmount, paymentMethod);
+      let purchaseData = {
+        giftcard_id: selectedCard.id,
+        amount: selectedAmount,
+        payment_method: paymentMethod,
+      };
+
+      if (paymentMethod === "card") {
+        purchaseData = {
+          ...purchaseData,
+          card_number: cardForm.card_number,
+          exp_month: cardForm.exp_month,
+          exp_year: cardForm.exp_year,
+          cvv: cardForm.cvv,
+        };
+      }
+
+      const result = await giftcardAPI.purchaseWithDetails(purchaseData);
       setPurchaseResult(result);
+      setShowCardForm(false);
+      setCardForm({ card_number: "", exp_month: "", exp_year: "", cvv: "" });
       await refreshUser();
       if (onPurchase) onPurchase();
       simAPI.getMySim().then(setSim).catch(() => {});
@@ -54,27 +69,14 @@ export default function GiftCardSection({ onPurchase }) {
     setSelectedCard(null);
     setSelectedAmount(null);
     setPurchaseResult(null);
-  };
-
-  const handleLinkCard = async () => {
-    setLinking(true);
-    try {
-      const result = await giftcardAPI.linkCard(linkForm);
-      setLinkedCard(result);
-      setShowLinkCard(false);
-      setLinkForm({ card_number: "", expiry: "", cvv: "", holder_name: "" });
-      toast.success(`Carta ****${result.last_four} collegata`);
-    } catch (err) {
-      toast.error(err.message);
-    }
-    setLinking(false);
+    setShowCardForm(false);
+    setCardForm({ card_number: "", exp_month: "", exp_year: "", cvv: "" });
   };
 
   if (cards.length === 0) return null;
 
   const hasContoUP = sim && sim.eur_balance !== undefined;
   const eurBalance = sim?.eur_balance || 0;
-  const hasLinkedCard = !!linkedCard;
 
   return (
     <div className="mt-6" data-testid="giftcard-section">
@@ -243,104 +245,75 @@ export default function GiftCardSection({ onPurchase }) {
                 </Button>
               )}
 
-              {/* Linked card option */}
-              {hasLinkedCard && (
+              {/* Card payment via GestPay */}
+              {!showCardForm ? (
                 <Button
                   variant="outline"
                   className="w-full h-auto py-3"
-                  onClick={() => handlePurchase("linked_card")}
-                  disabled={purchasing}
-                  data-testid="pay-linked-card"
+                  onClick={() => setShowCardForm(true)}
+                  data-testid="pay-card-btn"
                 >
                   <div className="flex items-center gap-3 w-full">
                     <CreditCard className="w-5 h-5 shrink-0 text-[#6B7280]" />
                     <div className="text-left flex-1">
-                      <p className="font-semibold text-sm">{linkedCard.brand} ****{linkedCard.last_four}</p>
-                      <p className="text-xs text-[#6B7280]">{linkedCard.holder_name}</p>
+                      <p className="font-semibold text-sm">Paga con Carta</p>
+                      <p className="text-xs text-[#6B7280]">Visa, Mastercard, Amex</p>
                     </div>
                   </div>
                 </Button>
-              )}
-
-              {/* Link new card */}
-              {!hasLinkedCard && !hasContoUP && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-amber-800">Nessun metodo di pagamento</p>
-                    <p className="text-xs text-amber-600 mt-1">Attiva il Conto UP o collega una carta di credito</p>
+              ) : (
+                <div className="space-y-3 border rounded-xl p-4 bg-[#FAFAFA]" data-testid="card-payment-form">
+                  <div className="flex items-center gap-2 mb-1">
+                    <CreditCard className="w-4 h-4 text-[#2B7AB8]" />
+                    <span className="text-sm font-medium">Dati Carta</span>
                   </div>
+                  <Input
+                    placeholder="Numero carta"
+                    value={cardForm.card_number}
+                    onChange={(e) => setCardForm({ ...cardForm, card_number: e.target.value })}
+                    className="font-mono"
+                    data-testid="gc-card-number"
+                  />
+                  <div className="grid grid-cols-3 gap-2">
+                    <Input
+                      placeholder="MM"
+                      maxLength={2}
+                      value={cardForm.exp_month}
+                      onChange={(e) => setCardForm({ ...cardForm, exp_month: e.target.value })}
+                      data-testid="gc-exp-month"
+                    />
+                    <Input
+                      placeholder="AA"
+                      maxLength={4}
+                      value={cardForm.exp_year}
+                      onChange={(e) => setCardForm({ ...cardForm, exp_year: e.target.value })}
+                      data-testid="gc-exp-year"
+                    />
+                    <Input
+                      placeholder="CVV"
+                      type="password"
+                      maxLength={4}
+                      value={cardForm.cvv}
+                      onChange={(e) => setCardForm({ ...cardForm, cvv: e.target.value })}
+                      data-testid="gc-cvv"
+                    />
+                  </div>
+                  <Button
+                    className="w-full bg-[#E85A24] hover:bg-[#D14E1A]"
+                    onClick={() => handlePurchase("card")}
+                    disabled={purchasing || !cardForm.card_number || !cardForm.exp_month || !cardForm.exp_year || !cardForm.cvv}
+                    data-testid="confirm-card-payment"
+                  >
+                    {purchasing ? "Pagamento in corso..." : `Paga ${selectedAmount} EUR`}
+                  </Button>
                 </div>
               )}
 
-              {!hasLinkedCard && (
-                <Button
-                  variant="outline"
-                  className="w-full border-dashed border-[#E85A24] text-[#E85A24] hover:bg-[#E85A24]/5"
-                  onClick={() => setShowLinkCard(true)}
-                  data-testid="link-card-btn"
-                >
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  Collega Carta di Credito
-                </Button>
-              )}
-
-              <Button variant="ghost" className="w-full text-sm" onClick={() => setSelectedAmount(null)}>
+              <Button variant="ghost" className="w-full text-sm" onClick={() => { setSelectedAmount(null); setShowCardForm(false); }}>
                 Cambia importo
               </Button>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Link Card Dialog */}
-      <Dialog open={showLinkCard} onOpenChange={setShowLinkCard}>
-        <DialogContent className="max-w-sm mx-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-[#2B7AB8]" />
-              Collega Carta
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <Input
-              placeholder="Numero carta"
-              value={linkForm.card_number}
-              onChange={(e) => setLinkForm({ ...linkForm, card_number: e.target.value })}
-              data-testid="card-number-input"
-            />
-            <Input
-              placeholder="Intestatario"
-              value={linkForm.holder_name}
-              onChange={(e) => setLinkForm({ ...linkForm, holder_name: e.target.value })}
-              data-testid="card-holder-input"
-            />
-            <div className="grid grid-cols-2 gap-3">
-              <Input
-                placeholder="MM/AA"
-                value={linkForm.expiry}
-                onChange={(e) => setLinkForm({ ...linkForm, expiry: e.target.value })}
-                data-testid="card-expiry-input"
-              />
-              <Input
-                placeholder="CVV"
-                type="password"
-                value={linkForm.cvv}
-                onChange={(e) => setLinkForm({ ...linkForm, cvv: e.target.value })}
-                data-testid="card-cvv-input"
-              />
-            </div>
-
-            <Button
-              className="w-full bg-[#2B7AB8] hover:bg-[#236799]"
-              onClick={handleLinkCard}
-              disabled={linking || !linkForm.card_number || !linkForm.holder_name || !linkForm.expiry || !linkForm.cvv}
-              data-testid="confirm-link-card"
-            >
-              {linking ? "Collegamento..." : "Collega Carta"}
-            </Button>
-          </div>
         </DialogContent>
       </Dialog>
     </div>

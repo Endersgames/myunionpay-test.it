@@ -355,6 +355,13 @@ export const giftcardAPI = {
     });
   },
 
+  async purchaseWithDetails(data) {
+    return apiRequest('/giftcards/purchase', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
   async getMyPurchases() {
     return apiRequest('/giftcards/my-purchases');
   },
