@@ -379,10 +379,30 @@ export const giftcardAPI = {
     return apiRequest('/giftcards/admin/all');
   },
 
+  async adminCreate(data) {
+    return apiRequest('/giftcards/admin/create', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
   async adminUpdate(giftcard_id, data) {
     return apiRequest(`/giftcards/admin/${giftcard_id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
+    });
+  },
+
+  async adminUpdateApiConfig(giftcard_id, data) {
+    return apiRequest(`/giftcards/admin/${giftcard_id}/api-config`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async adminTestApi(giftcard_id) {
+    return apiRequest(`/giftcards/admin/${giftcard_id}/test-api`, {
+      method: 'POST',
     });
   },
 

@@ -28,6 +28,7 @@ export default function GiftCardSection({ onPurchase }) {
   const [showLinkCard, setShowLinkCard] = useState(false);
   const [linkForm, setLinkForm] = useState({ card_number: "", expiry: "", cvv: "", holder_name: "" });
   const [linking, setLinking] = useState(false);
+  const [purchaseResult, setPurchaseResult] = useState(null);
 
   useEffect(() => {
     giftcardAPI.getAll().then(setCards).catch(() => {});
@@ -39,17 +40,20 @@ export default function GiftCardSection({ onPurchase }) {
     setPurchasing(true);
     try {
       const result = await giftcardAPI.purchase(selectedCard.id, selectedAmount, paymentMethod);
-      toast.success(`Gift Card ${selectedCard.brand} da ${selectedAmount}EUR acquistata! Cashback: +${result.cashback_earned.toFixed(2)} UP`);
-      setSelectedCard(null);
-      setSelectedAmount(null);
+      setPurchaseResult(result);
       await refreshUser();
       if (onPurchase) onPurchase();
-      // Refresh sim balance
       simAPI.getMySim().then(setSim).catch(() => {});
     } catch (err) {
       toast.error(err.message);
     }
     setPurchasing(false);
+  };
+
+  const closePurchaseDialog = () => {
+    setSelectedCard(null);
+    setSelectedAmount(null);
+    setPurchaseResult(null);
   };
 
   const handleLinkCard = async () => {
@@ -109,7 +113,7 @@ export default function GiftCardSection({ onPurchase }) {
       </div>
 
       {/* Purchase Dialog */}
-      <Dialog open={!!selectedCard && !showLinkCard} onOpenChange={(open) => { if (!open) { setSelectedCard(null); setSelectedAmount(null); } }}>
+      <Dialog open={!!selectedCard && !showLinkCard} onOpenChange={(open) => { if (!open) closePurchaseDialog(); }}>
         <DialogContent className="max-w-sm mx-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -118,7 +122,61 @@ export default function GiftCardSection({ onPurchase }) {
             </DialogTitle>
           </DialogHeader>
 
-          {selectedCard && !selectedAmount && (
+          {/* Purchase Success - Show Activation Code */}
+          {purchaseResult && (
+            <div className="space-y-4" data-testid="purchase-result">
+              <div className="text-center">
+                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-3">
+                  <Gift className="w-8 h-8 text-green-600" />
+                </div>
+                <p className="text-lg font-bold text-[#1A1A1A]">Acquisto completato!</p>
+                <p className="text-sm text-[#6B7280] mt-1">
+                  Gift Card {purchaseResult.brand} - {purchaseResult.amount} EUR
+                </p>
+                <p className="text-sm text-[#E85A24] font-medium mt-1">
+                  +{purchaseResult.cashback_earned?.toFixed(2)} UP cashback
+                </p>
+              </div>
+
+              {purchaseResult.activation_code && (
+                <div className="bg-[#F5F5F5] rounded-xl p-4 text-center" data-testid="activation-code-display">
+                  <p className="text-xs text-[#6B7280] mb-2">Codice Attivazione</p>
+                  <p className="text-xl font-bold font-mono text-[#1A1A1A] tracking-wider select-all break-all">
+                    {purchaseResult.activation_code}
+                  </p>
+                  <button
+                    className="mt-2 text-xs text-[#2B7AB8] hover:underline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(purchaseResult.activation_code);
+                      toast.success("Codice copiato!");
+                    }}
+                    data-testid="copy-code-btn"
+                  >
+                    Copia codice
+                  </button>
+                </div>
+              )}
+
+              {purchaseResult.api_status === "no_api" && (
+                <div className="bg-amber-50 rounded-xl p-3 text-center">
+                  <p className="text-xs text-amber-700">API brand non configurata. Il codice sara disponibile quando l'admin configurera l'API.</p>
+                </div>
+              )}
+
+              {purchaseResult.api_status && purchaseResult.api_status.startsWith("error") && (
+                <div className="bg-red-50 rounded-xl p-3 text-center">
+                  <p className="text-xs text-red-700">Errore comunicazione API brand. Contatta l'assistenza.</p>
+                </div>
+              )}
+
+              <Button className="w-full bg-[#2B7AB8] hover:bg-[#236799]" onClick={closePurchaseDialog} data-testid="close-result-btn">
+                Chiudi
+              </Button>
+            </div>
+          )}
+
+          {/* Amount Selection */}
+          {selectedCard && !selectedAmount && !purchaseResult && (
             <div className="space-y-4">
               <div className="text-center">
                 {selectedCard.logo_url ? (
@@ -152,7 +210,7 @@ export default function GiftCardSection({ onPurchase }) {
             </div>
           )}
 
-          {selectedCard && selectedAmount && (
+          {selectedCard && selectedAmount && !purchaseResult && (
             <div className="space-y-4">
               <div className="bg-[#F5F5F5] rounded-xl p-4 text-center">
                 <p className="text-sm text-[#6B7280]">Gift Card {selectedCard.brand}</p>
