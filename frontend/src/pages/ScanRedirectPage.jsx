@@ -118,8 +118,20 @@ export default function ScanRedirectPage() {
   // View menu (for merchants)
   const handleViewMenu = () => {
     if (merchantData) {
-      navigate(`/merchant/${merchantData.id}`);
+      navigate(`/menu/${merchantData.id}?ref=${qrCode}`);
     }
+  };
+
+  // View menu + register flow
+  const handleViewMenuRegister = () => {
+    if (merchantData) {
+      navigate(`/menu/${merchantData.id}?ref=${qrCode}`);
+    }
+  };
+
+  // Register + get UP + pay
+  const handleRegisterAndPay = () => {
+    navigate(`/register?ref=${qrCode}&redirect=/pay/${qrCode}`);
   };
 
   if (error) {
@@ -195,8 +207,10 @@ export default function ScanRedirectPage() {
     );
   }
 
-  // MERCHANT QR - Show Menu/Order options
-  if (recipientType === "merchant" && showInstallPrompt && !isInstalled) {
+  // MERCHANT QR - Show options based on auth state
+  if (recipientType === "merchant" && merchantData) {
+    const isLoggedIn = !!user;
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#1A1A1A] to-[#2D2D2D] flex flex-col px-6 py-8 text-white">
         {/* Header */}
@@ -205,84 +219,137 @@ export default function ScanRedirectPage() {
             <Store className="w-10 h-10" />
           </div>
           <h1 className="font-heading text-2xl font-bold mb-1">{recipientName}</h1>
-          {merchantData && (
-            <p className="text-white/60 text-sm">{merchantData.category}</p>
+          <p className="text-white/60 text-sm">{merchantData.category}</p>
+          {merchantData.address && (
+            <p className="text-white/40 text-xs mt-1">{merchantData.address}</p>
           )}
         </div>
 
-        {/* Merchant Info Card */}
-        {merchantData && (
-          <div className="bg-white/10 rounded-2xl p-4 mb-6">
-            <p className="text-white/80 text-sm line-clamp-2">{merchantData.description}</p>
-            <p className="text-white/50 text-xs mt-2">{merchantData.address}</p>
+        {/* Action Cards */}
+        <div className="flex-1 space-y-4">
+          {isLoggedIn ? (
+            <>
+              {/* REGISTERED: Option 1 - View Menu */}
+              <button
+                onClick={handleViewMenu}
+                className="w-full bg-white/10 hover:bg-white/15 rounded-2xl p-5 text-left transition-colors"
+                data-testid="qr-view-menu"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-xl bg-[#2B7AB8]/30 flex items-center justify-center">
+                    <Menu className="w-7 h-7 text-[#2B7AB8]" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-lg">Visualizza il Menu</p>
+                    <p className="text-white/60 text-sm">Scopri piatti e offerte</p>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-white/40" />
+                </div>
+              </button>
+
+              {/* REGISTERED: Option 2 - Pay */}
+              <button
+                onClick={() => navigate(`/pay/${qrCode}`, { replace: true })}
+                className="w-full bg-gradient-to-r from-[#E85A24] to-[#D14E1A] rounded-2xl p-5 text-left"
+                data-testid="qr-pay-merchant"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
+                    <UtensilsCrossed className="w-7 h-7" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-lg">Paga</p>
+                    <p className="text-white/80 text-sm">Paga il merchant direttamente</p>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-white/40" />
+                </div>
+              </button>
+            </>
+          ) : (
+            <>
+              {/* NOT REGISTERED: Option 1 - View Menu only */}
+              <button
+                onClick={handleViewMenu}
+                className="w-full bg-white/10 hover:bg-white/15 rounded-2xl p-5 text-left transition-colors"
+                data-testid="qr-view-menu-only"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-xl bg-[#2B7AB8]/30 flex items-center justify-center">
+                    <Menu className="w-7 h-7 text-[#2B7AB8]" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-lg">Visualizza il Menu</p>
+                    <p className="text-white/60 text-sm">Scopri piatti e offerte</p>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-white/40" />
+                </div>
+              </button>
+
+              {/* NOT REGISTERED: Option 2 - View Menu + Get 1 UP */}
+              <button
+                onClick={handleViewMenuRegister}
+                className="w-full bg-gradient-to-r from-[#2B7AB8] to-[#1E5F8A] rounded-2xl p-5 text-left relative overflow-hidden"
+                data-testid="qr-menu-and-up"
+              >
+                <div className="absolute top-3 right-3 bg-white/20 backdrop-blur px-3 py-1 rounded-full">
+                  <span className="text-xs font-bold">+1 UP</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
+                    <Menu className="w-7 h-7" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-lg">Menu + Ottieni 1 UP</p>
+                    <p className="text-white/80 text-sm">Registrati e guadagna il tuo primo UP</p>
+                  </div>
+                </div>
+              </button>
+
+              {/* NOT REGISTERED: Option 3 - Register + UP + Pay */}
+              <button
+                onClick={handleRegisterAndPay}
+                className="w-full bg-gradient-to-r from-[#E85A24] to-[#D14E1A] rounded-2xl p-5 text-left relative overflow-hidden"
+                data-testid="qr-register-pay"
+              >
+                <div className="absolute top-3 right-3 bg-white/20 backdrop-blur px-3 py-1 rounded-full">
+                  <span className="text-xs font-bold">+1 UP</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
+                    <Gift className="w-7 h-7" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-lg">Registrati e Paga</p>
+                    <p className="text-white/80 text-sm">Ottieni 1 UP e paga il merchant</p>
+                  </div>
+                </div>
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* PWA Install Prompt */}
+        {!isInstalled && showInstallPrompt && (
+          <div className="mt-4 bg-white/5 border border-white/10 rounded-2xl p-4">
+            <div className="flex items-center gap-3">
+              <Smartphone className="w-8 h-8 text-[#2B7AB8]" />
+              <div className="flex-1">
+                <p className="font-medium text-sm">Installa l'app</p>
+                <p className="text-xs text-white/50">Per un'esperienza migliore</p>
+              </div>
+              <Button
+                onClick={handleInstall}
+                size="sm"
+                className="bg-[#2B7AB8] hover:bg-[#236699] text-xs rounded-full"
+              >
+                Installa
+              </Button>
+            </div>
           </div>
         )}
 
-        {/* Action Cards */}
-        <div className="flex-1 space-y-4">
-          {/* View Menu Option */}
-          <button
-            onClick={handleViewMenu}
-            className="w-full bg-white/10 hover:bg-white/15 rounded-2xl p-5 text-left transition-colors"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-xl bg-[#2B7AB8]/30 flex items-center justify-center">
-                <Menu className="w-7 h-7 text-[#2B7AB8]" />
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-lg">Visualizza il Menu</p>
-                <p className="text-white/60 text-sm">Scopri le offerte e i prodotti</p>
-              </div>
-              <ArrowRight className="w-5 h-5 text-white/40" />
-            </div>
-          </button>
-
-          {/* Install & Order with Discount */}
-          <button
-            onClick={handleInstall}
-            className="w-full bg-gradient-to-r from-[#E85A24] to-[#D14E1A] rounded-2xl p-5 text-left relative overflow-hidden"
-          >
-            {/* Discount Badge */}
-            <div className="absolute top-3 right-3 bg-white/20 backdrop-blur px-3 py-1 rounded-full">
-              <span className="text-xs font-bold">-1 UP</span>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
-                <ShoppingBag className="w-7 h-7" />
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-lg">Installa ed Ordina</p>
-                <p className="text-white/80 text-sm">con 1 UP di sconto!</p>
-              </div>
-            </div>
-            
-            <div className="mt-4 pt-4 border-t border-white/20 flex items-center gap-3">
-              <Gift className="w-5 h-5 text-white/80" />
-              <span className="text-sm text-white/80">+ Guadagna 1 UP bonus alla registrazione</span>
-            </div>
-          </button>
-
-          {/* Pay Directly */}
-          <button
-            onClick={handleContinue}
-            className="w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl p-5 text-left transition-colors"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-xl bg-green-500/20 flex items-center justify-center">
-                <UtensilsCrossed className="w-7 h-7 text-green-500" />
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-lg">Paga Direttamente</p>
-                <p className="text-white/60 text-sm">Continua nel browser</p>
-              </div>
-              <ArrowRight className="w-5 h-5 text-white/40" />
-            </div>
-          </button>
-        </div>
-
         <p className="text-center text-xs text-white/40 mt-6">
-          myunionpay-test.it • Paga. Guadagna. Unisciti.
+          myunionpay-test.it
         </p>
       </div>
     );

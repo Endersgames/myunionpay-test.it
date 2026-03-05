@@ -93,41 +93,31 @@ export default function GiftCardSection({ onPurchase }) {
             <button
               key={card.id}
               onClick={() => { setSelectedCard(card); setSelectedAmount(null); }}
-              className="relative bg-white rounded-xl border border-black/5 overflow-hidden hover:shadow-md transition-shadow active:scale-[0.97]"
+              className="relative bg-white rounded-xl border border-black/5 overflow-hidden hover:shadow-md transition-shadow active:scale-[0.97] flex flex-col"
               style={{ aspectRatio: "1.586/1" }}
               data-testid={`giftcard-${card.brand.toLowerCase().replace(/[.\s]/g, '-')}`}
             >
-              {card.logo_url ? (
-                <>
-                  {/* Full-bleed logo */}
+              {/* Logo area - top */}
+              <div className="flex-1 min-h-0 overflow-hidden">
+                {card.logo_url ? (
                   <img
                     src={card.logo_url}
                     alt={card.brand}
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="w-full h-full object-cover"
                   />
-                  {/* Bottom gradient overlay for text readability */}
-                  <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 px-2.5 py-1.5 flex items-center justify-between">
-                    <span className="text-xs font-semibold text-white truncate drop-shadow">{card.brand}</span>
-                    <span className="text-[10px] font-bold text-white bg-white/25 backdrop-blur-sm px-1.5 py-0.5 rounded-full shrink-0 ml-1">
-                      {card.cashback_percent}%
-                    </span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  {/* Default icon card */}
-                  <div className="absolute inset-0 flex items-center justify-center pb-7" style={{ backgroundColor: card.logo_color + "0A" }}>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: card.logo_color + "0A" }}>
                     <Icon className="w-12 h-12" style={{ color: card.logo_color }} />
                   </div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white/95 to-transparent px-2.5 py-2 flex items-center justify-between">
-                    <span className="text-xs font-semibold text-[#1A1A1A] truncate">{card.brand}</span>
-                    <span className="text-[10px] font-bold text-[#E85A24] bg-[#E85A24]/10 px-1.5 py-0.5 rounded-full shrink-0 ml-1">
-                      {card.cashback_percent}%
-                    </span>
-                  </div>
-                </>
-              )}
+                )}
+              </div>
+              {/* Name + cashback - bottom */}
+              <div className="px-2.5 py-1.5 flex items-center justify-between bg-white border-t border-black/5">
+                <span className="text-xs font-semibold text-[#1A1A1A] truncate">{card.brand}</span>
+                <span className="text-[10px] font-bold text-[#E85A24] bg-[#E85A24]/10 px-1.5 py-0.5 rounded-full shrink-0 ml-1">
+                  {card.cashback_percent}%
+                </span>
+              </div>
             </button>
           );
         })}

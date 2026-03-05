@@ -24,6 +24,8 @@ import ScanRedirectPage from "@/pages/ScanRedirectPage";
 import SimActivationPage from "@/pages/SimActivationPage";
 import SimDashboardPage from "@/pages/SimDashboardPage";
 import AdminGiftCardsPage from "@/pages/AdminGiftCardsPage";
+import PublicMenuPage from "@/pages/PublicMenuPage";
+import MenuManagePage from "@/pages/MenuManagePage";
 import ChromePromptBanner from "@/components/ChromePromptBanner";
 
 // Auth Context
@@ -146,6 +148,7 @@ function App() {
           <Route path="/pay/:qrCode" element={<ProtectedRoute><PaymentPage /></ProtectedRoute>} />
           <Route path="/marketplace" element={<ProtectedRoute><MarketplacePage /></ProtectedRoute>} />
           <Route path="/merchant/:id" element={<MerchantDetailPage />} />
+          <Route path="/menu/:merchantId" element={<PublicMenuPage />} />
           <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
           <Route path="/merchant-dashboard" element={<ProtectedRoute><MerchantDashboardPage /></ProtectedRoute>} />
@@ -153,6 +156,7 @@ function App() {
           <Route path="/sim-activation" element={<ProtectedRoute><SimActivationPage /></ProtectedRoute>} />
           <Route path="/sim-dashboard" element={<ProtectedRoute><SimDashboardPage /></ProtectedRoute>} />
           <Route path="/admin/giftcards" element={<ProtectedRoute><AdminGiftCardsPage /></ProtectedRoute>} />
+          <Route path="/menu-manage" element={<ProtectedRoute><MenuManagePage /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

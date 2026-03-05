@@ -442,7 +442,49 @@ export const giftcardAPI = {
   }
 };
 
-// Common constants
+// ========================
+// MENU API
+// ========================
+
+export const menuAPI = {
+  async getMyItems() {
+    return apiRequest('/menu/my-items');
+  },
+  async createItem(data) {
+    return apiRequest('/menu/items', { method: 'POST', body: JSON.stringify(data) });
+  },
+  async updateItem(itemId, data) {
+    return apiRequest(`/menu/items/${itemId}`, { method: 'PUT', body: JSON.stringify(data) });
+  },
+  async deleteItem(itemId) {
+    return apiRequest(`/menu/items/${itemId}`, { method: 'DELETE' });
+  },
+  async uploadItemImage(itemId, file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const headers = {};
+    const token = getAuthToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await fetch(`/api/menu/items/${itemId}/image`, { method: 'POST', headers, body: formData });
+    if (!response.ok) throw new Error('Errore upload immagine');
+    return response.json();
+  },
+  async uploadCoverImage(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const headers = {};
+    const token = getAuthToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await fetch('/api/menu/cover-image', { method: 'POST', headers, body: formData });
+    if (!response.ok) throw new Error('Errore upload copertina');
+    return response.json();
+  },
+  async getPublicMenu(merchantId) {
+    const response = await fetch(`/api/menu/public/${merchantId}`);
+    if (!response.ok) throw new Error('Menu non disponibile');
+    return response.json();
+  },
+};
 export const PROFILE_TAGS = [
   "tech", "fashion", "food", "fitness", "travel", 
   "music", "sports", "gaming", "beauty", "health",

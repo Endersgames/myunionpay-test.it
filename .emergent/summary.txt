@@ -1,0 +1,185 @@
+<analysis>**original_problem_statement:**
+The user aims to build myunionpay-test.it, a comprehensive PWA payments application using FastAPI and MongoDB.
+
+Key Features:
+1.  **PWA Functionality:** A fully installable Progressive Web App.
+2.  **Conto UP:** A Revolut-style account with a virtual card, IBAN, and simulated EUR balance.
+3.  **Gift Card System:**
+    *   Admin panel () to add/manage gift cards, including cashback rates and custom logos.
+    *   Admins can configure brand-specific APIs for real-time gift card activation upon purchase.
+    *   Users purchase gift cards with real EUR, either from their Conto UP balance or via a credit card processed by GestPay/Axerve.
+4.  **Merchant & Menu System:**
+    *   Merchants (specifically restaurants/bars) can create and manage a detailed, multi-lingual menu (in 5 languages) with fields for origin, calories, and health notes.
+    *   Merchants can customize their public page with a cover image.
+    *   Users scan a merchant's QR code to view the menu and pay. The flow differs for registered vs. non-registered users to incentivize sign-ups.
+5.  **Referral & Points System:** Users have QR/referral codes to earn UP points.
+6.  **Payment Gateway:** Integration with GestPay/Axerve for real credit card processing (currently in sandbox mode).
+7.  **Custom Domain:** The app must be fully functional on the user's custom domain, .
+
+**User's preferred language**: Italian
+
+**what currently exists?**
+The application is a functional PWA with a modular FastAPI backend and a React frontend. The critical, long-standing login issue on the custom domain has been resolved.
+
+Current features include:
+-   Robust user authentication (registration, login, password hashing).
+-   A fully integrated GestPay/Axerve sandbox for credit card payments and tokenization.
+-   An advanced gift card system where admins can configure card details, logos, and external API endpoints for activation.
+-   A unified transaction history that aggregates payments from all sources (P2P, Gift Cards, GestPay).
+-   The backend and public-facing frontend for a new, complex, multi-lingual merchant menu system.
+-   A QR code scanning flow that correctly directs to the current domain and handles registered vs. non-registered users differently.
+-   A service worker with cache versioning to ensure new deployments are correctly loaded by users.
+
+**Last working item**:
+    - Last item agent was working: Implementing the complex merchant menu feature. The agent created the backend models (multi-lingual), API endpoints, the public-facing menu page (with language switching), and updated the QR code scanning page () to handle the new user flow (registered vs. unregistered).
+    - Status: IN PROGRESS
+    - Agent Testing Done: Y
+    - Which testing method agent to use? The backend API was tested with . The frontend public menu and QR scan pages were verified with screenshots. The next step is to build the merchant-facing UI to manage the menu.
+    - User Testing Done: N
+
+**All Pending/In progress Issue list**:
+  - Issue 1: Made with Emergent Badge (P2)
+
+  Issues Detail:
+  - **Issue 1:** Made with Emergent Badge
+     - **Attempted fixes:** None, this is a platform feature.
+     - **Next debug checklist:** Reiterate to the user that this is injected by the platform for preview environments and cannot be removed from the code. Direct them to support for inquiries about its removal in production.
+     - **Why fix this issue and what will be achieved with the fix?** Manages user expectations regarding branding.
+     - **Status:** NOT STARTED
+     - **Is recurring issue?** Y
+     - **Should Test frontend/backend/both after fix?** NA
+     - **Blocked on other issue:** None
+
+**In progress Task List**:
+  - Task 1: Complete Merchant Menu & Dashboard Feature (P0)
+
+ Task Detail:
+  - **Task 1:** Complete Merchant Menu & Dashboard Feature
+     - **Where to resume:** The backend APIs and public-facing menu page are complete. The next critical step is to build the merchant-facing UI at **/app/frontend/src/pages/MerchantMenuPage.jsx**. This page should allow a logged-in merchant to:
+        1.  Upload/change their custom cover image.
+        2.  Create, edit, and delete menu categories.
+        3.  Create, edit, and delete menu items within those categories, including all multi-lingual fields (name, description), price, origin, calories, and health notes.
+     - **What will be achieved with this?** This will complete the core functionality of the merchant menu feature, a major user request.
+     - **Status:** IN PROGRESS
+     - **Should Test frontend/backend/both after fix?** both
+     - **Blocked on something:** None
+
+**Upcoming and Future Tasks**
+- **Upcoming Tasks:**
+    - **P1: Finalize PWA Installation Flow:** Ensure the PWA auto-install process is simple, robust, and intuitive for both iOS and Android users, as specifically requested.
+    - **P2: Implement Pay Merchant Flow:** Connect the Pay Merchant button on the QR scan page to the GestPay payment processing flow.
+- **Future Tasks:**
+    - **P3: Move GestPay to Production:** Switch from the GestPay sandbox to a production environment by updating the API endpoint, Shop Login, and API Key in the  file.
+    - **P4: Re-implement Push Notifications:** Review and implement a robust push notification system.
+
+**Completed work in this session**
+- **CRITICAL LOGIN FIX:** Resolved the blocking custom domain login failure. This involved fixing the database seed script to not overwrite existing users, making login case-insensitive, adding robust logging, and improving frontend error display.
+- **GestPay/Axerve Payment Gateway Integration:** Fully integrated the GestPay sandbox, including payment creation, execution with test cards, tokenization, and handling server-to-server callbacks.
+- **Gift Card API Activation Feature:** Implemented a system for admins to configure brand-specific API endpoints (URL, method, auth) that are automatically called to activate a gift card upon purchase.
+- **Unified Transaction History:** Refactored the backend to aggregate all transaction types (P2P, Gift Card, GestPay) into a single, unified history view on the dashboard, with unique icons for each type.
+- **Critical Bug Fix (Cashback on Failed Payment):** Fixed a critical bug where cashback was incorrectly awarded even for failed (KO) GestPay transactions by properly checking the .
+- **UI/UX Enhancements:**
+    - Redesigned gift card components to have credit-card proportions with better logo scaling.
+    - Improved payment forms with better input validation and clearer error messages from the backend.
+- **QR Code & Caching Fixes:**
+    - Corrected the QR code generation to use , ensuring it always points to the correct domain (live vs. preview).
+    - Implemented service worker versioning to force cache invalidation on new deployments, resolving issues where users saw outdated code.
+- **Merchant Menu (Phase 1):** Built the backend models/API and the public-facing, multi-lingual menu page. Implemented the new QR code scanning flow logic.
+
+**Earlier issues found/mentioned but not fixed**
+   - **Issue 1:** The Made with Emergent badge remains a user concern, but it is a platform feature.
+
+**Known issue recurrence from previous fork**
+  - **Login on Custom Domain:** This was a severe, recurring issue that is now **RESOLVED**.
+
+**Code Architecture**
+
+
+**Key Technical Concepts**
+- **Backend:** FastAPI, Pydantic, MongoDB, JWT authentication.
+- **Frontend:** React, React Router, Axios, Context API, PWA (Service Workers).
+- **Payment Integration:** Integration with GestPay/Axerve REST APIs for payment processing and tokenization using .
+- **Data Aggregation:** Using MongoDB aggregation pipelines to create a unified transaction history from multiple collections.
+- **Multi-lingual Support:** Data models and frontend components designed to handle content in multiple languages.
+
+**key DB schema**
+-   **users**: 
+-   **merchants**:  (will be linked to a menu)
+-   **gift_cards**: 
+-   **menus**: 
+-   **transactions**, **giftcard_purchases**, **gestpay_transactions**: Separate collections for different transaction types, now aggregated in the API.
+
+**changes in tech stack**
+-   Added  to the backend for making external API calls to GestPay and brand activation endpoints.
+
+**All files of reference**
+*   **/app/backend/routes/auth.py**: Contains the fixed login logic.
+*   **/app/backend/services/seed.py**: Contains the fixed database seeding logic.
+*   **/app/backend/services/gestpay.py**: Core logic for GestPay/Axerve integration.
+*   **/app/backend/routes/gestpay.py**: API endpoints for processing payments via GestPay.
+*   **/app/backend/routes/menu.py**: API endpoints for managing merchant menus.
+*   **/app/frontend/src/pages/MerchantMenuPage.jsx**: **Next file to implement.** This is for merchants to manage their menu.
+*   **/app/frontend/src/pages/PublicMenuPage.jsx**: The public-facing, multi-lingual menu page.
+*   **/app/frontend/src/pages/ScanRedirectPage.jsx**: Contains the updated logic for handling QR code scans.
+*   **/app/frontend/src/components/GiftCardSection.jsx**: Contains the updated gift card purchase flow with the GestPay integration.
+*   **/app/public/service-worker.js**: Contains the cache-busting versioning logic.
+
+**key api endpoints**
+-   : (Fixed)
+-   : Processes a payment using GestPay with card details.
+-   : Processes a payment using a saved token.
+-   : Server-to-server callback endpoint for GestPay.
+-   : (GET) Fetches a merchant's public menu.
+-   : (GET, PUT) Endpoints for a merchant to manage their own menu.
+-   : (GET) Unified transaction history for the logged-in user.
+
+**Critical Info for New Agent**
+-   The critical login bug is **FIXED**. Do not spend time investigating it. The user has confirmed the fix after deployment.
+-   The new top priority is to **complete the merchant menu feature** by building the merchant-facing management page ().
+-   The GestPay integration is currently in **SANDBOX mode**. All payments use test cards. Do not use real cards. The only Visa card that works reliably in the sandbox is .
+-   The QR code redirection issue was caused by browser caching and was fixed by versioning the **service worker**. If the user reports a similar issue after deployment, the first step is to advise them to do a hard refresh or clear site data.
+
+**documents and test reports created in this job**
+  - /app/memory/PRD.md (updated)
+  - /app/test_reports/iteration_2.json
+  - /app/test_reports/iteration_3.json
+
+**Last 10 User Messages and any pending HUMAN messages** 
+10. **User:** Requests a complex merchant menu feature with a multi-lingual editor, cover image, and a new QR code flow. (In Progress)
+9.  **User:** Asks how to keep the agent awake 24/7. (Answered)
+8.  **User:** Asks what is required to take the app live with real users. (Answered)
+7.  **User:** Reports the QR code still points to an old link after deployment. (Resolved, was a service worker cache issue)
+6.  **User:** Asks what IP address to enter in the GestPay sandbox configuration. (Answered)
+5.  **User:** Asks what callback URLs to configure in the GestPay sandbox. (Answered)
+4.  **User:** Provides the GestPay Shop Login and API Key to begin integration. (Acknowledged)
+3.  **User:** Reports that some transactions are not visible in the history. (Resolved, by creating a unified history endpoint)
+2.  **User:** Reports that cashback was credited even for a failed (KO) transaction. (Resolved, critical bug fix)
+1.  **User:** Requests UI changes to the gift card display: make the logo bigger and adapt to card proportions. (Completed)
+
+**Project Health Check:**
+-   **Broken:** None. The critical login blocker has been resolved.
+-   **Mocked:**
+    -   Conto UP banking operations (transfers, top-ups) are still simulated.
+    -   Gift card API activations point to a mock service () until real brand APIs are configured by the admin.
+
+**3rd Party Integrations**
+-   **html5-qrcode**: Frontend library for QR code scanning.
+-   **qrcode.react**: Frontend library for generating QR codes.
+-   **GestPay / Axerve**: Payment gateway for credit card processing. Integrated in SANDBOX mode.
+
+**Testing status**
+  - Testing agent used after significant changes: YES. Used after the login fix and after implementing the gift card API feature. All tests passed.
+  - Troubleshoot agent used after agent stuck in loop: NO
+  - Test files created: []
+  - Known regressions: None. The major login regression was fixed.
+
+**Credentials to test flow:**
+-   **Standard User:**  / 
+-   **Admin User:**  / 
+-   **GestPay Sandbox Test Card (Visa):**
+    -   Number: 
+    -   Expiry: Any future date (e.g., )
+    -   CVV: 
+
+**What agent forgot to execute**
+The agent has been on track and addressed all recent user requests. The next step of building the merchant menu management UI is correctly identified and is the logical continuation of the current task.</analysis>

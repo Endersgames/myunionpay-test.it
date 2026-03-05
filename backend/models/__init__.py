@@ -87,7 +87,8 @@ class MerchantResponse(BaseModel):
     description: str
     category: str
     address: str
-    image_url: Optional[str]
+    image_url: Optional[str] = None
+    cover_image_url: Optional[str] = None
     qr_code: str
     created_at: str
 
