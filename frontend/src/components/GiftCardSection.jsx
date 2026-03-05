@@ -86,29 +86,34 @@ export default function GiftCardSection({ onPurchase }) {
         <span className="text-xs text-[#6B7280] ml-auto">cashback in UP</span>
       </div>
 
-      <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {cards.map((card) => {
           const Icon = categoryIcons[card.category] || Gift;
           return (
             <button
               key={card.id}
               onClick={() => { setSelectedCard(card); setSelectedAmount(null); }}
-              className="relative bg-white rounded-xl border border-black/5 p-3 flex flex-col items-center gap-2 hover:shadow-md transition-shadow active:scale-95"
+              className="relative bg-white rounded-xl border border-black/5 overflow-hidden hover:shadow-md transition-shadow active:scale-[0.97]"
+              style={{ aspectRatio: "1.586/1" }}
               data-testid={`giftcard-${card.brand.toLowerCase().replace(/[.\s]/g, '-')}`}
             >
-              {card.logo_url ? (
-                <img src={card.logo_url} alt={card.brand} className="w-10 h-10 rounded-lg object-contain" />
-              ) : (
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: card.logo_color + "18" }}>
-                  <Icon className="w-5 h-5" style={{ color: card.logo_color }} />
-                </div>
-              )}
-              <span className="text-xs font-semibold text-[#1A1A1A] text-center leading-tight truncate w-full">
-                {card.brand}
-              </span>
-              <span className="text-[10px] font-bold text-[#E85A24] bg-[#E85A24]/10 px-1.5 py-0.5 rounded-full">
-                {card.cashback_percent}%
-              </span>
+              {/* Logo area - fills top */}
+              <div className="absolute inset-0 flex items-center justify-center p-3 pb-8">
+                {card.logo_url ? (
+                  <img src={card.logo_url} alt={card.brand} className="w-full h-full object-contain" />
+                ) : (
+                  <div className="w-full h-full rounded-lg flex items-center justify-center" style={{ backgroundColor: card.logo_color + "0A" }}>
+                    <Icon className="w-12 h-12" style={{ color: card.logo_color }} />
+                  </div>
+                )}
+              </div>
+              {/* Brand name + cashback at bottom */}
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white/95 to-transparent px-2.5 py-2 flex items-center justify-between">
+                <span className="text-xs font-semibold text-[#1A1A1A] truncate">{card.brand}</span>
+                <span className="text-[10px] font-bold text-[#E85A24] bg-[#E85A24]/10 px-1.5 py-0.5 rounded-full shrink-0 ml-1">
+                  {card.cashback_percent}%
+                </span>
+              </div>
             </button>
           );
         })}
