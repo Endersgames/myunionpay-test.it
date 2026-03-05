@@ -122,10 +122,10 @@ export default function ScanRedirectPage() {
     }
   };
 
-  // View menu + register flow
+  // View menu + register first to get UP
   const handleViewMenuRegister = () => {
     if (merchantData) {
-      navigate(`/menu/${merchantData.id}?ref=${qrCode}`);
+      navigate(`/register?ref=${qrCode}&redirect=/menu/${merchantData.id}`);
     }
   };
 
