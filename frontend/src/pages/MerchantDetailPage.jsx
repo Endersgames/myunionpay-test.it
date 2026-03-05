@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/App";
-import { ArrowLeft, MapPin, QrCode, Send, Store } from "lucide-react";
+import { ArrowLeft, MapPin, QrCode, Send, Store, UtensilsCrossed } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import QRCode from "@/components/QRCode";
 
 // API
 import { merchantAPI } from "@/lib/api";
+
+const MENU_CATEGORIES = ["ristorante", "bar", "caffetteria", "alimentari", "pizzerie"];
 
 const CATEGORY_IMAGES = {
   "Ristorante": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800",
@@ -70,7 +72,8 @@ export default function MerchantDetailPage() {
     );
   }
 
-  const imageUrl = merchant.image_url || CATEGORY_IMAGES[merchant.category] || CATEGORY_IMAGES["Altro"];
+  const coverUrl = merchant.cover_image_url || merchant.image_url || CATEGORY_IMAGES[merchant.category] || CATEGORY_IMAGES["Altro"];
+  const hasMenu = MENU_CATEGORIES.some(c => (merchant.category || "").toLowerCase().includes(c));
 
   return (
     <div className="min-h-screen bg-white">
@@ -78,7 +81,7 @@ export default function MerchantDetailPage() {
       <div className="relative h-64">
         <div 
           className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${imageUrl})` }}
+          style={{ backgroundImage: `url(${coverUrl})` }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#050505] to-transparent" />
         <button 
@@ -107,6 +110,16 @@ export default function MerchantDetailPage() {
 
         {/* Actions */}
         <div className="space-y-3 mb-8">
+          {hasMenu && (
+            <Button
+              onClick={() => navigate(`/menu/${merchant.id}`)}
+              className="w-full h-14 rounded-full bg-[#E85A24] hover:bg-[#D14E1A] text-lg font-semibold"
+              data-testid="view-menu-btn"
+            >
+              <UtensilsCrossed className="w-5 h-5 mr-2" />
+              Vedi Menu
+            </Button>
+          )}
           <Button
             onClick={() => navigate(`/pay/${merchant.qr_code}`)}
             className="w-full h-14 rounded-full bg-[#2B7AB8] hover:bg-[#236699] text-lg font-semibold glow-primary"
