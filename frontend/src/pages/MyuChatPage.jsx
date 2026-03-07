@@ -127,6 +127,11 @@ export default function MyuChatPage() {
   const handleAction = (action) => {
     if (action.type === "navigate" && action.path) {
       navigate(action.path);
+    } else if (action.type === "create_task") {
+      setShowTasks(true);
+      toast.success(`Task "${action.title}" creato!`);
+    } else if (action.type === "suggest_merchant" && action.merchant_id) {
+      navigate(`/merchant/${action.merchant_id}`);
     }
   };
 
