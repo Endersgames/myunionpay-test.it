@@ -1,185 +1,623 @@
 <analysis>**original_problem_statement:**
-The user aims to build myunionpay-test.it, a comprehensive PWA payments application using FastAPI and MongoDB.
+The user's goal is to build a comprehensive PWA payments application named myUup.com.
 
-Key Features:
+**Initial High-Level Requirements:**
 1.  **PWA Functionality:** A fully installable Progressive Web App.
-2.  **Conto UP:** A Revolut-style account with a virtual card, IBAN, and simulated EUR balance.
-3.  **Gift Card System:**
-    *   Admin panel () to add/manage gift cards, including cashback rates and custom logos.
-    *   Admins can configure brand-specific APIs for real-time gift card activation upon purchase.
-    *   Users purchase gift cards with real EUR, either from their Conto UP balance or via a credit card processed by GestPay/Axerve.
-4.  **Merchant & Menu System:**
-    *   Merchants (specifically restaurants/bars) can create and manage a detailed, multi-lingual menu (in 5 languages) with fields for origin, calories, and health notes.
-    *   Merchants can customize their public page with a cover image.
-    *   Users scan a merchant's QR code to view the menu and pay. The flow differs for registered vs. non-registered users to incentivize sign-ups.
-5.  **Referral & Points System:** Users have QR/referral codes to earn UP points.
-6.  **Payment Gateway:** Integration with GestPay/Axerve for real credit card processing (currently in sandbox mode).
-7.  **Custom Domain:** The app must be fully functional on the user's custom domain, .
+2.  **Conto UP:** A Revolut-style account with a virtual card, IBAN, and simulated EUR balance (planned via Treezor integration).
+3.  **Gift Card System:** An admin-managed system for creating and selling gift cards with cashback and brand-specific API activation.
+4.  **Merchant & Menu System:** A complex, multi-lingual menu system for restaurant/bar merchants, accessible via QR code.
+5.  **Referral & Points System:** Users earn UP points via referral codes.
+6.  **Payment Gateway:** Integration with GestPay/Axerve for credit card processing.
+
+**Recently Added Major Features:**
+1.  **AI Companion MYU:** A friendly, in-app personal shopper/assistant to help users navigate the app, manage tasks, and discover merchants. It features a custom animated mascot, intent classification, task management, and a cost of 0.01 UP per interaction, using an economical LLM via the Emergent LLM Key.
+2.  **Advanced Notification Hub:** A dynamic notification center where merchants can send templated, media-rich (images) notifications to users about promos, events, and menu updates. MYU interacts within this hub to guide users.
+3.  **New Admin/Merchant Panels:**
+    *   **Merchant Area (Utenti Presentati):** A dashboard for merchants to view users who registered with their referral code.
+    *   **Admin Area (Utenti):** A comprehensive user management dashboard for admins.
+    *   **Admin Area (OpenAI API):** A configuration panel for the AI integration.
 
 **User's preferred language**: Italian
 
 **what currently exists?**
-The application is a functional PWA with a modular FastAPI backend and a React frontend. The critical, long-standing login issue on the custom domain has been resolved.
-
-Current features include:
--   Robust user authentication (registration, login, password hashing).
--   A fully integrated GestPay/Axerve sandbox for credit card payments and tokenization.
--   An advanced gift card system where admins can configure card details, logos, and external API endpoints for activation.
--   A unified transaction history that aggregates payments from all sources (P2P, Gift Cards, GestPay).
--   The backend and public-facing frontend for a new, complex, multi-lingual merchant menu system.
--   A QR code scanning flow that correctly directs to the current domain and handles registered vs. non-registered users differently.
--   A service worker with cache versioning to ensure new deployments are correctly loaded by users.
+The application is a full-stack PWA (React + FastAPI + MongoDB) rebranded as myUup.com.
+- **Core Features:** User authentication, GestPay sandbox integration, and a gift card system are functional.
+- **Merchant Menu:** The multi-lingual merchant menu feature is complete, including the backend, public-facing menu page, and the merchant-facing management UI. Demo data has been populated.
+- **AI Companion (MYU):** A highly sophisticated AI companion, MYU, is fully integrated. It includes a frontend chat interface, a custom animated mascot visible across the app, a backend service for intent classification and task management, and is powered by an LLM using the Emergent universal key.
+- **Notification System:** A new, dynamic notification hub allows merchants to send templated notifications with promotional images and CTAs. MYU is also integrated into this page to provide a lively, interactive experience.
+- **Admin/Merchant Panels:** The foundational files (backend routes, frontend pages) for the new Referred Users, Admin User Management, and Admin AI Config sections have been created, but the implementation is incomplete.
 
 **Last working item**:
-    - Last item agent was working: Implementing the complex merchant menu feature. The agent created the backend models (multi-lingual), API endpoints, the public-facing menu page (with language switching), and updated the QR code scanning page () to handle the new user flow (registered vs. unregistered).
-    - Status: IN PROGRESS
-    - Agent Testing Done: Y
-    - Which testing method agent to use? The backend API was tested with . The frontend public menu and QR scan pages were verified with screenshots. The next step is to build the merchant-facing UI to manage the menu.
+    - Last item agent was working: The agent was implementing three new sections as requested by the user: Utenti Presentati (Referred Users) for merchants, Utenti (User Management) for admins, and OpenAI API (AI Configuration) for admins. It created the placeholder files for both the frontend and backend.
+    - Status: BLOCKED
+    - Agent Testing Done: N
+    - Which testing method agent to use? backend testing agent. The first step should be to check the backend logs (==> /var/log/supervisor/backend.err.log <==
+INFO:     Finished server process [3288]
+INFO:     Started server process [3784]
+INFO:     Waiting for application startup.
+2026-03-07 10:57:29,896 - seed - INFO - Seed check: 25 users found in database
+2026-03-07 10:57:30,118 - seed - INFO - Seed password fix: updated 12 seed users
+INFO:     Application startup complete.
+2026-03-07 10:57:33,284 - auth - INFO - Login attempt for: test@test.com
+2026-03-07 10:57:33,506 - auth - INFO - Login success for: test@test.com
+2026-03-07 10:57:34,687 - auth - INFO - Login attempt for: admin@test.com
+2026-03-07 10:57:34,909 - auth - INFO - Login success for: admin@test.com
+2026-03-07 10:57:35,609 - auth - INFO - Login attempt for: test@test.com
+2026-03-07 10:57:35,831 - auth - INFO - Login success for: test@test.com
+2026-03-07 10:59:22,413 - auth - INFO - Login attempt for: admin@test.com
+2026-03-07 10:59:22,635 - auth - INFO - Login success for: admin@test.com
+2026-03-07 10:59:43,509 - auth - INFO - Login attempt for: admin@test.com
+2026-03-07 10:59:43,731 - auth - INFO - Login success for: admin@test.com
+2026-03-07 11:00:16,443 - auth - INFO - Login attempt for: test@test.com
+2026-03-07 11:00:16,666 - auth - INFO - Login success for: test@test.com
+2026-03-07 11:00:44,785 - auth - INFO - Login attempt for: test@test.com
+2026-03-07 11:00:45,009 - auth - INFO - Login success for: test@test.com
+2026-03-07 11:03:37,599 - auth - INFO - Login attempt for: test@test.com
+2026-03-07 11:03:37,823 - auth - INFO - Login success for: test@test.com
+2026-03-07 11:04:04,697 - auth - INFO - Login attempt for: test@test.com
+2026-03-07 11:04:04,919 - auth - INFO - Login success for: test@test.com
+2026-03-07 11:04:22,657 - auth - INFO - Login attempt for: admin@test.com
+2026-03-07 11:04:22,879 - auth - INFO - Login success for: admin@test.com
+2026-03-07 11:04:43,753 - auth - INFO - Login attempt for: admin@test.com
+2026-03-07 11:04:43,976 - auth - INFO - Login success for: admin@test.com
+2026-03-07 11:06:13,262 - auth - INFO - Login attempt for: test@test.com
+2026-03-07 11:06:13,484 - auth - INFO - Login success for: test@test.com
+2026-03-07 11:06:13,719 - auth - INFO - Login attempt for: admin@test.com
+2026-03-07 11:06:13,941 - auth - INFO - Login success for: admin@test.com
+2026-03-07 11:06:14,180 - auth - INFO - Login attempt for: luca.bianchi@test.com
+2026-03-07 11:06:14,404 - auth - INFO - Login success for: luca.bianchi@test.com
+2026-03-07 11:07:03,022 - auth - INFO - Login attempt for: luca.bianchi@test.com
+2026-03-07 11:07:03,244 - auth - INFO - Login success for: luca.bianchi@test.com
+[92m11:07:43 - LiteLLM:INFO[0m: utils.py:3427 - 
+LiteLLM completion() model= gpt-4.1-nano; provider = openai
+2026-03-07 11:07:43,752 - LiteLLM - INFO - 
+LiteLLM completion() model= gpt-4.1-nano; provider = openai
+[92m11:07:44 - LiteLLM:INFO[0m: utils.py:1307 - Wrapper: Completed Call, calling success_handler
+2026-03-07 11:07:44,701 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+WARNING:  WatchFiles detected changes in 'tests/test_auth_comprehensive.py', 'services/push.py', 'server.py', 'services/myu_ai.py', 'database.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3784]
+INFO:     Started server process [6179]
+INFO:     Waiting for application startup.
+2026-03-07 11:40:57,147 - seed - INFO - Seed check: 25 users found in database
+2026-03-07 11:40:57,372 - seed - INFO - Seed password fix: updated 12 seed users
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [6179]
+INFO:     Stopping reloader process [555]
+INFO:     Will watch for changes in these directories: ['/app/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [6259] using WatchFiles
+INFO:     Started server process [6261]
+INFO:     Waiting for application startup.
+2026-03-07 11:41:17,650 - seed - INFO - Seed check: 25 users found in database
+2026-03-07 11:41:17,873 - seed - INFO - Seed password fix: updated 12 seed users
+INFO:     Application startup complete.
+2026-03-07 11:47:10,091 - auth - INFO - Login attempt for: luca.bianchi@test.com
+2026-03-07 11:47:10,318 - auth - INFO - Login success for: luca.bianchi@test.com
+WARNING:  WatchFiles detected changes in 'routes/merchant_users.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [6261]
+WARNING:  WatchFiles detected changes in 'routes/admin_users.py', 'routes/admin_openai.py'. Reloading...
+INFO:     Started server process [7093]
+INFO:     Waiting for application startup.
+2026-03-07 11:57:43,071 - seed - INFO - Seed check: 25 users found in database
+2026-03-07 11:57:43,294 - seed - INFO - Seed password fix: updated 12 seed users
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'server.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [7093]
+WARNING:  WatchFiles detected changes in 'server.py'. Reloading...
+INFO:     Started server process [7132]
+INFO:     Waiting for application startup.
+2026-03-07 11:57:51,322 - seed - INFO - Seed check: 25 users found in database
+2026-03-07 11:57:51,544 - seed - INFO - Seed password fix: updated 12 seed users
+INFO:     Application startup complete.
+INFO:     Will watch for changes in these directories: ['/app/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [48] using WatchFiles
+INFO:     Started server process [85]
+INFO:     Waiting for application startup.
+2026-03-07 13:09:57,868 - seed - INFO - Seed check: 25 users found in database
+2026-03-07 13:09:58,221 - seed - INFO - Seed password fix: updated 12 seed users
+INFO:     Application startup complete.
+INFO:     Will watch for changes in these directories: ['/app/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [46] using WatchFiles
+
+==> /var/log/supervisor/backend.out.log <==
+INFO:     10.227.1.2:48958 - "GET /api/notifications/me HTTP/1.1" 200 OK
+INFO:     10.227.5.130:54384 - "GET /api/notifications/me HTTP/1.1" 200 OK
+INFO:     10.227.5.130:59768 - "PUT /api/notifications/e16882b6-6b0e-4d68-9355-0c0171057c3b/read HTTP/1.1" 200 OK
+INFO:     10.227.5.130:59766 - "PUT /api/notifications/e16882b6-6b0e-4d68-9355-0c0171057c3b/click HTTP/1.1" 200 OK
+INFO:     10.227.1.2:45772 - "PUT /api/notifications/ae41b73d-1f87-423a-9ccf-c7840ef8d818/read HTTP/1.1" 200 OK
+INFO:     10.227.1.2:45780 - "PUT /api/notifications/ae41b73d-1f87-423a-9ccf-c7840ef8d818/click HTTP/1.1" 200 OK
+INFO:     10.227.5.130:59766 - "PUT /api/notifications/697a7bf9-8bb8-44b8-a612-8458b6f2ad37/read HTTP/1.1" 200 OK
+INFO:     10.227.1.2:45780 - "PUT /api/notifications/697a7bf9-8bb8-44b8-a612-8458b6f2ad37/click HTTP/1.1" 200 OK
+INFO:     10.227.1.2:45780 - "PUT /api/notifications/5908b2d6-36bc-4923-8f3a-1a72a6616725/read HTTP/1.1" 200 OK
+INFO:     10.227.1.2:45780 - "PUT /api/notifications/5908b2d6-36bc-4923-8f3a-1a72a6616725/click HTTP/1.1" 200 OK
+INFO:     10.227.1.2:45772 - "GET /api/notifications/image/79fe5898-f797-4f68-9b77-8c248a867560.jpg HTTP/1.1" 200 OK
+INFO:     10.227.5.130:59766 - "PUT /api/notifications/6649cd47-1d73-40a1-9e2c-71294260f5fc/read HTTP/1.1" 200 OK
+INFO:     10.227.1.2:45780 - "PUT /api/notifications/6649cd47-1d73-40a1-9e2c-71294260f5fc/click HTTP/1.1" 200 OK
+INFO:     10.227.5.130:59766 - "GET /api/notifications/image/e9dbd1ca-4d02-495c-84f3-c2d779cdbdd3.jpg HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46362 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46362 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46362 - "GET /api/wallet HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46362 - "GET /api/payments/history HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46370 - "GET /api/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56372 - "GET /api/wallet HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46362 - "GET /api/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46362 - "GET /api/payments/history HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46362 - "GET /api/sim/my-sim HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56372 - "GET /api/giftcards HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46362 - "GET /api/sim/my-sim HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56372 - "GET /api/giftcards HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56372 - "GET /api/giftcards/logo/986ef34a-13b7-4250-9414-905c982c75b7.JPG HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46362 - "GET /api/giftcards/logo/71813118-8d5c-4d15-86c7-770bf43c246b.JPG HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46370 - "GET /api/giftcards/logo/d9f77699-681a-4b53-8338-e35b964d3bd8.JPG HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46370 - "GET /api/giftcards/logo/bcddd511-c663-4175-b959-2cebdccaf9cd.JPG HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46370 - "GET /api/giftcards/logo/e450314f-e3cf-42a2-b7cc-c52194a5ded8.png HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56372 - "GET /api/giftcards/logo/84869108-1d50-462f-ba11-05f47d738138.JPG HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56372 - "GET /api/giftcards/logo/1aa843df-62b9-45d3-9365-cd11ef930443.JPG HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46370 - "GET /api/giftcards/logo/4e1b3042-de51-4905-91e5-ac01b3c99437.JPG HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56372 - "GET /api/giftcards/logo/62091058-c72f-4759-828f-5642bcfe2c73.JPG HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56372 - "GET /api/giftcards/logo/e131aba1-5edb-4568-b2f9-2dcfe4b0da82.png HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46370 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46370 - "GET /api/wallet HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46370 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56378 - "GET /api/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56372 - "GET /api/payments/history HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46370 - "GET /api/wallet HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46362 - "GET /api/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56372 - "GET /api/payments/history HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56372 - "GET /api/sim/my-sim HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46362 - "GET /api/giftcards HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46362 - "GET /api/giftcards HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46370 - "GET /api/sim/my-sim HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56372 - "GET /api/giftcards/logo/986ef34a-13b7-4250-9414-905c982c75b7.JPG HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56378 - "GET /api/giftcards/logo/71813118-8d5c-4d15-86c7-770bf43c246b.JPG HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56378 - "GET /api/giftcards/logo/d9f77699-681a-4b53-8338-e35b964d3bd8.JPG HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56372 - "GET /api/giftcards/logo/bcddd511-c663-4175-b959-2cebdccaf9cd.JPG HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46370 - "GET /api/giftcards/logo/e131aba1-5edb-4568-b2f9-2dcfe4b0da82.png HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56378 - "GET /api/giftcards/logo/84869108-1d50-462f-ba11-05f47d738138.JPG HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46362 - "GET /api/giftcards/logo/1aa843df-62b9-45d3-9365-cd11ef930443.JPG HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46370 - "GET /api/giftcards/logo/4e1b3042-de51-4905-91e5-ac01b3c99437.JPG HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56372 - "GET /api/giftcards/logo/e450314f-e3cf-42a2-b7cc-c52194a5ded8.png HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56378 - "GET /api/giftcards/logo/62091058-c72f-4759-828f-5642bcfe2c73.JPG HTTP/1.1" 200 OK
+INFO:     10.227.5.130:55300 - "GET /api/profile/my-tags HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56392 - "GET /api/referrals/stats HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56402 - "GET /api/sim/my-sim HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56404 - "GET /api/tasks HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56402 - "GET /api/referrals/stats HTTP/1.1" 200 OK
+INFO:     10.227.5.130:55300 - "GET /api/sim/my-sim HTTP/1.1" 200 OK
+INFO:     10.227.5.130:55300 - "GET /api/tasks HTTP/1.1" 200 OK
+INFO:     10.227.5.130:55312 - "GET /api/profile/my-tags HTTP/1.1" 200 OK
+INFO:     10.227.1.2:54082 - "GET /api/merchants HTTP/1.1" 200 OK
+INFO:     10.227.1.2:54082 - "GET /api/merchants HTTP/1.1" 200 OK
+INFO:     10.227.5.130:38176 - "GET /api/notifications/me HTTP/1.1" 200 OK
+INFO:     10.227.1.2:34314 - "GET /api/notifications/me HTTP/1.1" 200 OK
+INFO:     10.227.5.130:38176 - "GET /api/profile/my-tags HTTP/1.1" 200 OK
+INFO:     10.227.1.2:34314 - "GET /api/referrals/stats HTTP/1.1" 200 OK
+INFO:     10.227.1.2:34314 - "GET /api/sim/my-sim HTTP/1.1" 200 OK
+INFO:     10.227.5.130:38176 - "GET /api/tasks HTTP/1.1" 200 OK
+INFO:     10.227.5.130:38182 - "GET /api/profile/my-tags HTTP/1.1" 200 OK
+INFO:     10.227.5.130:38176 - "GET /api/referrals/stats HTTP/1.1" 200 OK
+INFO:     10.227.5.130:38176 - "GET /api/tasks HTTP/1.1" 200 OK
+INFO:     10.227.1.2:34314 - "GET /api/sim/my-sim HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43338 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43338 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43338 - "GET /api/wallet HTTP/1.1" 200 OK
+INFO:     10.227.5.130:55218 - "GET /api/payments/history HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43338 - "GET /api/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43338 - "GET /api/wallet HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43338 - "GET /api/payments/history HTTP/1.1" 200 OK
+INFO:     10.227.5.130:55218 - "GET /api/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43338 - "GET /api/giftcards HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43338 - "GET /api/sim/my-sim HTTP/1.1" 200 OK
+INFO:     10.227.5.130:55218 - "GET /api/giftcards HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43338 - "GET /api/sim/my-sim HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43338 - "GET /api/giftcards/logo/bcddd511-c663-4175-b959-2cebdccaf9cd.JPG HTTP/1.1" 200 OK
+INFO:     10.227.5.130:55218 - "GET /api/giftcards/logo/4e1b3042-de51-4905-91e5-ac01b3c99437.JPG HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43342 - "GET /api/giftcards/logo/986ef34a-13b7-4250-9414-905c982c75b7.JPG HTTP/1.1" 200 OK
+INFO:     10.227.5.130:55234 - "GET /api/giftcards/logo/d9f77699-681a-4b53-8338-e35b964d3bd8.JPG HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43338 - "GET /api/giftcards/logo/71813118-8d5c-4d15-86c7-770bf43c246b.JPG HTTP/1.1" 200 OK
+INFO:     10.227.5.130:55218 - "GET /api/giftcards/logo/e450314f-e3cf-42a2-b7cc-c52194a5ded8.png HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43342 - "GET /api/giftcards/logo/62091058-c72f-4759-828f-5642bcfe2c73.JPG HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43344 - "GET /api/giftcards/logo/1aa843df-62b9-45d3-9365-cd11ef930443.JPG HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43358 - "GET /api/giftcards/logo/e131aba1-5edb-4568-b2f9-2dcfe4b0da82.png HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43338 - "GET /api/giftcards/logo/84869108-1d50-462f-ba11-05f47d738138.JPG HTTP/1.1" 200 OK) to diagnose the 502 error.
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-  - Issue 1: Made with Emergent Badge (P2)
-
+  - Issue 1: 502 Bad Gateway Error (P0)
+  - Issue 2: Made with Emergent Badge (P2)
+  
   Issues Detail:
-  - **Issue 1:** Made with Emergent Badge
-     - **Attempted fixes:** None, this is a platform feature.
-     - **Next debug checklist:** Reiterate to the user that this is injected by the platform for preview environments and cannot be removed from the code. Direct them to support for inquiries about its removal in production.
-     - **Why fix this issue and what will be achieved with the fix?** Manages user expectations regarding branding.
+  - **Issue 1:** 502 Bad Gateway Error
+     - **Attempted fixes:** The agent identified the error occurred immediately after adding the new placeholder routes for the admin and merchant panels. It did not have a chance to debug further.
+     - **Next debug checklist:**
+        1. Check backend supervisor logs for startup errors: ==> /var/log/supervisor/backend.err.log <==
+INFO:     Finished server process [3288]
+INFO:     Started server process [3784]
+INFO:     Waiting for application startup.
+2026-03-07 10:57:29,896 - seed - INFO - Seed check: 25 users found in database
+2026-03-07 10:57:30,118 - seed - INFO - Seed password fix: updated 12 seed users
+INFO:     Application startup complete.
+2026-03-07 10:57:33,284 - auth - INFO - Login attempt for: test@test.com
+2026-03-07 10:57:33,506 - auth - INFO - Login success for: test@test.com
+2026-03-07 10:57:34,687 - auth - INFO - Login attempt for: admin@test.com
+2026-03-07 10:57:34,909 - auth - INFO - Login success for: admin@test.com
+2026-03-07 10:57:35,609 - auth - INFO - Login attempt for: test@test.com
+2026-03-07 10:57:35,831 - auth - INFO - Login success for: test@test.com
+2026-03-07 10:59:22,413 - auth - INFO - Login attempt for: admin@test.com
+2026-03-07 10:59:22,635 - auth - INFO - Login success for: admin@test.com
+2026-03-07 10:59:43,509 - auth - INFO - Login attempt for: admin@test.com
+2026-03-07 10:59:43,731 - auth - INFO - Login success for: admin@test.com
+2026-03-07 11:00:16,443 - auth - INFO - Login attempt for: test@test.com
+2026-03-07 11:00:16,666 - auth - INFO - Login success for: test@test.com
+2026-03-07 11:00:44,785 - auth - INFO - Login attempt for: test@test.com
+2026-03-07 11:00:45,009 - auth - INFO - Login success for: test@test.com
+2026-03-07 11:03:37,599 - auth - INFO - Login attempt for: test@test.com
+2026-03-07 11:03:37,823 - auth - INFO - Login success for: test@test.com
+2026-03-07 11:04:04,697 - auth - INFO - Login attempt for: test@test.com
+2026-03-07 11:04:04,919 - auth - INFO - Login success for: test@test.com
+2026-03-07 11:04:22,657 - auth - INFO - Login attempt for: admin@test.com
+2026-03-07 11:04:22,879 - auth - INFO - Login success for: admin@test.com
+2026-03-07 11:04:43,753 - auth - INFO - Login attempt for: admin@test.com
+2026-03-07 11:04:43,976 - auth - INFO - Login success for: admin@test.com
+2026-03-07 11:06:13,262 - auth - INFO - Login attempt for: test@test.com
+2026-03-07 11:06:13,484 - auth - INFO - Login success for: test@test.com
+2026-03-07 11:06:13,719 - auth - INFO - Login attempt for: admin@test.com
+2026-03-07 11:06:13,941 - auth - INFO - Login success for: admin@test.com
+2026-03-07 11:06:14,180 - auth - INFO - Login attempt for: luca.bianchi@test.com
+2026-03-07 11:06:14,404 - auth - INFO - Login success for: luca.bianchi@test.com
+2026-03-07 11:07:03,022 - auth - INFO - Login attempt for: luca.bianchi@test.com
+2026-03-07 11:07:03,244 - auth - INFO - Login success for: luca.bianchi@test.com
+[92m11:07:43 - LiteLLM:INFO[0m: utils.py:3427 - 
+LiteLLM completion() model= gpt-4.1-nano; provider = openai
+2026-03-07 11:07:43,752 - LiteLLM - INFO - 
+LiteLLM completion() model= gpt-4.1-nano; provider = openai
+[92m11:07:44 - LiteLLM:INFO[0m: utils.py:1307 - Wrapper: Completed Call, calling success_handler
+2026-03-07 11:07:44,701 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+WARNING:  WatchFiles detected changes in 'tests/test_auth_comprehensive.py', 'services/push.py', 'server.py', 'services/myu_ai.py', 'database.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3784]
+INFO:     Started server process [6179]
+INFO:     Waiting for application startup.
+2026-03-07 11:40:57,147 - seed - INFO - Seed check: 25 users found in database
+2026-03-07 11:40:57,372 - seed - INFO - Seed password fix: updated 12 seed users
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [6179]
+INFO:     Stopping reloader process [555]
+INFO:     Will watch for changes in these directories: ['/app/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [6259] using WatchFiles
+INFO:     Started server process [6261]
+INFO:     Waiting for application startup.
+2026-03-07 11:41:17,650 - seed - INFO - Seed check: 25 users found in database
+2026-03-07 11:41:17,873 - seed - INFO - Seed password fix: updated 12 seed users
+INFO:     Application startup complete.
+2026-03-07 11:47:10,091 - auth - INFO - Login attempt for: luca.bianchi@test.com
+2026-03-07 11:47:10,318 - auth - INFO - Login success for: luca.bianchi@test.com
+WARNING:  WatchFiles detected changes in 'routes/merchant_users.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [6261]
+WARNING:  WatchFiles detected changes in 'routes/admin_users.py', 'routes/admin_openai.py'. Reloading...
+INFO:     Started server process [7093]
+INFO:     Waiting for application startup.
+2026-03-07 11:57:43,071 - seed - INFO - Seed check: 25 users found in database
+2026-03-07 11:57:43,294 - seed - INFO - Seed password fix: updated 12 seed users
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'server.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [7093]
+WARNING:  WatchFiles detected changes in 'server.py'. Reloading...
+INFO:     Started server process [7132]
+INFO:     Waiting for application startup.
+2026-03-07 11:57:51,322 - seed - INFO - Seed check: 25 users found in database
+2026-03-07 11:57:51,544 - seed - INFO - Seed password fix: updated 12 seed users
+INFO:     Application startup complete.
+INFO:     Will watch for changes in these directories: ['/app/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [48] using WatchFiles
+INFO:     Started server process [85]
+INFO:     Waiting for application startup.
+2026-03-07 13:09:57,868 - seed - INFO - Seed check: 25 users found in database
+2026-03-07 13:09:58,221 - seed - INFO - Seed password fix: updated 12 seed users
+INFO:     Application startup complete.
+INFO:     Will watch for changes in these directories: ['/app/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [46] using WatchFiles
+
+==> /var/log/supervisor/backend.out.log <==
+INFO:     10.227.1.2:48958 - "GET /api/notifications/me HTTP/1.1" 200 OK
+INFO:     10.227.5.130:54384 - "GET /api/notifications/me HTTP/1.1" 200 OK
+INFO:     10.227.5.130:59768 - "PUT /api/notifications/e16882b6-6b0e-4d68-9355-0c0171057c3b/read HTTP/1.1" 200 OK
+INFO:     10.227.5.130:59766 - "PUT /api/notifications/e16882b6-6b0e-4d68-9355-0c0171057c3b/click HTTP/1.1" 200 OK
+INFO:     10.227.1.2:45772 - "PUT /api/notifications/ae41b73d-1f87-423a-9ccf-c7840ef8d818/read HTTP/1.1" 200 OK
+INFO:     10.227.1.2:45780 - "PUT /api/notifications/ae41b73d-1f87-423a-9ccf-c7840ef8d818/click HTTP/1.1" 200 OK
+INFO:     10.227.5.130:59766 - "PUT /api/notifications/697a7bf9-8bb8-44b8-a612-8458b6f2ad37/read HTTP/1.1" 200 OK
+INFO:     10.227.1.2:45780 - "PUT /api/notifications/697a7bf9-8bb8-44b8-a612-8458b6f2ad37/click HTTP/1.1" 200 OK
+INFO:     10.227.1.2:45780 - "PUT /api/notifications/5908b2d6-36bc-4923-8f3a-1a72a6616725/read HTTP/1.1" 200 OK
+INFO:     10.227.1.2:45780 - "PUT /api/notifications/5908b2d6-36bc-4923-8f3a-1a72a6616725/click HTTP/1.1" 200 OK
+INFO:     10.227.1.2:45772 - "GET /api/notifications/image/79fe5898-f797-4f68-9b77-8c248a867560.jpg HTTP/1.1" 200 OK
+INFO:     10.227.5.130:59766 - "PUT /api/notifications/6649cd47-1d73-40a1-9e2c-71294260f5fc/read HTTP/1.1" 200 OK
+INFO:     10.227.1.2:45780 - "PUT /api/notifications/6649cd47-1d73-40a1-9e2c-71294260f5fc/click HTTP/1.1" 200 OK
+INFO:     10.227.5.130:59766 - "GET /api/notifications/image/e9dbd1ca-4d02-495c-84f3-c2d779cdbdd3.jpg HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46362 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46362 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46362 - "GET /api/wallet HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46362 - "GET /api/payments/history HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46370 - "GET /api/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56372 - "GET /api/wallet HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46362 - "GET /api/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46362 - "GET /api/payments/history HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46362 - "GET /api/sim/my-sim HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56372 - "GET /api/giftcards HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46362 - "GET /api/sim/my-sim HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56372 - "GET /api/giftcards HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56372 - "GET /api/giftcards/logo/986ef34a-13b7-4250-9414-905c982c75b7.JPG HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46362 - "GET /api/giftcards/logo/71813118-8d5c-4d15-86c7-770bf43c246b.JPG HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46370 - "GET /api/giftcards/logo/d9f77699-681a-4b53-8338-e35b964d3bd8.JPG HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46370 - "GET /api/giftcards/logo/bcddd511-c663-4175-b959-2cebdccaf9cd.JPG HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46370 - "GET /api/giftcards/logo/e450314f-e3cf-42a2-b7cc-c52194a5ded8.png HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56372 - "GET /api/giftcards/logo/84869108-1d50-462f-ba11-05f47d738138.JPG HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56372 - "GET /api/giftcards/logo/1aa843df-62b9-45d3-9365-cd11ef930443.JPG HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46370 - "GET /api/giftcards/logo/4e1b3042-de51-4905-91e5-ac01b3c99437.JPG HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56372 - "GET /api/giftcards/logo/62091058-c72f-4759-828f-5642bcfe2c73.JPG HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56372 - "GET /api/giftcards/logo/e131aba1-5edb-4568-b2f9-2dcfe4b0da82.png HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46370 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46370 - "GET /api/wallet HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46370 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56378 - "GET /api/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56372 - "GET /api/payments/history HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46370 - "GET /api/wallet HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46362 - "GET /api/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56372 - "GET /api/payments/history HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56372 - "GET /api/sim/my-sim HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46362 - "GET /api/giftcards HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46362 - "GET /api/giftcards HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46370 - "GET /api/sim/my-sim HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56372 - "GET /api/giftcards/logo/986ef34a-13b7-4250-9414-905c982c75b7.JPG HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56378 - "GET /api/giftcards/logo/71813118-8d5c-4d15-86c7-770bf43c246b.JPG HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56378 - "GET /api/giftcards/logo/d9f77699-681a-4b53-8338-e35b964d3bd8.JPG HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56372 - "GET /api/giftcards/logo/bcddd511-c663-4175-b959-2cebdccaf9cd.JPG HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46370 - "GET /api/giftcards/logo/e131aba1-5edb-4568-b2f9-2dcfe4b0da82.png HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56378 - "GET /api/giftcards/logo/84869108-1d50-462f-ba11-05f47d738138.JPG HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46362 - "GET /api/giftcards/logo/1aa843df-62b9-45d3-9365-cd11ef930443.JPG HTTP/1.1" 200 OK
+INFO:     10.227.5.130:46370 - "GET /api/giftcards/logo/4e1b3042-de51-4905-91e5-ac01b3c99437.JPG HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56372 - "GET /api/giftcards/logo/e450314f-e3cf-42a2-b7cc-c52194a5ded8.png HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56378 - "GET /api/giftcards/logo/62091058-c72f-4759-828f-5642bcfe2c73.JPG HTTP/1.1" 200 OK
+INFO:     10.227.5.130:55300 - "GET /api/profile/my-tags HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56392 - "GET /api/referrals/stats HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56402 - "GET /api/sim/my-sim HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56404 - "GET /api/tasks HTTP/1.1" 200 OK
+INFO:     10.227.1.2:56402 - "GET /api/referrals/stats HTTP/1.1" 200 OK
+INFO:     10.227.5.130:55300 - "GET /api/sim/my-sim HTTP/1.1" 200 OK
+INFO:     10.227.5.130:55300 - "GET /api/tasks HTTP/1.1" 200 OK
+INFO:     10.227.5.130:55312 - "GET /api/profile/my-tags HTTP/1.1" 200 OK
+INFO:     10.227.1.2:54082 - "GET /api/merchants HTTP/1.1" 200 OK
+INFO:     10.227.1.2:54082 - "GET /api/merchants HTTP/1.1" 200 OK
+INFO:     10.227.5.130:38176 - "GET /api/notifications/me HTTP/1.1" 200 OK
+INFO:     10.227.1.2:34314 - "GET /api/notifications/me HTTP/1.1" 200 OK
+INFO:     10.227.5.130:38176 - "GET /api/profile/my-tags HTTP/1.1" 200 OK
+INFO:     10.227.1.2:34314 - "GET /api/referrals/stats HTTP/1.1" 200 OK
+INFO:     10.227.1.2:34314 - "GET /api/sim/my-sim HTTP/1.1" 200 OK
+INFO:     10.227.5.130:38176 - "GET /api/tasks HTTP/1.1" 200 OK
+INFO:     10.227.5.130:38182 - "GET /api/profile/my-tags HTTP/1.1" 200 OK
+INFO:     10.227.5.130:38176 - "GET /api/referrals/stats HTTP/1.1" 200 OK
+INFO:     10.227.5.130:38176 - "GET /api/tasks HTTP/1.1" 200 OK
+INFO:     10.227.1.2:34314 - "GET /api/sim/my-sim HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43338 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43338 - "GET /api/auth/me HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43338 - "GET /api/wallet HTTP/1.1" 200 OK
+INFO:     10.227.5.130:55218 - "GET /api/payments/history HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43338 - "GET /api/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43338 - "GET /api/wallet HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43338 - "GET /api/payments/history HTTP/1.1" 200 OK
+INFO:     10.227.5.130:55218 - "GET /api/notifications/unread-count HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43338 - "GET /api/giftcards HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43338 - "GET /api/sim/my-sim HTTP/1.1" 200 OK
+INFO:     10.227.5.130:55218 - "GET /api/giftcards HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43338 - "GET /api/sim/my-sim HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43338 - "GET /api/giftcards/logo/bcddd511-c663-4175-b959-2cebdccaf9cd.JPG HTTP/1.1" 200 OK
+INFO:     10.227.5.130:55218 - "GET /api/giftcards/logo/4e1b3042-de51-4905-91e5-ac01b3c99437.JPG HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43342 - "GET /api/giftcards/logo/986ef34a-13b7-4250-9414-905c982c75b7.JPG HTTP/1.1" 200 OK
+INFO:     10.227.5.130:55234 - "GET /api/giftcards/logo/d9f77699-681a-4b53-8338-e35b964d3bd8.JPG HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43338 - "GET /api/giftcards/logo/71813118-8d5c-4d15-86c7-770bf43c246b.JPG HTTP/1.1" 200 OK
+INFO:     10.227.5.130:55218 - "GET /api/giftcards/logo/e450314f-e3cf-42a2-b7cc-c52194a5ded8.png HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43342 - "GET /api/giftcards/logo/62091058-c72f-4759-828f-5642bcfe2c73.JPG HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43344 - "GET /api/giftcards/logo/1aa843df-62b9-45d3-9365-cd11ef930443.JPG HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43358 - "GET /api/giftcards/logo/e131aba1-5edb-4568-b2f9-2dcfe4b0da82.png HTTP/1.1" 200 OK
+INFO:     10.227.1.2:43338 - "GET /api/giftcards/logo/84869108-1d50-462f-ba11-05f47d738138.JPG HTTP/1.1" 200 OK.
+        2. Inspect  for issues with the new  calls.
+        3. Review the newly created route files (, ) for syntax errors, missing imports, or other startup-blocking issues.
+        4. Check  to ensure no new dependencies were missed during file creation.
+     - **Why fix this issue and what will be achieved with the fix?** This is a critical blocker. The backend is not running, which prevents any further development or testing. Fixing it will restore the application and allow the implementation of the new admin/merchant features.
+     - **Status:** IN PROGRESS
+     - **Is recurring issue?** Y (Similar 502 errors have occurred on deploy due to environment/dependency issues).
+     - **Should Test frontend/backend/both after fix?** backend
+     - **Blocked on other issue:** None. This is the primary blocker.
+  - **Issue 2:** Made with Emergent Badge
+     - **Attempted fixes:** None.
+     - **Next debug checklist:** This is a platform-injected feature for preview environments. The agent should reiterate this to the user and confirm it will not be present in a production deployment plan.
+     - **Why fix this issue and what will be achieved with the fix?** Manages user expectations.
      - **Status:** NOT STARTED
      - **Is recurring issue?** Y
      - **Should Test frontend/backend/both after fix?** NA
      - **Blocked on other issue:** None
 
 **In progress Task List**:
-  - Task 1: Complete Merchant Menu & Dashboard Feature (P0)
+  - Task 1: Implement Merchant Area - Utenti Presentati (P1)
+  - Task 2: Implement Admin Area - Utenti (P1)
+  - Task 3: Implement Admin Area - OpenAI API Configuration (P1)
 
  Task Detail:
-  - **Task 1:** Complete Merchant Menu & Dashboard Feature
-     - **Where to resume:** The backend APIs and public-facing menu page are complete. The next critical step is to build the merchant-facing UI at **/app/frontend/src/pages/MerchantMenuPage.jsx**. This page should allow a logged-in merchant to:
-        1.  Upload/change their custom cover image.
-        2.  Create, edit, and delete menu categories.
-        3.  Create, edit, and delete menu items within those categories, including all multi-lingual fields (name, description), price, origin, calories, and health notes.
-     - **What will be achieved with this?** This will complete the core functionality of the merchant menu feature, a major user request.
-     - **Status:** IN PROGRESS
+  - **Task 1:** Implement Merchant Area - Utenti Presentati
+     - **Where to resume:** Blocked by the 502 error. Once fixed, continue implementation in  (API logic) and  (UI).
+     - **What will be achieved with this?** Merchants will be able to see a list of users who signed up using their referral code.
+     - **Status:** BLOCKED
      - **Should Test frontend/backend/both after fix?** both
-     - **Blocked on something:** None
+     - **Blocked on something:** Issue 1: 502 Bad Gateway Error
+  - **Task 2:** Implement Admin Area - Utenti
+     - **Where to resume:** Blocked by the 502 error. Once fixed, continue implementation in  and .
+     - **What will be achieved with this?** Admins will have a full dashboard to manage all users in the system.
+     - **Status:** BLOCKED
+     - **Should Test frontend/backend/both after fix?** both
+     - **Blocked on something:** Issue 1: 502 Bad Gateway Error
+  - **Task 3:** Implement Admin Area - OpenAI API Configuration
+     - **Where to resume:** Blocked by the 502 error. Once fixed, continue implementation in  and .
+     - **What will be achieved with this?** Admins will be able to configure the AI model and API key from the UI.
+     - **Status:** BLOCKED
+     - **Should Test frontend/backend/both after fix?** both
+     - **Blocked on something:** Issue 1: 502 Bad Gateway Error
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-    - **P1: Finalize PWA Installation Flow:** Ensure the PWA auto-install process is simple, robust, and intuitive for both iOS and Android users, as specifically requested.
-    - **P2: Implement Pay Merchant Flow:** Connect the Pay Merchant button on the QR scan page to the GestPay payment processing flow.
+    - **P1: Implement Treezor Integration:** For Conto UP virtual IBAN and card functionality.
+    - **P2: Finalize PWA Installation Flow:** Ensure the PWA installation is seamless and intuitive.
+    - **P3: Implement Pay Merchant Flow:** Connect the payment button on the QR scan page to the GestPay flow.
 - **Future Tasks:**
-    - **P3: Move GestPay to Production:** Switch from the GestPay sandbox to a production environment by updating the API endpoint, Shop Login, and API Key in the  file.
-    - **P4: Re-implement Push Notifications:** Review and implement a robust push notification system.
+    - **P4: Move GestPay to Production:** Switch from sandbox to production credentials.
+    - **P5: Create Native Mobile App:** Use the Mobile Agent to build iOS/Android versions with Expo/React Native.
+    - **P6: Re-implement Push Notifications.**
 
 **Completed work in this session**
-- **CRITICAL LOGIN FIX:** Resolved the blocking custom domain login failure. This involved fixing the database seed script to not overwrite existing users, making login case-insensitive, adding robust logging, and improving frontend error display.
-- **GestPay/Axerve Payment Gateway Integration:** Fully integrated the GestPay sandbox, including payment creation, execution with test cards, tokenization, and handling server-to-server callbacks.
-- **Gift Card API Activation Feature:** Implemented a system for admins to configure brand-specific API endpoints (URL, method, auth) that are automatically called to activate a gift card upon purchase.
-- **Unified Transaction History:** Refactored the backend to aggregate all transaction types (P2P, Gift Card, GestPay) into a single, unified history view on the dashboard, with unique icons for each type.
-- **Critical Bug Fix (Cashback on Failed Payment):** Fixed a critical bug where cashback was incorrectly awarded even for failed (KO) GestPay transactions by properly checking the .
-- **UI/UX Enhancements:**
-    - Redesigned gift card components to have credit-card proportions with better logo scaling.
-    - Improved payment forms with better input validation and clearer error messages from the backend.
-- **QR Code & Caching Fixes:**
-    - Corrected the QR code generation to use , ensuring it always points to the correct domain (live vs. preview).
-    - Implemented service worker versioning to force cache invalidation on new deployments, resolving issues where users saw outdated code.
-- **Merchant Menu (Phase 1):** Built the backend models/API and the public-facing, multi-lingual menu page. Implemented the new QR code scanning flow logic.
+- **AI Companion MYU:** Fully designed and implemented a complex, integrated AI assistant from scratch, including frontend UI, animated mascot, backend services for intent classification, task engine, and LLM integration via Emergent's universal key.
+- **Advanced Notification Hub:** Completely overhauled the notification system to allow merchants to send templated, media-rich (images) notifications. The UI was redesigned with expandable cards and dynamic interactions from MYU.
+- **Bug Fixes:** Resolved a critical bug where the MYU chat cost was deducted from an integer field () instead of a float (), causing validation errors and login failures. Fixed a UI bug where a task creation button in the chat was unresponsive.
+- **Deployment & Environment Support:** Successfully diagnosed and resolved multiple user-reported issues related to deployment, including a 502 error on the live domain (by fixing ) and persistent browser caching problems.
+- **UI/UX Enhancements:** Added a Vedi Menu button to merchant profiles and implemented a custom animated mascot for MYU, which is globally visible and provides non-intrusive tips.
+- **Rebranding:** Renamed all textual references of the app from myunionpay-test.it to myUup.com across the entire codebase.
 
 **Earlier issues found/mentioned but not fixed**
-   - **Issue 1:** The Made with Emergent badge remains a user concern, but it is a platform feature.
+   - **Issue 1:** The Made with Emergent badge remains a user concern, but it is a platform feature for previews.
 
 **Known issue recurrence from previous fork**
-  - **Login on Custom Domain:** This was a severe, recurring issue that is now **RESOLVED**.
+  - **502 Errors on Deploy:** This has happened before, often related to missing dependencies ( requiring a special index URL) or other environment setup issues that only manifest on deploy. The current 502 is likely a similar type of issue.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Backend:** FastAPI, Pydantic, MongoDB, JWT authentication.
-- **Frontend:** React, React Router, Axios, Context API, PWA (Service Workers).
-- **Payment Integration:** Integration with GestPay/Axerve REST APIs for payment processing and tokenization using .
-- **Data Aggregation:** Using MongoDB aggregation pipelines to create a unified transaction history from multiple collections.
-- **Multi-lingual Support:** Data models and frontend components designed to handle content in multiple languages.
+- **AI Integration:** Using  to call an LLM. The core logic is in .
+- **Intent Classification:** Using the LLM to classify user chat messages into a structured JSON format to drive application logic (e.g., ).
+- **Stateful AI Companion:** Managing chat history (), user state, and tasks () in MongoDB to provide a continuous experience.
+- **Dynamic Frontend Components:** Using  for the complex, non-intrusive animations of the  component.
+- **Advanced Notification System:** A full-featured system with merchant-defined templates, image uploads (), and user interaction tracking.
+- **File Uploads:** A new endpoint () was created to handle image uploads for notifications, storing them in .
 
 **key DB schema**
 -   **users**: 
--   **merchants**:  (will be linked to a menu)
--   **gift_cards**: 
+-   **merchants**: 
 -   **menus**: 
--   **transactions**, **giftcard_purchases**, **gestpay_transactions**: Separate collections for different transaction types, now aggregated in the API.
+-   **myu_conversations**: 
+-   **myu_tasks**: 
+-   **myu_intent_logs**: 
+-   **notifications**: 
+-   **user_notifications**: 
+-   **notification_interactions**: 
+-   **app_config**:  (Planned)
 
 **changes in tech stack**
--   Added  to the backend for making external API calls to GestPay and brand activation endpoints.
+-   ****: Added for accessing LLMs via the universal key.
+-   ****: Added to the frontend for advanced animations.
+-   ****: Added to the frontend for the notification image upload UI.
 
 **All files of reference**
-*   **/app/backend/routes/auth.py**: Contains the fixed login logic.
-*   **/app/backend/services/seed.py**: Contains the fixed database seeding logic.
-*   **/app/backend/services/gestpay.py**: Core logic for GestPay/Axerve integration.
-*   **/app/backend/routes/gestpay.py**: API endpoints for processing payments via GestPay.
-*   **/app/backend/routes/menu.py**: API endpoints for managing merchant menus.
-*   **/app/frontend/src/pages/MerchantMenuPage.jsx**: **Next file to implement.** This is for merchants to manage their menu.
-*   **/app/frontend/src/pages/PublicMenuPage.jsx**: The public-facing, multi-lingual menu page.
-*   **/app/frontend/src/pages/ScanRedirectPage.jsx**: Contains the updated logic for handling QR code scans.
-*   **/app/frontend/src/components/GiftCardSection.jsx**: Contains the updated gift card purchase flow with the GestPay integration.
-*   **/app/public/service-worker.js**: Contains the cache-busting versioning logic.
+*   **/app/backend/server.py**: Entry point. The last change was adding routers for the new admin/merchant panels, which likely caused the 502 error.
+*   **/app/backend/services/ai_service.py**: Core logic for the MYU AI companion.
+*   **/app/backend/routes/ai.py**: API endpoints for the MYU chat.
+*   **/app/backend/routes/notifications.py**: API endpoints for the new notification system.
+-   **/app/frontend/src/pages/MyuChatPage.jsx**: The main chat interface for MYU.
+-   **/app/frontend/src/pages/NotificationsPage.jsx**: The completely rewritten notification hub.
+-   **/app/frontend/src/components/MyuMascot.jsx**: The globally visible, animated MYU mascot component.
+*   **New (Placeholder) Files:**
+    *   
+    *   
+    *   
+    *   
+    *   
+
+**Areas that need refactoring**:
+- The new admin/merchant pages are empty placeholders and require full implementation. The current  and  files should be reviewed to ensure a clean separation of concerns before building them out.
 
 **key api endpoints**
--   : (Fixed)
--   : Processes a payment using GestPay with card details.
--   : Processes a payment using a saved token.
--   : Server-to-server callback endpoint for GestPay.
--   : (GET) Fetches a merchant's public menu.
--   : (GET, PUT) Endpoints for a merchant to manage their own menu.
--   : (GET) Unified transaction history for the logged-in user.
+-   : Main endpoint for interacting with MYU.
+-   : GET all notifications for the user.
+-   : POST to send a new templated notification.
+-   : POST to upload an image for a notification.
+-   **Planned endpoints (currently placeholders):**
+    -   
+    -   , 
+    -   
 
 **Critical Info for New Agent**
--   The critical login bug is **FIXED**. Do not spend time investigating it. The user has confirmed the fix after deployment.
--   The new top priority is to **complete the merchant menu feature** by building the merchant-facing management page ().
--   The GestPay integration is currently in **SANDBOX mode**. All payments use test cards. Do not use real cards. The only Visa card that works reliably in the sandbox is .
--   The QR code redirection issue was caused by browser caching and was fixed by versioning the **service worker**. If the user reports a similar issue after deployment, the first step is to advise them to do a hard refresh or clear site data.
+-   **TOP PRIORITY:** The backend is down with a 502 Bad Gateway error. This happened immediately after creating placeholder files and routes for new admin/merchant features. You must diagnose this by checking the backend logs first. This is a hard blocker.
+-   **OpenAI/MYU Integration:** The MYU AI companion is a core feature. It uses the  library and the universal key. The configuration is in .
+-   **Cost Deduction:** The AI chat costs 0.01 UP per message. This is deducted from the user's  (a float field), **not**  (an int field). A previous bug where it deducted from  caused critical login failures.
+-   **User Caching Issues:** The user frequently reports not seeing changes on their custom domain after a deploy. This is almost always a browser/service-worker caching issue. The standard advice is a hard refresh (), clearing site data, or using an incognito window.
+-   **User Accounts for Testing:** To test features like notifications, do not use the merchant account that sends them (). Use a receiving user account like  or  (password for all is ).
 
 **documents and test reports created in this job**
-  - /app/memory/PRD.md (updated)
-  - /app/test_reports/iteration_2.json
-  - /app/test_reports/iteration_3.json
+  - /app/memory/PRD.md (updated with MYU and Notifications features)
+  - /app/test_reports/iteration_1.json (from testing the Notifications feature)
 
 **Last 10 User Messages and any pending HUMAN messages** 
-10. **User:** Requests a complex merchant menu feature with a multi-lingual editor, cover image, and a new QR code flow. (In Progress)
-9.  **User:** Asks how to keep the agent awake 24/7. (Answered)
-8.  **User:** Asks what is required to take the app live with real users. (Answered)
-7.  **User:** Reports the QR code still points to an old link after deployment. (Resolved, was a service worker cache issue)
-6.  **User:** Asks what IP address to enter in the GestPay sandbox configuration. (Answered)
-5.  **User:** Asks what callback URLs to configure in the GestPay sandbox. (Answered)
-4.  **User:** Provides the GestPay Shop Login and API Key to begin integration. (Acknowledged)
-3.  **User:** Reports that some transactions are not visible in the history. (Resolved, by creating a unified history endpoint)
-2.  **User:** Reports that cashback was credited even for a failed (KO) transaction. (Resolved, critical bug fix)
-1.  **User:** Requests UI changes to the gift card display: make the logo bigger and adapt to card proportions. (Completed)
+10. **User:** Asks to rename the entire app to myUup.com. (Completed, but logo change was reverted per user request).
+9.  **User:** Requests three major new features: a Referred Users panel for merchants, a User Management panel for admins, and an OpenAI Config panel for admins, providing detailed specs for each. (In Progress)
+8.  **Agent:** Starts implementing the new features by creating all necessary backend and frontend files.
+7.  **User:** Reports a 502 error immediately after the agent created the new files. (Current Blocker)
+6.  **Agent:** Acknowledges the 502 error and was about to begin debugging when the session ended.
+5.  **User:** Asks why they can't see notifications on the live site after a deploy. (Answered: it was a caching issue and they were logged in as the sender).
+4.  **User:** Reports the old notifications are still showing on live and the manage menu link is gone. (Answered: agent confirmed a redeploy was needed and repopulated demo data on live).
+3.  **User:** Asks how to deploy the changes. (Answered: by clicking the Re-deploy changes button).
+2.  **User:** Reports a 502 error on the live domain after deploying. (Resolved: agent fixed  to properly install ).
+1.  **User:** Says they can't see the new notifications in the preview. (Answered: user was logged in as the merchant who sent the notifications, not a recipient).
 
 **Project Health Check:**
--   **Broken:** None. The critical login blocker has been resolved.
+-   **Broken:** The backend is currently non-functional, returning a 502 Bad Gateway error. This prevents the entire application from starting up.
 -   **Mocked:**
-    -   Conto UP banking operations (transfers, top-ups) are still simulated.
-    -   Gift card API activations point to a mock service () until real brand APIs are configured by the admin.
+    -   Conto UP banking operations are simulated.
+    -   Gift card API activations point to a mock service.
 
 **3rd Party Integrations**
--   **html5-qrcode**: Frontend library for QR code scanning.
--   **qrcode.react**: Frontend library for generating QR codes.
--   **GestPay / Axerve**: Payment gateway for credit card processing. Integrated in SANDBOX mode.
+-   **GestPay / Axerve:** Payment gateway (SANDBOX mode).
+-   **html5-qrcode:** Frontend QR code scanning.
+-   **qrcode.react:** Frontend QR code generation.
+-   **OpenAI (via Emergent LLM Key):** Powers the MYU AI companion. The model used is .
 
 **Testing status**
-  - Testing agent used after significant changes: YES. Used after the login fix and after implementing the gift card API feature. All tests passed.
+  - Testing agent used after significant changes: YES. The last run was for the Notifications feature, and all tests passed.
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: []
-  - Known regressions: None. The major login regression was fixed.
+  - Known regressions: None, but the application is currently down due to a startup error.
 
 **Credentials to test flow:**
--   **Standard User:**  / 
--   **Admin User:**  / 
+-   **Merchant/Sender:**  / 
+-   **Admin/Recipient:**  / 
+-   **Standard User/Recipient:**  / 
 -   **GestPay Sandbox Test Card (Visa):**
     -   Number: 
     -   Expiry: Any future date (e.g., )
     -   CVV: 
 
 **What agent forgot to execute**
-The agent has been on track and addressed all recent user requests. The next step of building the merchant menu management UI is correctly identified and is the logical continuation of the current task.</analysis>
+The agent was actively implementing the user's latest, very large feature request when it was blocked by a technical error. It did not forget or overlook any tasks.</analysis>
