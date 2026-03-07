@@ -1,97 +1,97 @@
-# My Union Pay (Myunionpaytest.it) - PRD
+# My Union Pay (myunionpay-test.it) - PRD
 
-## Descrizione Progetto
-App PWA per pagamenti P2P con sistema di wallet digitale, marketplace merchant, notifiche reward, e Conto UP (conto bancario virtuale).
+## Problema Originale
+App PWA per pagamenti digitali con wallet UP, gift card, merchant affiliati, QR code e compagno AI.
 
-## Stack Tecnologico
-- **Frontend**: React 19, Tailwind CSS, Shadcn/UI
-- **Backend**: FastAPI, MongoDB (pymongo/motor), httpx (per chiamate API brand)
-- **PWA**: Service Worker, Manifest
-- **Auth**: JWT Bearer Token
+## Architettura
+- **Frontend:** React + Shadcn UI + PWA (Service Workers)
+- **Backend:** FastAPI + MongoDB + JWT Auth
+- **AI:** OpenAI gpt-4.1-nano via Emergent LLM Key
+- **Pagamenti:** GestPay/Axerve (Sandbox)
 
-## Architettura Backend (v2.1)
-```
-/app/backend/
-  server.py          # Entry point
-  database.py        # MongoDB connection, config
-  models/__init__.py # Pydantic models
-  routes/
-    auth.py          # Login (case-insensitive), register, diagnostics
-    wallet.py        # Wallet CRUD
-    payments.py      # P2P payments
-    merchants.py     # Merchants CRUD
-    notifications.py # Notifications
-    profile.py       # User profile tags
-    push.py          # Push notifications
-    referrals.py     # Referral stats
-    sim.py           # Conto UP
-    qr.py            # QR code routing
-    tasks.py         # User tasks
-    giftcards.py     # Gift cards + Brand API integration + Admin CRUD
-  services/
-    auth.py          # Password hashing, JWT, auth utils
-    push.py          # Push notification sender
-    seed.py          # DB seeder (only updates SEED_EMAILS passwords)
-  uploads/logos/     # Gift card logos
-```
+## Funzionalità Implementate
 
-## Funzionalita Implementate
-- Auth (registrazione, login case-insensitive, JWT, diagnostics)
-- Wallet (saldo, deposito, pagamenti P2P)
-- QR Code (generazione, scansione, condivisione)
-- Merchant (registrazione, marketplace, categorie)
-- Notifiche (profilate per merchant, preview, reward)
-- Profilo (tag interessi, referral stats, task)
-- Referral (codice = QR code, bonus +1 UP)
-- Conto UP (carta virtuale, IBAN, saldo EUR, top-up, bonifico, conversione)
-- PWA Install Prompt
-- Merchant QR Scan (Menu / Installa ed Ordina / Paga)
-- Task Verifica Residenza (upload fattura per +5 UP)
-- **Gift Card con integrazione API Brand**:
-  - Admin crea nuove gift card (brand, categoria, cashback, importi)
-  - Admin configura API per ogni brand (endpoint, API key, metodo, headers, body template)
-  - Admin testa API dal pannello
-  - Utente acquista gift card con EUR (Conto UP o carta collegata)
-  - Sistema chiama automaticamente API brand per ottenere codice attivazione
-  - Codice attivazione mostrato all'utente dopo acquisto con possibilita di copia
-  - Cashback accreditato in UP
-  - Admin gestisce cashback % e stato on/off per ogni card
-  - Upload logo manuale per ogni gift card
+### Core (Completate)
+- [x] Autenticazione (registrazione, login, JWT)
+- [x] Wallet UP con saldo e transazioni
+- [x] QR Code per pagamenti e referral
+- [x] Sistema Gift Card con pannello admin
+- [x] GestPay/Axerve sandbox integration
+- [x] Sistema referral con punti UP
+- [x] Storico transazioni unificato
+- [x] PWA con Service Worker e cache versioning
+- [x] SIM virtuale (attivazione, dashboard)
+- [x] Profilo utente con tag interessi
+- [x] Notifiche push
+- [x] Marketplace merchant
 
-## Branding
-- Nome: **Myunionpaytest.it**
-- Primary: #2B7AB8 (Blu)
-- Accent: #E85A24 (Arancione)
+### Menu Merchant (Completato)
+- [x] Backend API CRUD menu multilingua (5 lingue: IT, EN, FR, DE, ES)
+- [x] Pagina pubblica menu con switch lingua
+- [x] Pagina gestione menu merchant (aggiungi/elimina piatti, cover image)
+- [x] Campi: nome, descrizione, prezzo, origine, calorie, sezione salute
+- [x] Categorie: Antipasti, Primi, Secondi, Dolci, Bevande
+- [x] QR scan flow: registrato (2 opzioni) vs non registrato (3 opzioni)
+- [x] Bottone "Vedi Menu" nella vetrina merchant (solo ristoranti/bar)
+- [x] 13 piatti di esempio popolati su preview e live
+
+### MYU - AI Companion (Completato - Marzo 2026)
+- [x] Chat AI con gpt-4.1-nano (risposte brevi, max 2 frasi)
+- [x] Costo 0.01 UP per messaggio (deduzione dal wallet)
+- [x] Classificazione intent (domain/intent/confidence)
+- [x] 6 domini: companion, wallet, marketplace, growth, support, general
+- [x] 14 intenti: check_balance, discover_merchants, task_creation, etc.
+- [x] Sistema task (crea, completa, cancella, postponi)
+- [x] Suggerimenti merchant basati su profilo
+- [x] Cronologia chat persistente in MongoDB
+- [x] Stato conversazionale breve (no cronologia piena nel prompt)
+- [x] System prompt personalizzato (amichevole, breve, italiano)
+- [x] CTA azioni (navigate, create_task, suggest_merchant)
+- [x] Bottone FAB flottante nella dashboard
+- [x] Welcome screen con 3 suggerimenti rapidi
+- [x] Nuova sessione (reset conversazione)
+- [x] Pannello task nel header chat
+- [x] Gestione saldo insufficiente (errore 402)
+- [x] Intent logging per analytics
+
+## Database Collections
+- users, wallets, merchants, transactions
+- gift_cards, giftcard_purchases, gestpay_transactions
+- menu_items, notifications, push_subscriptions
+- sim_cards, referrals, user_tasks
+- myu_conversations, myu_conversation_state, myu_tasks, myu_intent_logs
 
 ## Credenziali Test
-- Email: test@test.com / Password: test123
-- Admin: admin@test.com / Password: test123
+- User: test@test.com / test123
+- Admin: admin@test.com / test123
+- GestPay test card: 4111111111111111, exp: 12/26, CVV: 123
 
-## API Endpoints Gift Card (nuovi)
-- POST /api/giftcards/admin/create - Crea nuova gift card
-- PUT /api/giftcards/admin/{id}/api-config - Configura API brand
-- POST /api/giftcards/admin/{id}/test-api - Testa API brand
-- POST /api/giftcards/admin/{id}/logo - Upload logo
-- POST /api/giftcards/purchase - Acquisto con chiamata API brand (restituisce activation_code)
+## Backlog Prioritizzato
 
-## Backlog
+### P0 - Critico
+- [ ] Funzione modifica piatto esistente nel menu merchant
 
-### P1 - Alta Priorita
-- [ ] Definire e implementare Menu Merchant (struttura dati, API, UI)
+### P1 - Importante
+- [ ] Finalizzare PWA Install flow (iOS/Android intuitivo)
+- [ ] Implementare "Paga Merchant" con GestPay
+- [ ] Integrazione Treezor (carta virtuale + IBAN) - richiede contratto Treezor
 
-### P2 - Media Priorita
-- [ ] Push Notifications reali con pywebpush
-- [ ] Integrazione gateway Fabrick.com
+### P2 - Medio
+- [ ] Passaggio GestPay a produzione
+- [ ] Push Notifications reali
+- [ ] Paginazione query database per scalabilità
 
-### P3 - Bassa Priorita
-- [ ] Marketplace avanzato
-- [ ] Gamification / progressione utente
+### P3 - Futuro
+- [ ] App nativa (React Native via Mobile Agent)
+- [ ] MYU reminder e check-in task automatici
+- [ ] MYU ranking merchant personalizzato (posizione, orario, cashback)
+- [ ] Dashboard admin MYU (analytics intenti, costi)
 
-## Note
-- Le operazioni bancarie sono SIMULATE
-- Badge "Made with Emergent" non rimovibile (feature piattaforma)
-- API brand usa httpbin.org/post per test. In produzione usare API reali dei brand
-- Il seed script aggiorna SOLO le password degli utenti seed (SEED_EMAILS)
+## Note Tecniche
+- GestPay è in SANDBOX mode
+- "Conto UP" banking operations sono simulate
+- Emergent LLM Key: sk-emergent-... (in backend/.env)
+- Custom domain: myunionpay-test.it (collegato e funzionante)
 
 ---
 Ultimo aggiornamento: Marzo 2026
