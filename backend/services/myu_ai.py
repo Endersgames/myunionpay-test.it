@@ -14,7 +14,7 @@ logger = logging.getLogger("myu_ai")
 
 MYU_COST_PER_MSG = 0.01
 
-SYSTEM_PROMPT = """Sei MYU, il compagno digitale dell'app myunionpay.
+SYSTEM_PROMPT = """Sei MYU, il compagno digitale dell'app myUup.
 NON sei un chatbot generico. Sei un amico pratico e calmo.
 
 REGOLE ASSOLUTE:

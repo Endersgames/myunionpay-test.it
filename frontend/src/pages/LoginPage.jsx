@@ -52,7 +52,7 @@ export default function LoginPage() {
 
         <div className="mb-8">
           <h1 className="font-heading text-3xl font-bold mb-2 text-[#1A1A1A]">Bentornato</h1>
-          <p className="text-[#6B7280]">Accedi al tuo account myunionpay-test.it</p>
+          <p className="text-[#6B7280]">Accedi al tuo account myUup.com</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">

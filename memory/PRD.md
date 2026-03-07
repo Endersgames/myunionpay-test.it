@@ -1,4 +1,4 @@
-# My Union Pay (myunionpay-test.it) - PRD
+# myUup (myUup.com) - PRD
 
 ## Problema Originale
 App PWA per pagamenti digitali con wallet UP, gift card, merchant affiliati, QR code e compagno AI.
@@ -91,7 +91,7 @@ App PWA per pagamenti digitali con wallet UP, gift card, merchant affiliati, QR 
 - GestPay è in SANDBOX mode
 - "Conto UP" banking operations sono simulate
 - Emergent LLM Key: sk-emergent-... (in backend/.env)
-- Custom domain: myunionpay-test.it (collegato e funzionante)
+- Custom domain: myUup.com (collegato e funzionante)
 
 ---
 Ultimo aggiornamento: Marzo 2026

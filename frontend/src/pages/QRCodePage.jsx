@@ -26,8 +26,8 @@ export default function QRCodePage() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "myunionpay-test.it - Pagami o Unisciti",
-          text: `Scansiona per pagarmi o scarica myunionpay-test.it! Codice: ${qrCode}`,
+          title: "myUup.com - Pagami o Unisciti",
+          text: `Scansiona per pagarmi o scarica myUup.com! Codice: ${qrCode}`,
           url: qrUrl
         });
       } catch (err) {
@@ -103,7 +103,7 @@ export default function QRCodePage() {
               <h3 className="font-semibold">Per Pagamenti</h3>
             </div>
             <p className="text-sm text-[#6B7280]">
-              Chi ha già myunionpay-test.it può scansionare e pagarti direttamente con il tastierino numerico.
+              Chi ha già myUup.com può scansionare e pagarti direttamente con il tastierino numerico.
             </p>
           </div>
 

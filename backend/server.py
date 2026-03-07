@@ -24,7 +24,7 @@ from routes.menu import router as menu_router
 from routes.myu import router as myu_router
 
 # Create the main app
-app = FastAPI(title="myunionpay-test.it API", version="2.0.0")
+app = FastAPI(title="myUup.com API", version="2.0.0")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
@@ -53,7 +53,7 @@ api_router.include_router(myu_router)
 
 @api_router.get("/")
 async def root():
-    return {"message": "myunionpay-test.it API v2.0", "status": "online"}
+    return {"message": "myUup.com API v2.0", "status": "online"}
 
 @api_router.get("/health")
 async def health():

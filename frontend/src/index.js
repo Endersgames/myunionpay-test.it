@@ -11,7 +11,7 @@ if ('serviceWorker' in navigator) {
         updateViaCache: 'none' // Always check for updates
       });
       
-      console.log('myunionpay-test.it SW registered:', registration.scope);
+      console.log('myUup.com SW registered:', registration.scope);
       
       // Check for updates immediately
       registration.update();
@@ -24,12 +24,12 @@ if ('serviceWorker' in navigator) {
       // Handle updates
       registration.addEventListener('updatefound', () => {
         const newWorker = registration.installing;
-        console.log('myunionpay-test.it SW update found');
+        console.log('myUup.com SW update found');
         
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
             // New service worker is ready, prompt user or auto-reload
-            console.log('myunionpay-test.it SW updated, reloading...');
+            console.log('myUup.com SW updated, reloading...');
             // Auto-activate new service worker
             newWorker.postMessage({ type: 'SKIP_WAITING' });
           }
@@ -46,7 +46,7 @@ if ('serviceWorker' in navigator) {
       });
       
     } catch (error) {
-      console.log('myunionpay-test.it SW registration failed:', error);
+      console.log('myUup.com SW registration failed:', error);
     }
   });
 }

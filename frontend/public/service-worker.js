@@ -1,5 +1,5 @@
-// Service Worker per myunionpay-test.it PWA con Push Notifications
-const CACHE_NAME = 'myunionpay-v2';
+// Service Worker per myUup.com PWA con Push Notifications
+const CACHE_NAME = 'myUup-v2';
 const urlsToCache = [
   '/',
   '/manifest.json',
@@ -11,11 +11,11 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('myunionpay-test.it: Cache opened');
+        console.log('myUup.com: Cache opened');
         return cache.addAll(urlsToCache);
       })
       .catch((err) => {
-        console.log('myunionpay-test.it: Cache failed', err);
+        console.log('myUup.com: Cache failed', err);
       })
   );
   self.skipWaiting();
@@ -28,7 +28,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            console.log('myunionpay-test.it: Removing old cache', cacheName);
+            console.log('myUup.com: Removing old cache', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -74,10 +74,10 @@ self.addEventListener('fetch', (event) => {
 
 // Handle push event - show notification
 self.addEventListener('push', (event) => {
-  console.log('My Union Pay: Push received', event);
+  console.log('myUup: Push received', event);
   
   let data = {
-    title: 'My Union Pay',
+    title: 'myUup',
     body: 'Hai una nuova notifica',
     icon: '/logo.png',
     badge: '/logo.png',
@@ -88,7 +88,7 @@ self.addEventListener('push', (event) => {
     try {
       data = { ...data, ...event.data.json() };
     } catch (e) {
-      console.error('My Union Pay: Failed to parse push data', e);
+      console.error('myUup: Failed to parse push data', e);
     }
   }
   
@@ -96,7 +96,7 @@ self.addEventListener('push', (event) => {
     body: data.body,
     icon: data.icon || '/logo.png',
     badge: data.badge || '/logo.png',
-    tag: data.tag || 'myunionpay-notification',
+    tag: data.tag || 'myUup-notification',
     data: data.data,
     vibrate: [200, 100, 200, 100, 200], // Vibration pattern
     requireInteraction: true, // Keep notification visible
@@ -113,7 +113,7 @@ self.addEventListener('push', (event) => {
 
 // Handle notification click
 self.addEventListener('notificationclick', (event) => {
-  console.log('My Union Pay: Notification clicked', event);
+  console.log('myUup: Notification clicked', event);
   
   event.notification.close();
   
@@ -147,7 +147,7 @@ self.addEventListener('notificationclick', (event) => {
 
 // Handle messages from the app
 self.addEventListener('message', (event) => {
-  console.log('My Union Pay: Message received', event.data);
+  console.log('myUup: Message received', event.data);
   
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();

@@ -79,7 +79,7 @@ export default function LandingPage() {
         <div className="flex items-center gap-3 mb-16 justify-center">
           <img 
             src="/logo.png" 
-            alt="myunionpay-test.it" 
+            alt="myUup.com" 
             className="h-20 w-auto"
           />
         </div>
@@ -106,7 +106,7 @@ export default function LandingPage() {
             <div className="flex items-center gap-3 flex-1">
               <Download className="w-6 h-6 flex-shrink-0" />
               <div>
-                <p className="font-semibold">Installa myunionpay-test.it</p>
+                <p className="font-semibold">Installa myUup.com</p>
                 <p className="text-sm opacity-80">
                   Tocca per aggiungere alla Home
                 </p>
@@ -155,7 +155,7 @@ export default function LandingPage() {
 
         {/* Footer */}
         <p className="text-center text-[#6B7280] text-sm mt-12">
-          Unisciti a migliaia di utenti che usano myunionpay-test.it ogni giorno
+          Unisciti a migliaia di utenti che usano myUup.com ogni giorno
         </p>
       </div>
 
@@ -163,12 +163,12 @@ export default function LandingPage() {
       <Dialog open={showInstructions} onOpenChange={setShowInstructions}>
         <DialogContent className="bg-white border-black/10 text-[#1A1A1A] max-w-sm mx-4">
           <DialogHeader>
-            <DialogTitle className="font-heading text-xl">Installa myunionpay-test.it</DialogTitle>
+            <DialogTitle className="font-heading text-xl">Installa myUup.com</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             {isIOS ? (
               <>
-                <p className="text-[#6B7280]">Per installare myunionpay-test.it su iPhone/iPad:</p>
+                <p className="text-[#6B7280]">Per installare myUup.com su iPhone/iPad:</p>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 bg-[#F5F5F5] p-3 rounded-xl">
                     <div className="w-10 h-10 rounded-full bg-[#2B7AB8]/10 flex items-center justify-center">
@@ -192,7 +192,7 @@ export default function LandingPage() {
               </>
             ) : (
               <>
-                <p className="text-[#6B7280]">Per installare myunionpay-test.it:</p>
+                <p className="text-[#6B7280]">Per installare myUup.com:</p>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 bg-[#F5F5F5] p-3 rounded-xl">
                     <div className="w-10 h-10 rounded-full bg-[#2B7AB8]/10 flex items-center justify-center">

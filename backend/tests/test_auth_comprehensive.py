@@ -1,5 +1,5 @@
 """
-Comprehensive Auth Tests for myunionpay-test.it
+Comprehensive Auth Tests for myUup.com
 Tests login robustness: case-insensitivity, email trimming, error messages,
 new user registration, and seed script password preservation.
 """

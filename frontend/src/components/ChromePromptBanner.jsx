@@ -69,7 +69,7 @@ export default function ChromePromptBanner() {
         </h2>
         
         <p className="text-[#6B7280] text-center mb-6">
-          Per la migliore esperienza e per installare l'app sulla Home, apri myunionpay-test.it con Google Chrome.
+          Per la migliore esperienza e per installare l'app sulla Home, apri myUup.com con Google Chrome.
         </p>
 
         <div className="space-y-3">
@@ -93,7 +93,7 @@ export default function ChromePromptBanner() {
         <div className="mt-6 p-4 bg-white rounded-xl">
           <p className="text-xs text-[#6B7280] text-center">
             <Smartphone className="w-4 h-4 inline mr-1" />
-            Con Chrome puoi installare myunionpay-test.it come app e ricevere notifiche push
+            Con Chrome puoi installare myUup.com come app e ricevere notifiche push
           </p>
         </div>
       </div>

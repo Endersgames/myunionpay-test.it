@@ -10,12 +10,12 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-JWT_SECRET = os.environ.get('JWT_SECRET', 'myunionpay-secure-jwt-secret-key-2024-production')
+JWT_SECRET = os.environ.get('JWT_SECRET', 'myUup-secure-jwt-secret-key-2024-production')
 JWT_ALGORITHM = "HS256"
 
 VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
 VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
-VAPID_EMAIL = os.environ.get('VAPID_EMAIL', 'mailto:noreply@myunionpay-test.it')
+VAPID_EMAIL = os.environ.get('VAPID_EMAIL', 'mailto:noreply@myUup.com')
 
 PROFILE_TAGS = [
     "tech", "fashion", "food", "fitness", "travel",
