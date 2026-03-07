@@ -5,14 +5,23 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { QrCode, Wallet, Users, Bell, ArrowRight, Download, Share, Plus, MoreVertical, Percent } from "lucide-react";
 
+const API = process.env.REACT_APP_BACKEND_URL || "";
+
+const MYU_BUBBLES = [
+  "Ehi! Installa myUup sulla Home per accesso veloce!",
+  "Cashback su Amazon, IKEA, Decathlon... installa e scopri!",
+  "Tocca qui per installarmi! Ci metto un attimo.",
+];
+
 export default function LandingPage() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [showInstall, setShowInstall] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [myuBubbleIdx, setMyuBubbleIdx] = useState(0);
+  const [myuVisible, setMyuVisible] = useState(false);
 
   useEffect(() => {
     if (!loading && user) {
@@ -28,17 +37,24 @@ export default function LandingPage() {
                        window.navigator.standalone === true;
     setIsStandalone(standalone);
     
-    if (!standalone) {
-      setShowInstall(true);
-    }
-    
     const handler = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setShowInstall(true);
     };
     window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+
+    // MYU appears after 1.5s
+    const myuTimer = setTimeout(() => setMyuVisible(true), 1500);
+    // Cycle bubbles every 5s
+    const bubbleTimer = setInterval(() => {
+      setMyuBubbleIdx(prev => (prev + 1) % MYU_BUBBLES.length);
+    }, 5000);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+      clearTimeout(myuTimer);
+      clearInterval(bubbleTimer);
+    };
   }, []);
 
   const handleInstall = async () => {
@@ -95,48 +111,66 @@ export default function LandingPage() {
           </p>
         </div>
 
-        {/* Install Banner + Cashback */}
-        {showInstall && !isStandalone && (
-          <div className="mb-8 animate-slideUp space-y-3" style={{ animationDelay: '0.1s' }}>
-            <button 
-              className="install-banner w-full text-left" 
-              onClick={handleInstall}
-              data-testid="install-banner"
-            >
-              <div className="flex items-center gap-3 flex-1">
-                <Download className="w-6 h-6 flex-shrink-0" />
-                <div>
-                  <p className="font-semibold">Installa myUup.com</p>
-                  <p className="text-sm opacity-80">
-                    Tocca per aggiungere alla Home
-                  </p>
-                </div>
-              </div>
-              <span className="bg-white text-[#2B7AB8] px-4 py-2 rounded-full font-semibold text-sm flex-shrink-0">
-                Installa
-              </span>
-            </button>
-
-            {/* Cashback promo */}
-            <div className="bg-gradient-to-r from-[#E85A24]/5 to-[#2B7AB8]/5 border border-[#E85A24]/15 rounded-2xl p-4" data-testid="cashback-promo">
-              <div className="flex items-center gap-2 mb-2">
-                <Percent className="w-4 h-4 text-[#E85A24]" />
-                <span className="text-sm font-bold text-[#E85A24]">Cashback fino al 15%</span>
-              </div>
-              <p className="text-xs text-[#6B7280] mb-3">Acquista dai tuoi brand preferiti e ricevi UP indietro</p>
-              <div className="flex items-center gap-4 overflow-x-auto pb-1 scrollbar-hide">
-                {["Amazon", "Nike", "Zalando", "H&M", "MediaWorld", "Esselunga", "IKEA", "Unieuro"].map(brand => (
-                  <span 
-                    key={brand} 
-                    className="flex-shrink-0 bg-white border border-black/8 rounded-lg px-3 py-1.5 text-[11px] font-semibold text-[#1A1A1A] shadow-sm"
-                  >
-                    {brand}
+        {/* MYU Mascot + Install CTA */}
+        {!isStandalone && myuVisible && (
+          <div className="mb-8 animate-slideUp" style={{ animationDelay: '0.1s' }} data-testid="myu-landing-section">
+            <div className="flex items-end gap-3">
+              {/* MYU avatar */}
+              <button
+                onClick={handleInstall}
+                className="flex-shrink-0 w-16 h-16 rounded-full overflow-hidden shadow-lg border-2 border-white hover:scale-105 transition-transform"
+                data-testid="myu-landing-avatar"
+                style={{ animation: "myuBounce 2s ease infinite" }}
+              >
+                <img src="/myu-icon.png" alt="MYU" className="w-full h-full object-cover" />
+              </button>
+              {/* Speech bubble */}
+              <div
+                className="flex-1 bg-white rounded-2xl rounded-bl-sm p-3 shadow-md border border-black/5 cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={handleInstall}
+                data-testid="myu-landing-bubble"
+                style={{ animation: "myuFadeIn 0.4s ease" }}
+                key={myuBubbleIdx}
+              >
+                <p className="text-sm font-medium text-[#1A1A1A] leading-snug">
+                  {MYU_BUBBLES[myuBubbleIdx]}
+                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="inline-flex items-center gap-1 bg-[#2B7AB8] text-white text-[11px] font-bold px-3 py-1.5 rounded-full hover:bg-[#236699] transition-colors">
+                    <Download className="w-3 h-3" />
+                    Installa
                   </span>
-                ))}
+                  <span className="text-[10px] text-[#6B7280]">1 tap</span>
+                </div>
               </div>
             </div>
           </div>
         )}
+
+        {/* Brand Cashback Strip */}
+        <div className="mb-8 animate-slideUp" style={{ animationDelay: '0.15s' }} data-testid="brand-cashback-strip">
+          <div className="flex items-center gap-2 mb-3 px-1">
+            <Percent className="w-4 h-4 text-[#E85A24]" />
+            <span className="text-sm font-bold text-[#1A1A1A]">Cashback sui tuoi brand</span>
+          </div>
+          <div className="grid grid-cols-4 gap-2">
+            {[
+              { brand: "Amazon", cashback: "1.87%", color: "#232F3E", logo: "/api/giftcards/logo/986ef34a-13b7-4250-9414-905c982c75b7.JPG" },
+              { brand: "IKEA", cashback: "6.5%", color: "#0058A3", logo: "/api/giftcards/logo/1aa843df-62b9-45d3-9365-cd11ef930443.JPG" },
+              { brand: "Conad", cashback: "1.69%", color: "#D9D9D9", logo: "/api/giftcards/logo/bcddd511-c663-4175-b959-2cebdccaf9cd.JPG" },
+              { brand: "Decathlon", cashback: "1%", color: "#333", logo: "/api/giftcards/logo/62091058-c72f-4759-828f-5642bcfe2c73.JPG" },
+            ].map(b => (
+              <div key={b.brand} className="bg-white rounded-xl border border-black/5 overflow-hidden shadow-sm hover:shadow-md transition-shadow" data-testid={`brand-${b.brand.toLowerCase()}`}>
+                <div className="aspect-[4/3] overflow-hidden bg-[#FAFAFA]">
+                  <img src={`${API}${b.logo}`} alt={b.brand} className="w-full h-full object-contain p-1" />
+                </div>
+                <div className="px-1.5 py-1 text-center border-t border-black/5">
+                  <span className="text-[10px] font-bold text-[#E85A24]">{b.cashback}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* Features */}
         <div className="grid grid-cols-2 gap-4 mb-12">
@@ -144,7 +178,7 @@ export default function LandingPage() {
             <div 
               key={f.title}
               className="bg-[#F5F5F5] border border-black/5 rounded-2xl p-5 animate-slideUp"
-              style={{ animationDelay: `${0.1 + i * 0.05}s` }}
+              style={{ animationDelay: `${0.2 + i * 0.05}s` }}
             >
               <f.icon className="w-8 h-8 text-[#2B7AB8] mb-3" />
               <h3 className="font-semibold mb-1 text-[#1A1A1A]">{f.title}</h3>
