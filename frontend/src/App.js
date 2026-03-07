@@ -27,6 +27,9 @@ import AdminGiftCardsPage from "@/pages/AdminGiftCardsPage";
 import PublicMenuPage from "@/pages/PublicMenuPage";
 import MenuManagePage from "@/pages/MenuManagePage";
 import MyuChatPage from "@/pages/MyuChatPage";
+import AdminUsersPage from "@/pages/AdminUsersPage";
+import AdminOpenAIPage from "@/pages/AdminOpenAIPage";
+import MerchantReferredUsersPage from "@/pages/MerchantReferredUsersPage";
 import MyuMascot from "@/components/MyuMascot";
 import ChromePromptBanner from "@/components/ChromePromptBanner";
 
@@ -160,6 +163,9 @@ function App() {
           <Route path="/admin/giftcards" element={<ProtectedRoute><AdminGiftCardsPage /></ProtectedRoute>} />
           <Route path="/menu-manage" element={<ProtectedRoute><MenuManagePage /></ProtectedRoute>} />
           <Route path="/myu" element={<ProtectedRoute><MyuChatPage /></ProtectedRoute>} />
+          <Route path="/admin/users" element={<ProtectedRoute><AdminUsersPage /></ProtectedRoute>} />
+          <Route path="/admin/openai" element={<ProtectedRoute><AdminOpenAIPage /></ProtectedRoute>} />
+          <Route path="/merchant/referred-users" element={<ProtectedRoute><MerchantReferredUsersPage /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <MyuMascot />

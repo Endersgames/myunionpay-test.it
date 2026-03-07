@@ -40,7 +40,6 @@ async def get_referred_users(search: str = "", user=Depends(get_current_user)):
 
     for u in users:
         tx_count = await db.transactions.count_documents({"$or": [{"sender_id": u["id"]}, {"receiver_id": u["id"]}]})
-        wallet = await db.wallets.find_one({"user_id": u["id"]}, {"_id": 0, "balance": 1})
         ref = next((r for r in referrals if r["referred_id"] == u["id"]), {})
 
         total_transactions += tx_count
@@ -50,13 +49,9 @@ async def get_referred_users(search: str = "", user=Depends(get_current_user)):
             "id": u["id"],
             "full_name": u.get("full_name", ""),
             "email": u.get("email", ""),
-            "phone": u.get("phone", ""),
             "created_at": u.get("created_at", ""),
             "is_active": u.get("is_active", True),
             "is_blocked": u.get("is_blocked", False),
-            "wallet_balance": wallet.get("balance", 0) if wallet else 0,
-            "qr_code": u.get("qr_code", ""),
-            "referral_code": u.get("referral_code", ""),
             "transactions_count": tx_count,
             "referral_date": ref.get("created_at", ""),
             "reward_amount": ref.get("reward_amount", 0),
@@ -78,13 +73,13 @@ async def export_referred_users_csv(user=Depends(get_current_user)):
 
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(["Nome", "Email", "Telefono", "Data Registrazione", "Saldo Wallet", "Transazioni", "QR Code", "Stato"])
+    writer.writerow(["Nome", "Email", "Data Registrazione", "Transazioni", "Stato"])
 
     for u in data["users"]:
         writer.writerow([
-            u["full_name"], u["email"], u["phone"], u["created_at"],
-            f"{u['wallet_balance']:.2f}", u["transactions_count"],
-            u["qr_code"], "Bloccato" if u.get("is_blocked") else "Attivo"
+            u["full_name"], u["email"], u["created_at"],
+            u["transactions_count"],
+            "Bloccato" if u.get("is_blocked") else "Attivo"
         ])
 
     output.seek(0)

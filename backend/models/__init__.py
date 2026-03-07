@@ -29,6 +29,7 @@ class UserResponse(BaseModel):
     referral_code: str
     up_points: int
     is_merchant: bool
+    is_admin: Optional[bool] = False
     created_at: str
 
 

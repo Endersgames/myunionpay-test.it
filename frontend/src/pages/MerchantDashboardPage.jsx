@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/App";
 import { 
   ArrowLeft, Store, QrCode, Bell, 
-  Wallet, MapPin, ChevronRight, UtensilsCrossed
+  Wallet, MapPin, ChevronRight, UtensilsCrossed, Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -279,6 +279,16 @@ export default function MerchantDashboardPage() {
             >
               <Bell className="w-5 h-5 mr-2" />
               Invia Notifica Profilata
+            </Button>
+
+            <Button
+              onClick={() => navigate("/merchant/referred-users")}
+              variant="outline"
+              className="w-full h-14 rounded-full border-[#2B7AB8]/30 text-[#2B7AB8] text-lg font-semibold hover:bg-[#2B7AB8]/5"
+              data-testid="referred-users-btn"
+            >
+              <Users className="w-5 h-5 mr-2" />
+              Utenti Presentati
             </Button>
           </div>
 

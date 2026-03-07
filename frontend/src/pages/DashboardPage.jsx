@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { 
   Wallet, QrCode, Scan, Bell, 
   ArrowUpRight, ArrowDownLeft, Plus, TrendingUp, Settings,
-  CreditCard, Gift
+  CreditCard, Gift, Users, Bot
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BottomNav from "@/components/BottomNav";
@@ -219,9 +219,9 @@ export default function DashboardPage() {
         {/* Gift Cards */}
         <GiftCardSection onPurchase={fetchData} />
 
-        {/* Admin Link */}
-        {user?.email === "admin@test.com" && (
-          <div className="mt-4 mb-2">
+        {/* Admin Links */}
+        {user?.is_admin && (
+          <div className="mt-4 mb-2 space-y-2">
             <Button
               onClick={() => navigate("/admin/giftcards")}
               variant="outline"
@@ -229,7 +229,25 @@ export default function DashboardPage() {
               data-testid="admin-giftcards-btn"
             >
               <Settings className="w-4 h-4 mr-2" />
-              Admin - Gestisci Gift Card
+              Admin - Gift Card
+            </Button>
+            <Button
+              onClick={() => navigate("/admin/users")}
+              variant="outline"
+              className="w-full h-12 rounded-xl border-[#1A1A1A] text-[#1A1A1A] font-semibold"
+              data-testid="admin-users-btn"
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Admin - Utenti
+            </Button>
+            <Button
+              onClick={() => navigate("/admin/openai")}
+              variant="outline"
+              className="w-full h-12 rounded-xl border-[#1A1A1A] text-[#1A1A1A] font-semibold"
+              data-testid="admin-openai-btn"
+            >
+              <Bot className="w-4 h-4 mr-2" />
+              Admin - Configurazione AI
             </Button>
           </div>
         )}

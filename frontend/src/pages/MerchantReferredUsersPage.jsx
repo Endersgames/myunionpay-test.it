@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/App";
-import { toast } from "sonner";
-import { ArrowLeft, Users, Search, Download, Wallet, QrCode, Mail, Phone, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Users, Search, Download, Mail, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 const API = process.env.REACT_APP_BACKEND_URL || "";
-const authHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem("token")}`, "Content-Type": "application/json" });
+const authHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem("auth_token")}`, "Content-Type": "application/json" });
 
 export default function MerchantReferredUsersPage() {
   const navigate = useNavigate();
@@ -43,7 +42,7 @@ export default function MerchantReferredUsersPage() {
     <div className="min-h-screen bg-[#FAFAFA] pb-8" data-testid="merchant-referred-page">
       <div className="bg-white border-b border-black/5 px-5 pt-8 pb-4">
         <div className="flex items-center gap-3 mb-4">
-          <button onClick={() => navigate("/merchant-dashboard")} className="p-2 -ml-2"><ArrowLeft className="w-5 h-5" /></button>
+          <button onClick={() => navigate("/merchant-dashboard")} className="p-2 -ml-2" data-testid="back-btn"><ArrowLeft className="w-5 h-5" /></button>
           <div>
             <h1 className="font-bold text-xl text-[#1A1A1A]">Utenti Presentati</h1>
             <p className="text-xs text-[#6B7280]">{data.total_users} utenti tramite il tuo referral</p>
@@ -95,18 +94,14 @@ export default function MerchantReferredUsersPage() {
                   <p className="text-xs text-[#6B7280]">{u.email}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-sm font-mono font-semibold text-[#1A1A1A]">{u.wallet_balance.toFixed(2)} UP</p>
-                  <p className="text-[10px] text-[#6B7280]">{u.transactions_count} tx</p>
+                  <p className="text-xs text-[#6B7280]">{u.transactions_count} tx</p>
                 </div>
                 {expandedId === u.id ? <ChevronUp className="w-4 h-4 text-[#6B7280]" /> : <ChevronDown className="w-4 h-4 text-[#6B7280]" />}
               </div>
               {expandedId === u.id && (
                 <div className="px-4 pb-4 pt-0 border-t border-black/5 space-y-2" style={{ animation: "myuFadeIn 0.3s ease" }}>
-                  <div className="grid grid-cols-2 gap-2 mt-3">
-                    <div className="flex items-center gap-2 text-xs text-[#6B7280]"><Phone className="w-3.5 h-3.5" />{u.phone || "N/A"}</div>
+                  <div className="mt-3 space-y-2">
                     <div className="flex items-center gap-2 text-xs text-[#6B7280]"><Mail className="w-3.5 h-3.5" />{u.email}</div>
-                    <div className="flex items-center gap-2 text-xs text-[#6B7280]"><QrCode className="w-3.5 h-3.5" />{u.qr_code || "N/A"}</div>
-                    <div className="flex items-center gap-2 text-xs text-[#6B7280]"><Wallet className="w-3.5 h-3.5" />{u.wallet_balance.toFixed(2)} UP</div>
                   </div>
                   <div className="flex items-center justify-between pt-2">
                     <span className="text-xs text-[#6B7280]">Registrato: {new Date(u.created_at).toLocaleDateString("it-IT")}</span>

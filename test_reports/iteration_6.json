@@ -1,0 +1,85 @@
+{
+  "summary": "Admin/Merchant Panels Testing Complete. Fixed 3 bugs during testing. Backend: 18/18 tests pass. Frontend: All 3 new pages working correctly after fixes.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_admin_merchant_panels.py",
+    "/app/test_reports/pytest/admin_merchant_results.xml"
+  ],
+  "action_items": [],
+  "bugs_fixed_by_tester": [
+    {
+      "bug": "UserResponse model missing is_admin field",
+      "file": "/app/backend/models/__init__.py",
+      "fix": "Added 'is_admin: Optional[bool] = False' to UserResponse model",
+      "impact": "Frontend couldn't detect admin users - admin buttons hidden, admin pages showed 'Accesso negato'"
+    },
+    {
+      "bug": "New pages using wrong localStorage key for auth token",
+      "files": [
+        "/app/frontend/src/pages/AdminUsersPage.jsx",
+        "/app/frontend/src/pages/AdminOpenAIPage.jsx", 
+        "/app/frontend/src/pages/MerchantReferredUsersPage.jsx"
+      ],
+      "fix": "Changed localStorage.getItem('token') to localStorage.getItem('auth_token')",
+      "impact": "API calls from new pages returned 401 errors"
+    },
+    {
+      "bug": "OpenAI test endpoint missing session_id parameter",
+      "file": "/app/backend/routes/admin_openai.py",
+      "fix": "Added session_id parameter to LlmChat constructor",
+      "impact": "Test connection threw 'missing required positional argument: session_id'"
+    },
+    {
+      "bug": "OpenAI config save stored 'KEEP_EXISTING' literally",
+      "file": "/app/backend/routes/admin_openai.py", 
+      "fix": "Updated save_openai_config to skip api_key update if value is 'KEEP_EXISTING', and test endpoint to fall back to env var",
+      "impact": "Test connection used invalid API key 'KEEP_EXISTING' instead of env var"
+    }
+  ],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/models/__init__.py",
+    "/app/backend/routes/admin_openai.py",
+    "/app/frontend/src/pages/AdminUsersPage.jsx",
+    "/app/frontend/src/pages/AdminOpenAIPage.jsx",
+    "/app/frontend/src/pages/MerchantReferredUsersPage.jsx"
+  ],
+  "success_rate": {
+    "backend": "100% (18/18 passed, 1 skipped)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "admin_user": "admin@test.com / test123",
+    "merchant_user": "test@test.com / test123 (owns Trattoria da Mario)"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Admin/Merchant panel features fully tested and working: 1) Admin Users page (/admin/users) - lists 25 users, filter by all/active/blocked/merchant/admin, search, expand user details, edit dialog, block/unblock. 2) Admin OpenAI Config page (/admin/openai) - shows API key status, model selection (GPT-4.1 Nano/Mini, GPT-4o Mini/Full, Gemini Flash Lite), enable/disable toggle, max tokens, temperature, save config, test connection working. 3) Merchant Referred Users page (/merchant/referred-users) - stats (users/transactions/rewards), search, export CSV, empty state when no referrals. 4) Dashboard shows 3 admin buttons for admin users. 5) Merchant Dashboard shows 'Utenti Presentati' button. 6) Security: non-admin users get 403 on admin endpoints, non-merchants get 403 on merchant endpoints. 7) Merchant referred users API correctly excludes phone/wallet_balance/qr_code fields.",
+  "verified_features": {
+    "GET /api/admin/users": "PASS - Returns 25 users with filters working",
+    "GET /api/admin/user/{id}": "PASS - Returns detailed user info with wallet, merchant, transactions",
+    "PUT /api/admin/user/{id}": "PASS - Updates user fields",
+    "POST /api/admin/user/{id}/block": "PASS - Blocks user",
+    "POST /api/admin/user/{id}/unblock": "PASS - Unblocks user",
+    "GET /api/admin/openai/config": "PASS - Returns config with api_key_set, model, enabled, max_tokens, temperature",
+    "POST /api/admin/openai/config": "PASS - Saves config (handles KEEP_EXISTING correctly)",
+    "POST /api/admin/openai/test": "PASS - Tests connection, returns success with model and response",
+    "GET /api/merchant/referred-users": "PASS - Returns referred users (0 in seed data)",
+    "Security - admin endpoints": "PASS - Non-admin users get 403",
+    "Security - merchant endpoints": "PASS - Non-merchant users get 403 (skipped - test user was also merchant)",
+    "AdminUsersPage UI": "PASS - All elements working: search, filters, user list, expand, edit dialog, block/unblock",
+    "AdminOpenAIPage UI": "PASS - All elements working: API key status, model selection, toggle, inputs, save, test connection",
+    "MerchantReferredUsersPage UI": "PASS - All elements working: stats, search, export CSV, empty state",
+    "Dashboard admin buttons": "PASS - 3 buttons shown for admin users (Gift Card, Utenti, Configurazione AI)",
+    "Merchant Dashboard button": "PASS - Utenti Presentati button shown"
+  }
+}

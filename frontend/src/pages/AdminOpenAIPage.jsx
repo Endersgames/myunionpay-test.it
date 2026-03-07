@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 const API = process.env.REACT_APP_BACKEND_URL || "";
-const authHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem("token")}`, "Content-Type": "application/json" });
+const authHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem("auth_token")}`, "Content-Type": "application/json" });
 
 const MODELS = [
   { id: "gpt-4.1-nano", label: "GPT-4.1 Nano (economico)", cost: "Basso" },
@@ -77,7 +77,7 @@ export default function AdminOpenAIPage() {
     <div className="min-h-screen bg-[#FAFAFA] pb-8" data-testid="admin-openai-page">
       <div className="bg-white border-b border-black/5 px-5 pt-8 pb-4">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate("/admin/giftcards")} className="p-2 -ml-2"><ArrowLeft className="w-5 h-5" /></button>
+          <button onClick={() => navigate("/dashboard")} className="p-2 -ml-2" data-testid="back-btn"><ArrowLeft className="w-5 h-5" /></button>
           <div>
             <h1 className="font-bold text-xl text-[#1A1A1A]">Configurazione AI</h1>
             <p className="text-xs text-[#6B7280]">Gestisci la connessione OpenAI per MYU</p>
