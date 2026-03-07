@@ -27,6 +27,7 @@ import AdminGiftCardsPage from "@/pages/AdminGiftCardsPage";
 import PublicMenuPage from "@/pages/PublicMenuPage";
 import MenuManagePage from "@/pages/MenuManagePage";
 import MyuChatPage from "@/pages/MyuChatPage";
+import MyuMascot from "@/components/MyuMascot";
 import ChromePromptBanner from "@/components/ChromePromptBanner";
 
 // Auth Context
@@ -161,6 +162,7 @@ function App() {
           <Route path="/myu" element={<ProtectedRoute><MyuChatPage /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <MyuMascot />
       </AuthProvider>
     </BrowserRouter>
   );

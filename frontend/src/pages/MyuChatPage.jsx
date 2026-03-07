@@ -2,9 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/App";
 import { toast } from "sonner";
-import { ArrowLeft, Send, RotateCcw, CheckCircle2, Clock, X, ChevronRight, Sparkles } from "lucide-react";
+import { ArrowLeft, Send, RotateCcw, CheckCircle2, Clock, X, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { myuAPI } from "@/lib/api";
+
+const MYU_ICON = "/myu-icon.png";
 
 const ACTION_LABELS = {
   navigate: { icon: ChevronRight, color: "bg-[#2B7AB8]" },
@@ -175,8 +177,8 @@ export default function MyuChatPage() {
               <ArrowLeft className="w-5 h-5 text-[#1A1A1A]" />
             </button>
             <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#E85A24] to-[#FF8C42] flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
+              <div className="w-9 h-9 rounded-full overflow-hidden">
+                <img src={MYU_ICON} alt="MYU" className="w-full h-full object-cover" />
               </div>
               <div>
                 <h1 className="font-bold text-[#1A1A1A] text-base leading-tight">MYU</h1>
@@ -215,8 +217,8 @@ export default function MyuChatPage() {
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center px-8">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#E85A24] to-[#FF8C42] flex items-center justify-center mb-4">
-              <Sparkles className="w-9 h-9 text-white" />
+            <div className="w-20 h-20 rounded-full overflow-hidden mb-4 myu-wave">
+              <img src={MYU_ICON} alt="MYU" className="w-full h-full object-cover" />
             </div>
             <h2 className="text-lg font-bold text-[#1A1A1A] mb-1">Ciao, sono MYU</h2>
             <p className="text-sm text-[#6B7280] mb-6">Il tuo compagno digitale. Chiedimi qualcosa!</p>
@@ -237,7 +239,12 @@ export default function MyuChatPage() {
 
         {messages.map((msg, idx) => (
           <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div className={`max-w-[80%] ${msg.role === "user"
+            {msg.role === "assistant" && (
+              <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 mr-2 mt-1">
+                <img src={MYU_ICON} alt="MYU" className="w-full h-full object-cover" />
+              </div>
+            )}
+            <div className={`max-w-[75%] ${msg.role === "user"
               ? "bg-[#2B7AB8] text-white rounded-2xl rounded-br-md px-4 py-2.5"
               : "bg-white border border-black/5 text-[#1A1A1A] rounded-2xl rounded-bl-md px-4 py-2.5 shadow-sm"
             }`}>
@@ -255,11 +262,16 @@ export default function MyuChatPage() {
 
         {loading && (
           <div className="flex justify-start">
-            <div className="bg-white border border-black/5 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
-              <div className="flex gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-[#E85A24] animate-bounce" style={{ animationDelay: "0ms" }} />
-                <div className="w-2 h-2 rounded-full bg-[#E85A24] animate-bounce" style={{ animationDelay: "150ms" }} />
-                <div className="w-2 h-2 rounded-full bg-[#E85A24] animate-bounce" style={{ animationDelay: "300ms" }} />
+            <div className="flex items-end gap-2">
+              <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 myu-nod">
+                <img src={MYU_ICON} alt="MYU" className="w-full h-full object-cover" />
+              </div>
+              <div className="bg-white border border-black/5 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
+                <div className="flex gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-[#4A90D9] myu-thinking-dot" style={{ animationDelay: "0ms" }} />
+                  <div className="w-2 h-2 rounded-full bg-[#4A90D9] myu-thinking-dot" style={{ animationDelay: "200ms" }} />
+                  <div className="w-2 h-2 rounded-full bg-[#E85A24] myu-thinking-dot" style={{ animationDelay: "400ms" }} />
+                </div>
               </div>
             </div>
           </div>
