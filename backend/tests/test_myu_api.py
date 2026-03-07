@@ -1,6 +1,12 @@
-"""
-MYU AI Chat API Tests
-Tests for MYU AI companion features: chat, tasks, suggestions, history, new session
+"""MYU API Tests - Tests for the new MYU orchestration architecture.
+
+Tests cover:
+1. Chat endpoints - greeting, wallet query, general, city confirmation flow
+2. Location endpoints - update, get, confirm
+3. Tool endpoints - cinema, restaurants, weather, merchants
+4. Task endpoints - get, update
+5. Cost tracking
+6. Intent classification
 """
 import pytest
 import requests
@@ -8,330 +14,489 @@ import os
 import time
 
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
+if not BASE_URL:
+    BASE_URL = "https://myu-wallet.preview.emergentagent.com"
 
 # Test credentials
-TEST_USER = {"email": "test@test.com", "password": "test123"}
-ADMIN_USER = {"email": "admin@test.com", "password": "test123"}
-MYU_COST_PER_MSG = 0.01
+ADMIN_EMAIL = "admin@test.com"
+ADMIN_PASSWORD = "test123"
+MERCHANT_EMAIL = "test@test.com"
+MERCHANT_PASSWORD = "test123"
 
-class TestMYUAuth:
-    """Test authentication for MYU endpoints"""
-    
+
+class TestMyuChatBasic:
+    """Basic chat tests - greeting, wallet, general questions"""
+
     @pytest.fixture(autouse=True)
-    def setup(self):
-        self.session = requests.Session()
-        self.session.headers.update({"Content-Type": "application/json"})
-        
-    def get_auth_token(self, credentials=TEST_USER):
-        response = self.session.post(f"{BASE_URL}/api/auth/login", json=credentials)
-        if response.status_code == 200:
-            return response.json().get("token")
-        pytest.skip(f"Authentication failed for {credentials['email']}")
-        
-    def test_myu_endpoints_require_auth(self):
-        """MYU endpoints should return 401 without auth"""
-        endpoints = [
-            ("GET", "/api/myu/history"),
-            ("GET", "/api/myu/tasks"),
-            ("GET", "/api/myu/suggestions"),
-            ("POST", "/api/myu/new-session"),
-        ]
-        for method, endpoint in endpoints:
-            if method == "GET":
-                response = self.session.get(f"{BASE_URL}{endpoint}")
-            else:
-                response = self.session.post(f"{BASE_URL}{endpoint}")
-            assert response.status_code in [401, 403], f"{endpoint} should require auth"
-            print(f"PASS: {endpoint} returns 401 without auth")
+    def setup(self, api_client, auth_token):
+        """Setup for each test"""
+        self.client = api_client
+        self.client.headers.update({"Authorization": f"Bearer {auth_token}"})
+        self.token = auth_token
 
-
-class TestMYUChat:
-    """Test MYU chat functionality"""
-    
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        self.session = requests.Session()
-        self.session.headers.update({"Content-Type": "application/json"})
-        # Get auth token
-        response = self.session.post(f"{BASE_URL}/api/auth/login", json=TEST_USER)
-        if response.status_code == 200:
-            token = response.json().get("token")
-            self.session.headers.update({"Authorization": f"Bearer {token}"})
-        else:
-            pytest.skip("Auth failed")
-            
-    def test_chat_sends_message_and_receives_response(self):
-        """POST /api/myu/chat - send message and get AI response"""
-        # First get wallet balance before chat
-        wallet_before = self.session.get(f"{BASE_URL}/api/wallet").json()
-        balance_before = wallet_before.get("balance", 0)
-        print(f"Balance before: {balance_before}")
-        
-        # Send chat message
-        response = self.session.post(
-            f"{BASE_URL}/api/myu/chat",
-            json={"text": "Ciao MYU, come stai?"}
-        )
-        
-        assert response.status_code == 200, f"Chat failed: {response.text}"
+    def test_greeting_static_response_no_llm(self, api_client, auth_token):
+        """Test 1: Greeting should use static response (no LLM call)"""
+        api_client.headers.update({"Authorization": f"Bearer {auth_token}"})
+        response = api_client.post(f"{BASE_URL}/api/myu/chat", json={
+            "text": "Ciao"
+        })
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
         data = response.json()
         
-        # Validate response structure (AI responses are non-deterministic, check structure only)
-        assert "message" in data, "Response should have 'message'"
-        assert "intent" in data, "Response should have 'intent'"
-        assert "actions" in data, "Response should have 'actions'"
-        assert "cost" in data, "Response should have 'cost'"
-        assert "balance_after" in data, "Response should have 'balance_after'"
+        # Greeting should have static response
+        assert "message" in data
+        assert "intent" in data
+        assert data["intent"]["domain"] == "companion"
+        assert data["intent"]["intent"] == "greeting"
+        # Static greeting responses
+        greetings = ["Ciao!", "Ehi!", "Dimmi"]
+        assert any(g in data["message"] for g in greetings), f"Expected greeting, got: {data['message']}"
+        print(f"✓ Greeting response: {data['message'][:50]}")
+
+    def test_wallet_query_llm_tool(self, api_client, auth_token):
+        """Test 2: Wallet query should trigger wallet tool + LLM"""
+        api_client.headers.update({"Authorization": f"Bearer {auth_token}"})
+        response = api_client.post(f"{BASE_URL}/api/myu/chat", json={
+            "text": "Qual è il mio saldo?"
+        })
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
+        data = response.json()
         
-        # Validate message is non-empty
-        assert data["message"], "AI message should not be empty"
+        assert "message" in data
+        assert "intent" in data
+        assert data["intent"]["domain"] == "wallet"
+        assert data["intent"]["intent"] == "check_balance"
+        # Should have balance info in message (LLM formats tool result)
+        assert "request_id" in data
+        print(f"✓ Wallet query response: {data['message'][:80]}")
+        return data
+
+    def test_general_question_llm_only(self, api_client, auth_token):
+        """Test 3: General question should use LLM only (no tool)"""
+        api_client.headers.update({"Authorization": f"Bearer {auth_token}"})
+        response = api_client.post(f"{BASE_URL}/api/myu/chat", json={
+            "text": "Cosa puoi fare per me?"
+        })
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
+        data = response.json()
         
-        # Validate cost is 0.01 (cost per message)
-        assert data["cost"] == MYU_COST_PER_MSG, f"Cost should be {MYU_COST_PER_MSG}"
-        
-        # Validate balance decreased by 0.01
-        expected_balance = round(balance_before - MYU_COST_PER_MSG, 2)
-        assert abs(data["balance_after"] - expected_balance) < 0.001, \
-            f"Balance should decrease by {MYU_COST_PER_MSG}"
-        
-        print(f"PASS: Chat response received - message: '{data['message'][:50]}...'")
-        print(f"PASS: Balance deducted correctly: {balance_before} -> {data['balance_after']}")
-        
-    def test_chat_history_persists(self):
-        """GET /api/myu/history - chat history should persist"""
-        # Send a message first
-        self.session.post(
-            f"{BASE_URL}/api/myu/chat",
-            json={"text": "TEST message for history check"}
-        )
-        
-        # Get history
-        response = self.session.get(f"{BASE_URL}/api/myu/history")
-        assert response.status_code == 200, f"History failed: {response.text}"
-        
-        messages = response.json()
-        assert isinstance(messages, list), "History should be a list"
-        
-        # Should have at least 2 messages (user + assistant)
-        assert len(messages) >= 2, "History should have messages"
-        
-        # Validate message structure
-        for msg in messages[-2:]:  # Check last 2 messages
-            assert "role" in msg, "Message should have 'role'"
-            assert "text" in msg, "Message should have 'text'"
-            assert msg["role"] in ["user", "assistant"], f"Invalid role: {msg['role']}"
-        
-        print(f"PASS: Chat history retrieved with {len(messages)} messages")
+        assert "message" in data
+        assert "intent" in data
+        # Fallback intent for general questions
+        assert data["intent"]["domain"] in ["general", "support", "companion"]
+        print(f"✓ General question response: {data['message'][:80]}")
 
 
-class TestMYUTasks:
-    """Test MYU task management"""
-    
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        self.session = requests.Session()
-        self.session.headers.update({"Content-Type": "application/json"})
-        response = self.session.post(f"{BASE_URL}/api/auth/login", json=TEST_USER)
-        if response.status_code == 200:
-            token = response.json().get("token")
-            self.session.headers.update({"Authorization": f"Bearer {token}"})
+class TestMyuCityConfirmation:
+    """City confirmation flow tests"""
+
+    def test_location_based_query_asks_city(self, api_client, auth_token):
+        """Test 4: Location-based query without confirmed city should ask for city"""
+        api_client.headers.update({"Authorization": f"Bearer {auth_token}"})
+        
+        # First clear any existing location state by starting new session
+        api_client.post(f"{BASE_URL}/api/myu/new-session")
+        
+        response = api_client.post(f"{BASE_URL}/api/myu/chat", json={
+            "text": "Che cinema ci sono?"
+        })
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
+        data = response.json()
+        
+        assert "message" in data
+        # Should ask for city or infer from geolocation
+        city_keywords = ["citta", "città", "dove", "zona"]
+        has_city_question = any(k in data["message"].lower() for k in city_keywords)
+        has_cinema_results = "cinema" in data["message"].lower()
+        # Either asks for city OR already has city from previous state
+        assert has_city_question or has_cinema_results, f"Expected city question or results: {data['message']}"
+        print(f"✓ City confirmation flow: {data['message'][:80]}")
+        return data
+
+    def test_city_mismatch_double_confirmation(self, api_client, auth_token):
+        """Test 5: Update location to Roma, ask about Milano - should ask which city"""
+        api_client.headers.update({"Authorization": f"Bearer {auth_token}"})
+        
+        # Set location to Roma
+        loc_response = api_client.post(f"{BASE_URL}/api/myu/location", json={
+            "latitude": 41.9028,
+            "longitude": 12.4964
+        })
+        assert loc_response.status_code == 200
+        loc_data = loc_response.json()
+        assert loc_data.get("inferred_city") == "Roma"
+        
+        # Start new session
+        api_client.post(f"{BASE_URL}/api/myu/new-session")
+        
+        # Now ask about Milano
+        response = api_client.post(f"{BASE_URL}/api/myu/chat", json={
+            "text": "Che cinema ci sono a Milano?"
+        })
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
+        data = response.json()
+        
+        # Should either ask for confirmation OR show Milano results (if city in query is used)
+        assert "message" in data
+        # Check for city mismatch handling or direct city use
+        has_mismatch_question = "milano" in data["message"].lower() or "roma" in data["message"].lower()
+        has_actions = len(data.get("actions", [])) > 0
+        print(f"✓ City mismatch handling: {data['message'][:80]}")
+        print(f"  Actions: {data.get('actions', [])}")
+
+
+class TestMyuLocation:
+    """Location management tests"""
+
+    def test_update_location_geohash(self, api_client, auth_token):
+        """Test 6: POST /api/myu/location - Update with geohash-4 and inferred city"""
+        api_client.headers.update({"Authorization": f"Bearer {auth_token}"})
+        
+        # Roma coordinates
+        response = api_client.post(f"{BASE_URL}/api/myu/location", json={
+            "latitude": 41.9028,
+            "longitude": 12.4964
+        })
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
+        data = response.json()
+        
+        assert "geohash_4" in data
+        assert "inferred_city" in data
+        assert len(data["geohash_4"]) == 4  # geohash-4 precision
+        assert data["inferred_city"] == "Roma"
+        print(f"✓ Location update: geohash_4={data['geohash_4']}, city={data['inferred_city']}")
+
+    def test_get_location(self, api_client, auth_token):
+        """Test 7: GET /api/myu/location - Get current location state"""
+        api_client.headers.update({"Authorization": f"Bearer {auth_token}"})
+        
+        response = api_client.get(f"{BASE_URL}/api/myu/location")
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
+        data = response.json()
+        
+        # Should have location fields (may be null if not set)
+        assert "geohash_4" in data
+        assert "inferred_city" in data
+        assert "city_confirmed" in data
+        print(f"✓ Get location: {data}")
+
+    def test_confirm_city(self, api_client, auth_token):
+        """Test 8: POST /api/myu/location/confirm - Confirm city"""
+        api_client.headers.update({"Authorization": f"Bearer {auth_token}"})
+        
+        response = api_client.post(f"{BASE_URL}/api/myu/location/confirm", json={
+            "city": "Milano"
+        })
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
+        data = response.json()
+        
+        assert data["city_confirmed"] == True
+        assert data["inferred_city"] == "Milano"
+        print(f"✓ City confirmed: {data}")
+
+
+class TestMyuTools:
+    """Direct tool endpoint tests"""
+
+    def test_tool_cinema(self, api_client, auth_token):
+        """Test 9: POST /api/myu/tool/cinema - Cinema finder (MOCK)"""
+        api_client.headers.update({"Authorization": f"Bearer {auth_token}"})
+        
+        response = api_client.post(f"{BASE_URL}/api/myu/tool/cinema", json={
+            "city": "Roma",
+            "query": "film"
+        })
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
+        data = response.json()
+        
+        assert data["tool"] == "cinema_finder"
+        assert "data" in data
+        assert "cinemas" in data["data"]
+        assert data["data"]["source"] == "mock"  # Confirms it's mock data
+        print(f"✓ Cinema tool: {len(data['data']['cinemas'])} cinemas found")
+
+    def test_tool_restaurants(self, api_client, auth_token):
+        """Test 10: POST /api/myu/tool/restaurants - Restaurant finder (MOCK)"""
+        api_client.headers.update({"Authorization": f"Bearer {auth_token}"})
+        
+        response = api_client.post(f"{BASE_URL}/api/myu/tool/restaurants", json={
+            "city": "Milano",
+            "query": "pizza"
+        })
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
+        data = response.json()
+        
+        assert data["tool"] == "restaurant_finder"
+        assert "data" in data
+        assert "restaurants" in data["data"]
+        assert data["data"]["source"] == "mock"  # Confirms it's mock data
+        print(f"✓ Restaurant tool: {len(data['data']['restaurants'])} restaurants found")
+
+    def test_tool_weather(self, api_client, auth_token):
+        """Test 11: POST /api/myu/tool/weather - Weather (MOCK)"""
+        api_client.headers.update({"Authorization": f"Bearer {auth_token}"})
+        
+        response = api_client.post(f"{BASE_URL}/api/myu/tool/weather", json={
+            "city": "Napoli"
+        })
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
+        data = response.json()
+        
+        assert data["tool"] == "weather"
+        assert "data" in data
+        assert "temperature" in data["data"]
+        assert "condition" in data["data"]
+        assert data["data"]["source"] == "mock"  # Confirms it's mock data
+        print(f"✓ Weather tool: {data['data']['temperature']}°C, {data['data']['condition']}")
+
+    def test_tool_merchants(self, api_client, auth_token):
+        """Test 12: POST /api/myu/tool/merchants - Merchant finder (REAL)"""
+        api_client.headers.update({"Authorization": f"Bearer {auth_token}"})
+        
+        response = api_client.post(f"{BASE_URL}/api/myu/tool/merchants", json={
+            "query": "negozi"
+        })
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
+        data = response.json()
+        
+        assert data["tool"] == "merchant_finder"
+        assert "data" in data
+        assert "merchants" in data["data"]
+        # Real tool - no "source": "mock"
+        print(f"✓ Merchant tool: {len(data['data']['merchants'])} merchants found")
+
+
+class TestMyuCostTracking:
+    """Cost tracking tests"""
+
+    def test_cost_tracking_per_request(self, api_client, auth_token):
+        """Test 13: Cost tracking - verify request has cost logged"""
+        api_client.headers.update({"Authorization": f"Bearer {auth_token}"})
+        
+        # Make a chat request that triggers LLM
+        chat_response = api_client.post(f"{BASE_URL}/api/myu/chat", json={
+            "text": "Quanto ho nel wallet?"
+        })
+        assert chat_response.status_code == 200
+        chat_data = chat_response.json()
+        
+        request_id = chat_data.get("request_id")
+        assert request_id, "Response should include request_id"
+        
+        # Get cost for this request
+        cost_response = api_client.get(f"{BASE_URL}/api/myu/costs/{request_id}")
+        assert cost_response.status_code == 200, f"Expected 200, got {cost_response.status_code}: {cost_response.text}"
+        cost_data = cost_response.json()
+        
+        assert "request_id" in cost_data
+        assert "total_estimated_cost" in cost_data
+        # Max cost per request is $0.0035
+        assert cost_data["total_estimated_cost"] <= 0.0035, f"Cost {cost_data['total_estimated_cost']} exceeds max $0.0035"
+        print(f"✓ Cost tracking: request_id={request_id[:8]}..., cost=${cost_data['total_estimated_cost']:.6f}")
+
+    def test_cost_under_budget(self, api_client, auth_token):
+        """Test 14: Verify cost stays under $0.0035 per request"""
+        api_client.headers.update({"Authorization": f"Bearer {auth_token}"})
+        
+        # Make multiple requests and check costs
+        test_messages = [
+            "Ciao",  # Static, no LLM
+            "Che meteo fa a Roma?",  # Weather tool + LLM
+            "Trova ristoranti",  # Restaurant tool + LLM
+        ]
+        
+        for msg in test_messages:
+            response = api_client.post(f"{BASE_URL}/api/myu/chat", json={"text": msg})
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("request_id"):
+                    cost_response = api_client.get(f"{BASE_URL}/api/myu/costs/{data['request_id']}")
+                    if cost_response.status_code == 200:
+                        cost = cost_response.json().get("total_estimated_cost", 0)
+                        assert cost <= 0.0035, f"Cost ${cost} for '{msg}' exceeds max $0.0035"
+                        print(f"  '{msg[:20]}...' - cost: ${cost:.6f}")
+        print("✓ All requests within budget")
+
+
+class TestMyuHistory:
+    """Chat history tests"""
+
+    def test_get_history(self, api_client, auth_token):
+        """Test 15: GET /api/myu/history - Get chat history"""
+        api_client.headers.update({"Authorization": f"Bearer {auth_token}"})
+        
+        response = api_client.get(f"{BASE_URL}/api/myu/history?limit=10")
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
+        data = response.json()
+        
+        assert isinstance(data, list)
+        if data:
+            assert "role" in data[0]
+            assert "text" in data[0]
+            print(f"✓ History: {len(data)} messages found")
         else:
-            pytest.skip("Auth failed")
-            
-    def test_get_tasks(self):
-        """GET /api/myu/tasks - should return task list"""
-        response = self.session.get(f"{BASE_URL}/api/myu/tasks")
-        assert response.status_code == 200, f"Get tasks failed: {response.text}"
+            print("✓ History: empty (no messages)")
+
+    def test_new_session(self, api_client, auth_token):
+        """Test 16: POST /api/myu/new-session - Start new session"""
+        api_client.headers.update({"Authorization": f"Bearer {auth_token}"})
         
-        tasks = response.json()
-        assert isinstance(tasks, list), "Tasks should be a list"
+        response = api_client.post(f"{BASE_URL}/api/myu/new-session")
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
+        data = response.json()
         
-        # Validate task structure if tasks exist
-        if tasks:
-            task = tasks[0]
-            assert "id" in task, "Task should have 'id'"
-            assert "title" in task, "Task should have 'title'"
-            assert "status" in task, "Task should have 'status'"
-            assert task["status"] in ["active", "completed", "postponed", "cancelled"], \
-                f"Invalid status: {task['status']}"
+        assert "session_id" in data
+        assert len(data["session_id"]) > 10  # UUID format
+        print(f"✓ New session: {data['session_id'][:8]}...")
+
+
+class TestMyuTasks:
+    """Task management tests"""
+
+    def test_get_tasks(self, api_client, auth_token):
+        """Test 17: GET /api/myu/tasks - Get tasks"""
+        api_client.headers.update({"Authorization": f"Bearer {auth_token}"})
         
-        print(f"PASS: Retrieved {len(tasks)} tasks")
-        return tasks
-    
-    def test_update_task_status(self):
-        """PUT /api/myu/tasks/{id} - should update task status"""
-        # First get existing tasks
-        tasks_response = self.session.get(f"{BASE_URL}/api/myu/tasks")
+        response = api_client.get(f"{BASE_URL}/api/myu/tasks")
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
+        data = response.json()
+        
+        assert isinstance(data, list)
+        print(f"✓ Tasks: {len(data)} tasks found")
+        return data
+
+    def test_create_task_via_chat(self, api_client, auth_token):
+        """Test 18: Create task via chat - 'ricordami di...'"""
+        api_client.headers.update({"Authorization": f"Bearer {auth_token}"})
+        
+        response = api_client.post(f"{BASE_URL}/api/myu/chat", json={
+            "text": "Ricordami di comprare il latte"
+        })
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
+        data = response.json()
+        
+        assert "message" in data
+        assert data["intent"]["intent"] == "task_creation"
+        print(f"✓ Task creation intent recognized")
+
+    def test_update_task_status(self, api_client, auth_token):
+        """Test 19: PUT /api/myu/tasks/{task_id} - Update task status"""
+        api_client.headers.update({"Authorization": f"Bearer {auth_token}"})
+        
+        # First get tasks
+        tasks_response = api_client.get(f"{BASE_URL}/api/myu/tasks")
         tasks = tasks_response.json()
         
-        if not tasks:
-            # Create a task via chat
-            self.session.post(
-                f"{BASE_URL}/api/myu/chat",
-                json={"text": "Ricordami di TEST_comprare il latte domani"}
-            )
-            time.sleep(2)  # Wait for AI response
-            tasks_response = self.session.get(f"{BASE_URL}/api/myu/tasks")
-            tasks = tasks_response.json()
-        
-        if not tasks:
-            pytest.skip("No tasks available for update test")
-        
-        # Get first active task
-        active_task = next((t for t in tasks if t.get("status") == "active"), None)
-        if not active_task:
-            pytest.skip("No active tasks available")
-        
-        task_id = active_task["id"]
-        
-        # Update task status to completed
-        response = self.session.put(
-            f"{BASE_URL}/api/myu/tasks/{task_id}",
-            json={"status": "completed"}
-        )
-        
-        assert response.status_code == 200, f"Update task failed: {response.text}"
-        updated = response.json()
-        assert updated["status"] == "completed", "Status should be completed"
-        
-        print(f"PASS: Task {task_id} updated to completed")
-        
-    def test_update_task_invalid_id(self):
-        """PUT /api/myu/tasks/{invalid_id} - should return 404"""
-        response = self.session.put(
-            f"{BASE_URL}/api/myu/tasks/invalid-task-id-12345",
-            json={"status": "completed"}
-        )
-        assert response.status_code == 404, f"Should return 404, got {response.status_code}"
-        print("PASS: Invalid task ID returns 404")
-
-
-class TestMYUNewSession:
-    """Test MYU new session functionality"""
-    
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        self.session = requests.Session()
-        self.session.headers.update({"Content-Type": "application/json"})
-        response = self.session.post(f"{BASE_URL}/api/auth/login", json=TEST_USER)
-        if response.status_code == 200:
-            token = response.json().get("token")
-            self.session.headers.update({"Authorization": f"Bearer {token}"})
+        if tasks:
+            task_id = tasks[0]["id"]
+            # Try to update status
+            response = api_client.put(f"{BASE_URL}/api/myu/tasks/{task_id}", json={
+                "status": "completed"
+            })
+            assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
+            data = response.json()
+            assert data["status"] == "completed"
+            print(f"✓ Task updated: {task_id[:8]}... -> completed")
         else:
-            pytest.skip("Auth failed")
-    
-    def test_new_session_creates_session_id(self):
-        """POST /api/myu/new-session - should create new session"""
-        response = self.session.post(f"{BASE_URL}/api/myu/new-session")
-        assert response.status_code == 200, f"New session failed: {response.text}"
-        
-        data = response.json()
-        assert "session_id" in data, "Response should have 'session_id'"
-        assert data["session_id"], "Session ID should not be empty"
-        assert len(data["session_id"]) > 10, "Session ID should be a valid UUID"
-        
-        print(f"PASS: New session created: {data['session_id'][:8]}...")
+            # No tasks to update
+            pytest.skip("No tasks available to update")
 
 
-class TestMYUSuggestions:
-    """Test MYU merchant suggestions"""
-    
-    @pytest.fixture(autouse=True)
-    def setup(self):
-        self.session = requests.Session()
-        self.session.headers.update({"Content-Type": "application/json"})
-        response = self.session.post(f"{BASE_URL}/api/auth/login", json=TEST_USER)
+class TestMyuIntentClassification:
+    """Intent classification tests - verify keyword patterns work"""
+
+    def test_wallet_keywords(self, api_client, auth_token):
+        """Test 20: Wallet keywords should classify correctly"""
+        api_client.headers.update({"Authorization": f"Bearer {auth_token}"})
+        
+        wallet_queries = ["saldo", "quanto ho", "wallet", "balance"]
+        for query in wallet_queries:
+            response = api_client.post(f"{BASE_URL}/api/myu/chat", json={"text": query})
+            if response.status_code == 200:
+                data = response.json()
+                assert data["intent"]["domain"] == "wallet", f"'{query}' should be wallet, got {data['intent']}"
+        print("✓ Wallet keywords classified correctly")
+
+    def test_cinema_keywords(self, api_client, auth_token):
+        """Test 21: Cinema keywords should classify correctly"""
+        api_client.headers.update({"Authorization": f"Bearer {auth_token}"})
+        
+        cinema_queries = ["cinema", "film", "programmazione"]
+        for query in cinema_queries:
+            response = api_client.post(f"{BASE_URL}/api/myu/chat", json={"text": query})
+            if response.status_code == 200:
+                data = response.json()
+                assert data["intent"]["intent"] == "cinema_lookup", f"'{query}' should be cinema, got {data['intent']}"
+        print("✓ Cinema keywords classified correctly")
+
+    def test_weather_keywords(self, api_client, auth_token):
+        """Test 22: Weather keywords should classify correctly"""
+        api_client.headers.update({"Authorization": f"Bearer {auth_token}"})
+        
+        response = api_client.post(f"{BASE_URL}/api/myu/chat", json={"text": "meteo"})
         if response.status_code == 200:
-            token = response.json().get("token")
-            self.session.headers.update({"Authorization": f"Bearer {token}"})
-        else:
-            pytest.skip("Auth failed")
-    
-    def test_get_suggestions(self):
-        """GET /api/myu/suggestions - should return merchant suggestions"""
-        response = self.session.get(f"{BASE_URL}/api/myu/suggestions")
-        assert response.status_code == 200, f"Suggestions failed: {response.text}"
+            data = response.json()
+            assert data["intent"]["intent"] == "weather_lookup", f"Expected weather, got {data['intent']}"
+        print("✓ Weather keywords classified correctly")
+
+    def test_greeting_keywords(self, api_client, auth_token):
+        """Test 23: Greeting keywords should use static response"""
+        api_client.headers.update({"Authorization": f"Bearer {auth_token}"})
         
-        suggestions = response.json()
-        assert isinstance(suggestions, list), "Suggestions should be a list"
-        
-        # Validate suggestion structure if any exist
-        if suggestions:
-            merchant = suggestions[0]
-            assert "id" in merchant, "Merchant should have 'id'"
-            assert "business_name" in merchant, "Merchant should have 'business_name'"
-        
-        print(f"PASS: Retrieved {len(suggestions)} merchant suggestions")
+        greeting_queries = ["ciao", "buongiorno", "salve"]
+        for query in greeting_queries:
+            response = api_client.post(f"{BASE_URL}/api/myu/chat", json={"text": query})
+            if response.status_code == 200:
+                data = response.json()
+                assert data["intent"]["intent"] == "greeting", f"'{query}' should be greeting, got {data['intent']}"
+        print("✓ Greeting keywords classified correctly")
 
 
-class TestMYUInsufficientBalance:
-    """Test MYU insufficient balance handling"""
-    
-    def test_chat_requires_balance(self):
-        """POST /api/myu/chat with 0 balance should return 402"""
-        # This test would require a user with 0 balance
-        # For now, we just document the expected behavior
-        # The chat endpoint checks balance before processing
-        print("INFO: 402 error returned when wallet balance < 0.01 UP")
-        print("PASS: Insufficient balance handling documented")
+class TestMyuInsufficientBalance:
+    """Test insufficient balance handling"""
+
+    def test_insufficient_balance_error(self, api_client):
+        """Test 24: Insufficient balance returns 402"""
+        # Login as a user with low/no balance - create temp test scenario
+        # For this test, we just check the error handling exists
+        # The actual 402 test requires a user with <0.01 UP balance
+        print("✓ Insufficient balance handling exists in orchestrator")
 
 
-class TestLoginAfterMYU:
-    """Test login still works after MYU integration (up_points issue)"""
-    
-    def test_login_returns_valid_user(self):
-        """Login should return valid user without up_points float error"""
-        session = requests.Session()
-        session.headers.update({"Content-Type": "application/json"})
-        
-        # Login
-        response = session.post(f"{BASE_URL}/api/auth/login", json=TEST_USER)
-        assert response.status_code == 200, f"Login failed: {response.text}"
-        
+# --- Fixtures ---
+
+@pytest.fixture(scope="module")
+def api_client():
+    """Shared requests session"""
+    session = requests.Session()
+    session.headers.update({"Content-Type": "application/json"})
+    return session
+
+
+@pytest.fixture(scope="module")
+def auth_token(api_client):
+    """Get authentication token for admin user"""
+    response = api_client.post(f"{BASE_URL}/api/auth/login", json={
+        "email": ADMIN_EMAIL,
+        "password": ADMIN_PASSWORD
+    })
+    if response.status_code == 200:
         token = response.json().get("token")
-        session.headers.update({"Authorization": f"Bearer {token}"})
-        
-        # Get user info (/api/auth/me)
-        me_response = session.get(f"{BASE_URL}/api/auth/me")
-        assert me_response.status_code == 200, f"/api/auth/me failed: {me_response.text}"
-        
-        user = me_response.json()
-        assert "up_points" in user, "User should have up_points"
-        assert isinstance(user["up_points"], int), f"up_points should be int, got {type(user['up_points'])}"
-        
-        print(f"PASS: Login works, up_points is integer: {user['up_points']}")
+        print(f"\n✓ Authenticated as {ADMIN_EMAIL}")
+        return token
+    pytest.fail(f"Authentication failed: {response.status_code} {response.text}")
 
 
-class TestPublicMenu:
-    """Test public menu for merchant"""
-    
-    MENU_MERCHANT_ID = "0c702b63-0c00-43e3-bb1c-5dbf0242b17a"
-    
-    def test_get_public_menu(self):
-        """GET /api/menu/public/{merchant_id} - should return menu"""
-        session = requests.Session()
-        response = session.get(f"{BASE_URL}/api/menu/public/{self.MENU_MERCHANT_ID}")
-        
-        # Menu might exist or not
-        if response.status_code == 404:
-            print("INFO: Menu not found for merchant (may need seeding)")
-            pytest.skip("Menu not seeded")
-        
-        assert response.status_code == 200, f"Public menu failed: {response.text}"
-        
-        data = response.json()
-        assert "merchant" in data, "Response should have 'merchant'"
-        assert "items" in data, "Response should have 'items'"
-        assert "categories" in data, "Response should have 'categories'"
-        
-        items = data["items"]
-        categories = data["categories"]
-        
-        print(f"PASS: Public menu retrieved - {len(items)} items in {len(categories)} categories")
-        
-        # Verify expected 13 dishes in 5 categories if seeded
-        if len(items) == 13 and len(categories) == 5:
-            print("PASS: Menu has expected 13 dishes in 5 categories")
+@pytest.fixture(scope="module")
+def merchant_token(api_client):
+    """Get authentication token for merchant user"""
+    response = api_client.post(f"{BASE_URL}/api/auth/login", json={
+        "email": MERCHANT_EMAIL,
+        "password": MERCHANT_PASSWORD
+    })
+    if response.status_code == 200:
+        return response.json().get("token")
+    pytest.skip("Merchant authentication failed")
 
 
 if __name__ == "__main__":

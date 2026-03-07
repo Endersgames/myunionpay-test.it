@@ -504,11 +504,16 @@ export const menuAPI = {
 // MYU AI API
 // ========================
 export const myuAPI = {
-  async chat(text) {
+  async chat(text, latitude = null, longitude = null) {
     try {
+      const body = { text };
+      if (latitude && longitude) {
+        body.latitude = latitude;
+        body.longitude = longitude;
+      }
       return await apiRequest('/myu/chat', {
         method: 'POST',
-        body: JSON.stringify({ text }),
+        body: JSON.stringify(body),
       });
     } catch (err) {
       if (err.message?.includes('402') || err.message?.includes('Saldo')) {
@@ -534,6 +539,24 @@ export const myuAPI = {
   },
   async getSuggestions() {
     return apiRequest('/myu/suggestions');
+  },
+  async updateLocation(latitude, longitude) {
+    return apiRequest('/myu/location', {
+      method: 'POST',
+      body: JSON.stringify({ latitude, longitude }),
+    });
+  },
+  async getLocation() {
+    return apiRequest('/myu/location');
+  },
+  async confirmCity(city) {
+    return apiRequest('/myu/location/confirm', {
+      method: 'POST',
+      body: JSON.stringify({ city }),
+    });
+  },
+  async getRequestCost(requestId) {
+    return apiRequest(`/myu/costs/${requestId}`);
   },
 };
 export const PROFILE_TAGS = [

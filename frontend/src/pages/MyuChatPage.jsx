@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/App";
 import { toast } from "sonner";
-import { ArrowLeft, Send, RotateCcw, CheckCircle2, Clock, X, ChevronRight } from "lucide-react";
+import { ArrowLeft, Send, RotateCcw, CheckCircle2, Clock, X, ChevronRight, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { myuAPI } from "@/lib/api";
 
@@ -12,6 +12,7 @@ const ACTION_LABELS = {
   navigate: { icon: ChevronRight, color: "bg-[#2B7AB8]" },
   create_task: { icon: CheckCircle2, color: "bg-[#E85A24]" },
   suggest_merchant: { icon: ChevronRight, color: "bg-emerald-600" },
+  confirm_city: { icon: MapPin, color: "bg-[#2B7AB8]" },
 };
 
 function ActionButton({ action, onClick }) {
@@ -86,16 +87,27 @@ export default function MyuChatPage() {
     setInitialLoading(false);
   };
 
-  const sendMessage = async () => {
-    const text = input.trim();
+  const sendMessage = async (overrideText = null) => {
+    // Ensure overrideText is a string (avoid event objects being passed)
+    const text = (typeof overrideText === 'string' && overrideText) ? overrideText : input.trim();
     if (!text || loading) return;
 
-    setInput("");
+    if (typeof overrideText !== 'string' || !overrideText) setInput("");
     setMessages(prev => [...prev, { role: "user", text, created_at: new Date().toISOString() }]);
     setLoading(true);
 
     try {
-      const res = await myuAPI.chat(text);
+      // Try to get user location for context
+      let lat = null, lng = null;
+      try {
+        const pos = await new Promise((resolve, reject) =>
+          navigator.geolocation?.getCurrentPosition(resolve, reject, { timeout: 3000, maximumAge: 300000 })
+        );
+        lat = pos.coords.latitude;
+        lng = pos.coords.longitude;
+      } catch {}
+
+      const res = await myuAPI.chat(text, lat, lng);
       setMessages(prev => [...prev, {
         role: "assistant",
         text: res.message,
@@ -132,6 +144,8 @@ export default function MyuChatPage() {
       toast.success(`Task "${action.title}" creato!`);
     } else if (action.type === "suggest_merchant" && action.merchant_id) {
       navigate(`/merchant/${action.merchant_id}`);
+    } else if (action.type === "confirm_city" && action.city) {
+      sendMessage(action.city);
     }
   };
 
@@ -301,7 +315,7 @@ export default function MyuChatPage() {
             />
           </div>
           <Button
-            onClick={sendMessage}
+            onClick={() => sendMessage()}
             disabled={!input.trim() || loading}
             className="h-11 w-11 rounded-xl bg-[#E85A24] hover:bg-[#D14E1A] disabled:opacity-40 flex-shrink-0"
             data-testid="myu-send-btn"
