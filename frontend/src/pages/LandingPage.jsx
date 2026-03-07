@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/App";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { QrCode, Wallet, Users, Bell, ArrowRight, Download, Share, Plus, MoreVertical } from "lucide-react";
+import { QrCode, Wallet, Users, Bell, ArrowRight, Download, Share, Plus, MoreVertical, Percent } from "lucide-react";
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -95,27 +95,47 @@ export default function LandingPage() {
           </p>
         </div>
 
-        {/* Install Banner */}
+        {/* Install Banner + Cashback */}
         {showInstall && !isStandalone && (
-          <button 
-            className="install-banner mb-8 animate-slideUp w-full text-left" 
-            style={{ animationDelay: '0.1s' }}
-            onClick={handleInstall}
-            data-testid="install-banner"
-          >
-            <div className="flex items-center gap-3 flex-1">
-              <Download className="w-6 h-6 flex-shrink-0" />
-              <div>
-                <p className="font-semibold">Installa myUup.com</p>
-                <p className="text-sm opacity-80">
-                  Tocca per aggiungere alla Home
-                </p>
+          <div className="mb-8 animate-slideUp space-y-3" style={{ animationDelay: '0.1s' }}>
+            <button 
+              className="install-banner w-full text-left" 
+              onClick={handleInstall}
+              data-testid="install-banner"
+            >
+              <div className="flex items-center gap-3 flex-1">
+                <Download className="w-6 h-6 flex-shrink-0" />
+                <div>
+                  <p className="font-semibold">Installa myUup.com</p>
+                  <p className="text-sm opacity-80">
+                    Tocca per aggiungere alla Home
+                  </p>
+                </div>
+              </div>
+              <span className="bg-white text-[#2B7AB8] px-4 py-2 rounded-full font-semibold text-sm flex-shrink-0">
+                Installa
+              </span>
+            </button>
+
+            {/* Cashback promo */}
+            <div className="bg-gradient-to-r from-[#E85A24]/5 to-[#2B7AB8]/5 border border-[#E85A24]/15 rounded-2xl p-4" data-testid="cashback-promo">
+              <div className="flex items-center gap-2 mb-2">
+                <Percent className="w-4 h-4 text-[#E85A24]" />
+                <span className="text-sm font-bold text-[#E85A24]">Cashback fino al 15%</span>
+              </div>
+              <p className="text-xs text-[#6B7280] mb-3">Acquista dai tuoi brand preferiti e ricevi UP indietro</p>
+              <div className="flex items-center gap-4 overflow-x-auto pb-1 scrollbar-hide">
+                {["Amazon", "Nike", "Zalando", "H&M", "MediaWorld", "Esselunga", "IKEA", "Unieuro"].map(brand => (
+                  <span 
+                    key={brand} 
+                    className="flex-shrink-0 bg-white border border-black/8 rounded-lg px-3 py-1.5 text-[11px] font-semibold text-[#1A1A1A] shadow-sm"
+                  >
+                    {brand}
+                  </span>
+                ))}
               </div>
             </div>
-            <span className="bg-white text-[#2B7AB8] px-4 py-2 rounded-full font-semibold text-sm flex-shrink-0">
-              Installa
-            </span>
-          </button>
+          </div>
         )}
 
         {/* Features */}

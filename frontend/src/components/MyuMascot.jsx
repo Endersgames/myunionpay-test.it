@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { Download } from "lucide-react";
 
 const MYU_ICON = "/myu-icon.png";
 
@@ -13,15 +14,9 @@ const MYU_BEHAVIORS = {
     { animation: "myu-look-around", delay: 4000 },
     { animation: "myu-point-up", delay: 15000 },
   ],
-  "/profile": [
-    { animation: "myu-nod", delay: 6000 },
-  ],
-  "/notifications": [
-    { animation: "myu-peek-right", delay: 3000 },
-  ],
-  "/qr": [
-    { animation: "myu-bounce", delay: 5000 },
-  ],
+  "/profile": [{ animation: "myu-nod", delay: 6000 }],
+  "/notifications": [{ animation: "myu-peek-right", delay: 3000 }],
+  "/qr": [{ animation: "myu-bounce", delay: 5000 }],
 };
 
 const TIPS = {
@@ -29,7 +24,7 @@ const TIPS = {
   "/marketplace": "Qualcosa di interessante qui!",
   "/profile": "Il tuo profilo, tutto in ordine!",
   "/qr": "Scansiona per pagare!",
-  "/notifications": "Novità per te!",
+  "/notifications": "Novita per te!",
 };
 
 export default function MyuMascot() {
@@ -39,13 +34,54 @@ export default function MyuMascot() {
   const [showTip, setShowTip] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [tipText, setTipText] = useState("");
+  const [showInstallBubble, setShowInstallBubble] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [installDismissed, setInstallDismissed] = useState(false);
 
-  // Hide on MYU chat page or non-protected pages
+  const isStandalone = typeof window !== "undefined" && (
+    window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true
+  );
+
+  // Hidden paths
   const hiddenPaths = ["/myu", "/login", "/register", "/", "/menu", "/s/"];
-  const isHidden = hiddenPaths.some(p => location.pathname === p || location.pathname.startsWith("/s/") || location.pathname.startsWith("/menu/"));
+  const isHidden = hiddenPaths.some(
+    (p) => location.pathname === p || location.pathname.startsWith("/s/") || location.pathname.startsWith("/menu/")
+  );
 
+  // Capture install prompt
   useEffect(() => {
-    if (isHidden) return;
+    const handler = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  // Show install bubble periodically when not standalone
+  useEffect(() => {
+    if (isHidden || isStandalone || installDismissed) return;
+
+    // Show install bubble after 6s, then every 60s
+    const initial = setTimeout(() => {
+      setShowInstallBubble(true);
+    }, 6000);
+
+    const recurring = setInterval(() => {
+      if (!installDismissed) {
+        setShowInstallBubble(true);
+      }
+    }, 60000);
+
+    return () => {
+      clearTimeout(initial);
+      clearInterval(recurring);
+    };
+  }, [location.pathname, isHidden, isStandalone, installDismissed]);
+
+  // Page tips
+  useEffect(() => {
+    if (isHidden || showInstallBubble) return;
 
     const behaviors = MYU_BEHAVIORS[location.pathname] || MYU_BEHAVIORS["/dashboard"];
     const timers = [];
@@ -58,8 +94,8 @@ export default function MyuMascot() {
       timers.push(t);
     });
 
-    // Show tip bubble occasionally
     const tipTimer = setTimeout(() => {
+      if (showInstallBubble) return;
       const tip = TIPS[location.pathname];
       if (tip) {
         setTipText(tip);
@@ -70,16 +106,71 @@ export default function MyuMascot() {
     timers.push(tipTimer);
 
     return () => timers.forEach(clearTimeout);
-  }, [location.pathname, isHidden]);
+  }, [location.pathname, isHidden, showInstallBubble]);
+
+  const handleInstall = useCallback(async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === "accepted") {
+        setShowInstallBubble(false);
+        setInstallDismissed(true);
+      }
+      setDeferredPrompt(null);
+    } else {
+      // Show manual instructions
+      setShowInstallBubble(false);
+      navigate("/myu");
+    }
+  }, [deferredPrompt, navigate]);
+
+  const dismissInstall = useCallback(() => {
+    setShowInstallBubble(false);
+    setInstallDismissed(true);
+    // Reset after 5 min
+    setTimeout(() => setInstallDismissed(false), 300000);
+  }, []);
 
   if (isHidden) return null;
 
   return (
     <>
-      {/* Tip bubble */}
-      {showTip && (
+      {/* Install bubble from MYU */}
+      {showInstallBubble && !isStandalone && (
         <div
-          className="fixed bottom-[108px] right-4 z-50 animate-fadeIn"
+          className="fixed bottom-[108px] right-4 z-50"
+          style={{ animation: "myuFadeIn 0.3s ease" }}
+          data-testid="myu-install-bubble"
+        >
+          <div className="bg-white rounded-2xl rounded-br-sm px-3 py-3 shadow-xl border border-[#2B7AB8]/15 max-w-[210px]">
+            <p className="text-xs text-[#1A1A1A] leading-tight font-medium mb-2">
+              Installa myUup.com sulla Home per accesso rapido e cashback!
+            </p>
+            <div className="flex gap-1.5">
+              <button
+                onClick={handleInstall}
+                className="flex-1 flex items-center justify-center gap-1 bg-[#2B7AB8] text-white text-[10px] font-bold px-2 py-1.5 rounded-lg hover:bg-[#236699] transition-colors"
+                data-testid="myu-install-btn"
+              >
+                <Download className="w-3 h-3" />
+                Installa
+              </button>
+              <button
+                onClick={dismissInstall}
+                className="text-[10px] text-[#6B7280] px-2 py-1.5 rounded-lg hover:bg-black/5 transition-colors"
+                data-testid="myu-install-dismiss"
+              >
+                Dopo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Standard tip bubble */}
+      {showTip && !showInstallBubble && (
+        <div
+          className="fixed bottom-[108px] right-4 z-50"
           style={{ animation: "myuFadeIn 0.3s ease, myuFadeOut 0.3s ease 3.5s forwards" }}
         >
           <div className="bg-white rounded-2xl rounded-br-sm px-3 py-2 shadow-lg border border-black/5 max-w-[180px]">
@@ -93,16 +184,13 @@ export default function MyuMascot() {
         onClick={() => navigate("/myu")}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className={`fixed bottom-24 right-4 z-50 w-14 h-14 rounded-full shadow-lg overflow-hidden transition-all duration-300 ${isHovered ? "scale-110 shadow-xl" : ""} ${currentAnim}`}
+        className={`fixed bottom-24 right-4 z-50 w-14 h-14 rounded-full shadow-lg overflow-hidden transition-all duration-300 ${
+          isHovered ? "scale-110 shadow-xl" : ""
+        } ${currentAnim}`}
         data-testid="myu-fab"
         style={{ background: "transparent" }}
       >
-        <img
-          src={MYU_ICON}
-          alt="MYU"
-          className="w-full h-full object-cover"
-        />
-        {/* Pulse ring */}
+        <img src={MYU_ICON} alt="MYU" className="w-full h-full object-cover" />
         <span className="absolute inset-0 rounded-full border-2 border-[#4A90D9]/40 animate-ping opacity-30 pointer-events-none" />
       </button>
     </>
