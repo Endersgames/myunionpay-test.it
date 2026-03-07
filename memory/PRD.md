@@ -54,12 +54,26 @@ App PWA per pagamenti digitali con wallet UP, gift card, merchant affiliati, QR 
 - [x] Gestione saldo insufficiente (errore 402)
 - [x] Intent logging per analytics
 
+### Notifiche Avanzate (Completato - Marzo 2026)
+- [x] Hub notifiche con template merchant
+- [x] Upload immagini per notifiche
+- [x] CTA link nelle notifiche
+- [x] Interazioni MYU nel hub notifiche
+
+### Pannelli Admin/Merchant (Completato - Marzo 2026)
+- [x] Admin - Gestione Utenti (/admin/users): lista, ricerca, filtri (tutti/attivi/bloccati/merchant/admin), modifica, blocca/sblocca
+- [x] Admin - Configurazione AI (/admin/openai): stato API key, selezione modello, abilita/disabilita, max token, temperatura, salva, test connessione
+- [x] Merchant - Utenti Presentati (/merchant/referred-users): statistiche, lista utenti (solo nome e email), ricerca, export CSV
+- [x] Navigazione: Dashboard admin mostra 3 bottoni admin (Gift Card, Utenti, AI). Dashboard merchant mostra bottone "Utenti Presentati"
+
 ## Database Collections
 - users, wallets, merchants, transactions
 - gift_cards, giftcard_purchases, gestpay_transactions
 - menu_items, notifications, push_subscriptions
 - sim_cards, referrals, user_tasks
 - myu_conversations, myu_conversation_state, myu_tasks, myu_intent_logs
+- app_config (openai config)
+- user_notifications, notification_interactions
 
 ## Credenziali Test
 - User: test@test.com / test123
@@ -92,6 +106,7 @@ App PWA per pagamenti digitali con wallet UP, gift card, merchant affiliati, QR 
 - "Conto UP" banking operations sono simulate
 - Emergent LLM Key: sk-emergent-... (in backend/.env)
 - Custom domain: myUup.com (collegato e funzionante)
+- Merchant "Utenti Presentati" mostra solo nome/email per privacy (mai telefono/saldo)
 
 ---
 Ultimo aggiornamento: Marzo 2026
