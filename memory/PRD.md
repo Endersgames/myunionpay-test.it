@@ -26,45 +26,68 @@ App PWA per pagamenti digitali con wallet UP, gift card, merchant affiliati, QR 
 - [x] Marketplace merchant
 
 ### Menu Merchant (Completato)
-- [x] Backend API CRUD menu multilingua (5 lingue: IT, EN, FR, DE, ES)
+- [x] Backend API CRUD menu multilingua (5 lingue)
 - [x] Pagina pubblica menu con switch lingua
-- [x] Pagina gestione menu merchant (aggiungi/elimina piatti, cover image)
-- [x] Campi: nome, descrizione, prezzo, origine, calorie, sezione salute
-- [x] Categorie: Antipasti, Primi, Secondi, Dolci, Bevande
-- [x] QR scan flow: registrato (2 opzioni) vs non registrato (3 opzioni)
-- [x] Bottone "Vedi Menu" nella vetrina merchant (solo ristoranti/bar)
-- [x] 13 piatti di esempio popolati su preview e live
-
-### MYU - AI Companion (Completato - Marzo 2026)
-- [x] Chat AI con gpt-4.1-nano (risposte brevi, max 2 frasi)
-- [x] Costo 0.01 UP per messaggio (deduzione dal wallet)
-- [x] Classificazione intent (domain/intent/confidence)
-- [x] 6 domini: companion, wallet, marketplace, growth, support, general
-- [x] 14 intenti: check_balance, discover_merchants, task_creation, etc.
-- [x] Sistema task (crea, completa, cancella, postponi)
-- [x] Suggerimenti merchant basati su profilo
-- [x] Cronologia chat persistente in MongoDB
-- [x] Stato conversazionale breve (no cronologia piena nel prompt)
-- [x] System prompt personalizzato (amichevole, breve, italiano)
-- [x] CTA azioni (navigate, create_task, suggest_merchant)
-- [x] Bottone FAB flottante nella dashboard
-- [x] Welcome screen con 3 suggerimenti rapidi
-- [x] Nuova sessione (reset conversazione)
-- [x] Pannello task nel header chat
-- [x] Gestione saldo insufficiente (errore 402)
-- [x] Intent logging per analytics
-
-### Notifiche Avanzate (Completato - Marzo 2026)
-- [x] Hub notifiche con template merchant
-- [x] Upload immagini per notifiche
-- [x] CTA link nelle notifiche
-- [x] Interazioni MYU nel hub notifiche
+- [x] Pagina gestione menu merchant
+- [x] QR scan flow
 
 ### Pannelli Admin/Merchant (Completato - Marzo 2026)
-- [x] Admin - Gestione Utenti (/admin/users): lista, ricerca, filtri (tutti/attivi/bloccati/merchant/admin), modifica, blocca/sblocca
-- [x] Admin - Configurazione AI (/admin/openai): stato API key, selezione modello, abilita/disabilita, max token, temperatura, salva, test connessione
-- [x] Merchant - Utenti Presentati (/merchant/referred-users): statistiche, lista utenti (solo nome e email), ricerca, export CSV
-- [x] Navigazione: Dashboard admin mostra 3 bottoni admin (Gift Card, Utenti, AI). Dashboard merchant mostra bottone "Utenti Presentati"
+- [x] Admin - Gestione Utenti (/admin/users)
+- [x] Admin - Configurazione AI (/admin/openai)
+- [x] Merchant - Utenti Presentati (/merchant/referred-users) - solo nome e email
+
+### MYU - AI Companion v2 (Completato - Marzo 2026)
+**Architettura a 6 layer production-ready:**
+
+#### 1. UI/Chat Layer (Frontend)
+- [x] Chat con MYU (0.01 UP per messaggio)
+- [x] Action buttons: navigate, create_task, suggest_merchant, confirm_city
+- [x] Geolocalizzazione automatica (navigator.geolocation)
+- [x] Welcome screen con suggerimenti rapidi
+
+#### 2. Orchestration Layer (myu/orchestrator.py)
+- [x] Flow: message → classify → budget → city confirm → tool → LLM → response
+- [x] Gestione stato city confirmation (multi-turn)
+- [x] Riconoscimento cambio topic durante city confirmation
+- [x] Max 1 LLM call + 1 tool call per richiesta
+
+#### 3. Intent/Decision Layer (myu/intent.py)
+- [x] Classificazione keyword-based (NO LLM, costo zero)
+- [x] 6 domini: companion, wallet, marketplace, growth, support, general
+- [x] 15+ intenti con pattern regex
+- [x] Risposte statiche per greeting (no LLM)
+- [x] Detection: needs_tool, needs_llm, is_location_based
+
+#### 4. Tool Layer (myu/tools/)
+- [x] Tool Router con max 1 tool per richiesta
+- [x] **Reali**: merchant_finder, wallet, tasks, notifications
+- [x] **MOCK**: cinema_finder, restaurant_finder, weather
+- [x] Caching aggressivo con TTL (15-60 min per tipo)
+
+#### 5. LLM Integration Layer (myu/llm_service.py)
+- [x] Wrapper cost-aware con token capping
+- [x] Modello configurabile da admin panel
+- [x] Context minimo (max 500 token input, 150 output)
+- [x] System prompt compatto
+- [x] Fallback su env key se DB key invalida
+
+#### 6. Cost Control Layer (myu/cost_control.py)
+- [x] Budget max $0.0035 USD per richiesta
+- [x] Stima costo per modello (token pricing)
+- [x] Hard stop se costo stimato supera budget
+- [x] Log costo per ogni richiesta (request_cost_logs)
+- [x] Costo reale misurato: ~$0.00004 per richiesta (89x sotto budget)
+
+#### 7. Location Layer (myu/location.py)
+- [x] Geohash-4 encoding (risoluzione ~39km)
+- [x] 30 città italiane con coordinate
+- [x] Doppia conferma città (geo vs menzione utente)
+- [x] City aliases (roma/rome/Roma, milano/milan/Milano...)
+- [x] Persistenza stato location in MongoDB
+
+### Notifiche Avanzate (Completato)
+- [x] Hub notifiche con template merchant
+- [x] Upload immagini, CTA link, interazioni MYU
 
 ## Database Collections
 - users, wallets, merchants, transactions
@@ -72,8 +95,24 @@ App PWA per pagamenti digitali con wallet UP, gift card, merchant affiliati, QR 
 - menu_items, notifications, push_subscriptions
 - sim_cards, referrals, user_tasks
 - myu_conversations, myu_conversation_state, myu_tasks, myu_intent_logs
-- app_config (openai config)
-- user_notifications, notification_interactions
+- app_config, user_notifications, notification_interactions
+- **NEW**: user_location_state, tool_cache, request_cost_logs
+
+## API Endpoints MYU
+- POST /api/myu/chat - Chat principale orchestrato
+- GET /api/myu/history - Storico chat
+- POST /api/myu/new-session - Nuova sessione
+- GET /api/myu/tasks - Lista task
+- PUT /api/myu/tasks/{id} - Aggiorna task
+- GET /api/myu/suggestions - Suggerimenti merchant
+- POST /api/myu/location - Aggiorna posizione (lat/lng → geohash_4)
+- GET /api/myu/location - Stato posizione corrente
+- POST /api/myu/location/confirm - Conferma città
+- POST /api/myu/tool/cinema - Tool cinema diretto
+- POST /api/myu/tool/restaurants - Tool ristoranti diretto
+- POST /api/myu/tool/weather - Tool meteo diretto
+- POST /api/myu/tool/merchants - Tool merchant diretto
+- GET /api/myu/costs/{requestId} - Costo singola richiesta
 
 ## Credenziali Test
 - User: test@test.com / test123
@@ -86,27 +125,29 @@ App PWA per pagamenti digitali con wallet UP, gift card, merchant affiliati, QR 
 - [ ] Funzione modifica piatto esistente nel menu merchant
 
 ### P1 - Importante
-- [ ] Finalizzare PWA Install flow (iOS/Android intuitivo)
+- [ ] Integrare API reali per cinema/weather/restaurant (sostituire mock)
+- [ ] Finalizzare PWA Install flow
 - [ ] Implementare "Paga Merchant" con GestPay
-- [ ] Integrazione Treezor (carta virtuale + IBAN) - richiede contratto Treezor
+- [ ] Integrazione Treezor (carta virtuale + IBAN)
 
 ### P2 - Medio
 - [ ] Passaggio GestPay a produzione
 - [ ] Push Notifications reali
 - [ ] Paginazione query database per scalabilità
+- [ ] Dashboard admin MYU analytics (intenti, costi, usage)
 
 ### P3 - Futuro
-- [ ] App nativa (React Native via Mobile Agent)
+- [ ] App nativa (React Native)
 - [ ] MYU reminder e check-in task automatici
 - [ ] MYU ranking merchant personalizzato (posizione, orario, cashback)
-- [ ] Dashboard admin MYU (analytics intenti, costi)
 
 ## Note Tecniche
-- GestPay è in SANDBOX mode
-- "Conto UP" banking operations sono simulate
-- Emergent LLM Key: sk-emergent-... (in backend/.env)
-- Custom domain: myUup.com (collegato e funzionante)
-- Merchant "Utenti Presentati" mostra solo nome/email per privacy (mai telefono/saldo)
+- GestPay in SANDBOX mode
+- "Conto UP" banking simulate
+- Tool cinema/weather/restaurant: MOCK (pronti per API reali)
+- Tool wallet/merchant/tasks/notifications: REALI (MongoDB)
+- Costo MYU: ~$0.00004/richiesta con gpt-4.1-nano
+- Merchant "Utenti Presentati" mostra solo nome/email
 
 ---
 Ultimo aggiornamento: Marzo 2026
