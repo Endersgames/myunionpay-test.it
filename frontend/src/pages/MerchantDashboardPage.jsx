@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/App";
 import { 
   ArrowLeft, Store, QrCode, Bell, 
-  Wallet, MapPin, ChevronRight
+  Wallet, MapPin, ChevronRight, UtensilsCrossed
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -259,14 +259,28 @@ export default function MerchantDashboardPage() {
           </div>
 
           {/* Send Notification Button */}
-          <Button
-            onClick={() => navigate("/send-notification")}
-            className="w-full h-14 rounded-full bg-[#2B7AB8] hover:bg-[#236699] text-lg font-semibold glow-primary"
-            data-testid="send-notification-btn"
-          >
-            <Bell className="w-5 h-5 mr-2" />
-            Invia Notifica Profilata
-          </Button>
+          <div className="space-y-3">
+            {/* Menu Management - only for restaurants/bars */}
+            {(merchant.category || "").toLowerCase().match(/ristorante|bar|caffetteria|pizzerie|alimentari/) && (
+              <Button
+                onClick={() => navigate("/menu-manage")}
+                className="w-full h-14 rounded-full bg-[#E85A24] hover:bg-[#D14E1A] text-lg font-semibold"
+                data-testid="manage-menu-btn"
+              >
+                <UtensilsCrossed className="w-5 h-5 mr-2" />
+                Gestisci Menu
+              </Button>
+            )}
+
+            <Button
+              onClick={() => navigate("/send-notification")}
+              className="w-full h-14 rounded-full bg-[#2B7AB8] hover:bg-[#236699] text-lg font-semibold glow-primary"
+              data-testid="send-notification-btn"
+            >
+              <Bell className="w-5 h-5 mr-2" />
+              Invia Notifica Profilata
+            </Button>
+          </div>
 
           <p className="text-center text-sm text-[#6B7280] mt-4">
             Invia notifiche agli utenti e paga da 0.01 a 1.00 UP per destinatario
