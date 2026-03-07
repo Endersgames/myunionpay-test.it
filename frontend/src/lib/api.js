@@ -211,6 +211,21 @@ export const notificationAPI = {
 
   async getUnreadCount() {
     return apiRequest('/notifications/unread-count');
+  },
+
+  async trackClick(notificationId) {
+    return apiRequest(`/notifications/${notificationId}/click`, { method: 'PUT' });
+  },
+
+  async getTemplates() {
+    return apiRequest('/notifications/templates');
+  },
+
+  async sendMerchantNotification(data) {
+    return apiRequest('/notifications/merchant/send', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   }
 };
 
