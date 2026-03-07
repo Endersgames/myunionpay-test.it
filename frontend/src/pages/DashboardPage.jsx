@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { 
   Wallet, QrCode, Scan, Bell, 
   ArrowUpRight, ArrowDownLeft, Plus, TrendingUp, Settings,
-  CreditCard, Gift
+  CreditCard, Gift, Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BottomNav from "@/components/BottomNav";
@@ -236,6 +236,15 @@ export default function DashboardPage() {
       </div>
 
       <BottomNav active="home" unreadCount={unreadCount} />
+
+      {/* MYU Floating Button */}
+      <button
+        onClick={() => navigate("/myu")}
+        className="fixed bottom-24 right-5 w-14 h-14 rounded-full bg-gradient-to-br from-[#E85A24] to-[#FF8C42] shadow-lg flex items-center justify-center z-50 hover:scale-105 active:scale-95 transition-transform"
+        data-testid="myu-fab"
+      >
+        <Sparkles className="w-6 h-6 text-white" />
+      </button>
     </div>
   );
 }

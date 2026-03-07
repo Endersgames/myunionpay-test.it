@@ -26,6 +26,7 @@ import SimDashboardPage from "@/pages/SimDashboardPage";
 import AdminGiftCardsPage from "@/pages/AdminGiftCardsPage";
 import PublicMenuPage from "@/pages/PublicMenuPage";
 import MenuManagePage from "@/pages/MenuManagePage";
+import MyuChatPage from "@/pages/MyuChatPage";
 import ChromePromptBanner from "@/components/ChromePromptBanner";
 
 // Auth Context
@@ -157,6 +158,7 @@ function App() {
           <Route path="/sim-dashboard" element={<ProtectedRoute><SimDashboardPage /></ProtectedRoute>} />
           <Route path="/admin/giftcards" element={<ProtectedRoute><AdminGiftCardsPage /></ProtectedRoute>} />
           <Route path="/menu-manage" element={<ProtectedRoute><MenuManagePage /></ProtectedRoute>} />
+          <Route path="/myu" element={<ProtectedRoute><MyuChatPage /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

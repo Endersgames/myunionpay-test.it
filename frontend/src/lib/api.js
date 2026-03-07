@@ -485,6 +485,42 @@ export const menuAPI = {
     return response.json();
   },
 };
+// ========================
+// MYU AI API
+// ========================
+export const myuAPI = {
+  async chat(text) {
+    try {
+      return await apiRequest('/myu/chat', {
+        method: 'POST',
+        body: JSON.stringify({ text }),
+      });
+    } catch (err) {
+      if (err.message?.includes('402') || err.message?.includes('Saldo')) {
+        throw new Error('Saldo insufficiente per chattare con MYU');
+      }
+      throw err;
+    }
+  },
+  async getHistory(limit = 30) {
+    return apiRequest(`/myu/history?limit=${limit}`);
+  },
+  async newSession() {
+    return apiRequest('/myu/new-session', { method: 'POST' });
+  },
+  async getTasks() {
+    return apiRequest('/myu/tasks');
+  },
+  async updateTask(taskId, status) {
+    return apiRequest(`/myu/tasks/${taskId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    });
+  },
+  async getSuggestions() {
+    return apiRequest('/myu/suggestions');
+  },
+};
 export const PROFILE_TAGS = [
   "tech", "fashion", "food", "fitness", "travel", 
   "music", "sports", "gaming", "beauty", "health",
