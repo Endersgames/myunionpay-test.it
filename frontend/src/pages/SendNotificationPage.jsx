@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/App";
 import { 
   ArrowLeft, Send, Users, Wallet, AlertCircle, 
-  MapPin, Globe, Eye, User, Tag
+  MapPin, Globe, Eye, User, Tag, Image, X, Megaphone
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,8 +33,14 @@ export default function SendNotificationPage() {
     target_tags: [],
     reward_amount: 0.10,
     target_cap: "",
-    target_all_italy: true
+    target_all_italy: true,
+    template_type: "generic",
+    image_url: "",
+    cta_text: "",
+    cta_url: ""
   });
+  const [uploading, setUploading] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
 
   useEffect(() => {
     if (user?.id) {
@@ -54,6 +60,42 @@ export default function SendNotificationPage() {
       console.error("Fetch error:", err);
     }
     setLoading(false);
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Immagine troppo grande. Max 5MB.");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const token = localStorage.getItem("token");
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || "";
+      const res = await fetch(`${backendUrl}/api/notifications/upload-image`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      if (!res.ok) throw new Error("Upload fallito");
+      const data = await res.json();
+      setFormData(prev => ({ ...prev, image_url: data.image_url }));
+      setImagePreview(URL.createObjectURL(file));
+      toast.success("Immagine caricata!");
+    } catch (err) {
+      toast.error("Errore upload immagine");
+    }
+    setUploading(false);
+  };
+
+  const removeImage = () => {
+    setFormData(prev => ({ ...prev, image_url: "" }));
+    setImagePreview(null);
   };
 
   const toggleTag = (tag) => {
@@ -106,8 +148,19 @@ export default function SendNotificationPage() {
     
     setSending(true);
     try {
-      const result = await notificationAPI.send(formData);
-      toast.success(`Notifica inviata a ${result.total_recipients} utenti!`);
+      const result = await notificationAPI.sendMerchantNotification({
+        template_type: formData.template_type,
+        title: formData.title,
+        message: formData.message,
+        image_url: formData.image_url || null,
+        cta_text: formData.cta_text || null,
+        cta_url: formData.cta_url || null,
+        reward_amount: formData.reward_amount,
+        target_tags: formData.target_tags,
+        target_cap: formData.target_cap,
+        target_all_italy: formData.target_all_italy,
+      });
+      toast.success(`Notifica inviata a ${result.recipients} utenti!`);
       navigate("/merchant-dashboard");
     } catch (err) {
       toast.error(err.message || "Errore nell'invio");
@@ -181,6 +234,98 @@ export default function SendNotificationPage() {
               className="bg-[#F5F5F5] border-black/10 focus:border-[#2B7AB8] rounded-xl min-h-[100px] text-[#1A1A1A]"
               data-testid="message-input"
             />
+          </div>
+
+          {/* Template Type */}
+          <div className="space-y-2">
+            <Label className="text-[#1A1A1A]">Tipo Notifica</Label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { id: "promo_offer", label: "Promo", icon: "tag", color: "bg-[#E85A24]" },
+                { id: "new_menu", label: "Menu", icon: "utensils", color: "bg-emerald-500" },
+                { id: "event", label: "Evento", icon: "calendar", color: "bg-purple-500" },
+                { id: "generic", label: "Generico", icon: "megaphone", color: "bg-[#2B7AB8]" },
+              ].map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => setFormData(prev => ({ ...prev, template_type: t.id }))}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium border transition ${
+                    formData.template_type === t.id 
+                      ? `${t.color} text-white border-transparent` 
+                      : "bg-white text-[#1A1A1A] border-black/10 hover:border-black/20"
+                  }`}
+                  data-testid={`template-${t.id}`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Image Upload */}
+          <div className="bg-[#F5F5F5] rounded-2xl p-5 border border-black/5">
+            <div className="flex items-center gap-2 mb-3">
+              <Image className="w-5 h-5 text-[#2B7AB8]" />
+              <Label className="text-[#1A1A1A] font-semibold">Immagine Promo</Label>
+              <span className="text-xs text-[#6B7280]">(Opzionale)</span>
+            </div>
+            
+            {imagePreview ? (
+              <div className="relative rounded-xl overflow-hidden">
+                <img src={imagePreview} alt="Promo" className="w-full h-40 object-cover" />
+                <button
+                  onClick={removeImage}
+                  className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/60 flex items-center justify-center text-white hover:bg-black/80"
+                  data-testid="remove-image-btn"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-black/15 rounded-xl cursor-pointer hover:border-[#2B7AB8]/40 transition bg-white">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="hidden"
+                  onChange={handleImageUpload}
+                  data-testid="image-upload-input"
+                />
+                {uploading ? (
+                  <div className="w-6 h-6 border-2 border-[#2B7AB8] border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <Image className="w-8 h-8 text-[#6B7280] mb-2" />
+                    <span className="text-sm text-[#6B7280]">Carica immagine promo</span>
+                    <span className="text-xs text-[#9CA3AF] mt-1">JPG, PNG, WebP - Max 5MB</span>
+                  </>
+                )}
+              </label>
+            )}
+          </div>
+
+          {/* CTA Button */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Megaphone className="w-5 h-5 text-[#E85A24]" />
+              <Label className="text-[#1A1A1A] font-semibold">Call-to-Action</Label>
+              <span className="text-xs text-[#6B7280]">(Opzionale)</span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                placeholder="Testo bottone (es: Scopri)"
+                value={formData.cta_text}
+                onChange={(e) => setFormData(prev => ({ ...prev, cta_text: e.target.value }))}
+                className="h-11 bg-[#F5F5F5] border-black/10 rounded-xl text-sm"
+                data-testid="cta-text-input"
+              />
+              <Input
+                placeholder="Link (es: /menu/...)"
+                value={formData.cta_url}
+                onChange={(e) => setFormData(prev => ({ ...prev, cta_url: e.target.value }))}
+                className="h-11 bg-[#F5F5F5] border-black/10 rounded-xl text-sm"
+                data-testid="cta-url-input"
+              />
+            </div>
           </div>
 
           {/* Target Tags - Profilazione Interessi */}

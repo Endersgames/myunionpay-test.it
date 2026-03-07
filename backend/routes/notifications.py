@@ -1,6 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi.responses import FileResponse
 from typing import List, Optional
 import uuid
+import os
 import logging
 from datetime import datetime, timezone
 from database import db
@@ -13,6 +15,43 @@ from services.push import send_push_notification
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
+
+NOTIF_UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads", "notifications")
+os.makedirs(NOTIF_UPLOAD_DIR, exist_ok=True)
+
+
+@router.post("/upload-image")
+async def upload_notification_image(file: UploadFile = File(...), user=Depends(get_current_user)):
+    """Upload a promo image for a notification."""
+    merchant = await db.merchants.find_one({"user_id": user["id"]}, {"_id": 0})
+    if not merchant:
+        raise HTTPException(status_code=403, detail="Solo i merchant possono caricare immagini")
+
+    ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else "jpg"
+    if ext not in ("jpg", "jpeg", "png", "webp", "gif"):
+        raise HTTPException(status_code=400, detail="Formato non supportato. Usa JPG, PNG, WebP o GIF.")
+
+    filename = f"{uuid.uuid4()}.{ext}"
+    filepath = os.path.join(NOTIF_UPLOAD_DIR, filename)
+
+    content = await file.read()
+    if len(content) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Immagine troppo grande. Max 5MB.")
+
+    with open(filepath, "wb") as f:
+        f.write(content)
+
+    image_url = f"/api/notifications/image/{filename}"
+    return {"image_url": image_url, "filename": filename}
+
+
+@router.get("/image/{filename}")
+async def get_notification_image(filename: str):
+    """Serve a notification image."""
+    filepath = os.path.join(NOTIF_UPLOAD_DIR, filename)
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail="Immagine non trovata")
+    return FileResponse(filepath)
 
 # ========================
 # NOTIFICATION TEMPLATES
