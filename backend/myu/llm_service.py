@@ -2,6 +2,7 @@
 import os
 import json
 import logging
+from openai import AsyncOpenAI
 from database import db
 from myu.cost_control import MAX_OUTPUT_TOKENS, MAX_CONTEXT_TOKENS, cap_tokens, count_tokens
 
@@ -41,17 +42,27 @@ ACTIONS: {"type": "navigate", "path": "...", "label": "..."}, {"type": "create_t
 def normalize_model_for_responses(raw_model: str) -> str:
     """Normalize configured model to a known-safe OpenAI Responses model."""
     model = (raw_model or "").strip()
-    aliases = {
-        "gpt-4.1-nano": "gpt-4o-mini",
-        "gpt-4o": "gpt-4o-mini",
-    }
-    if model in aliases:
-        return aliases[model]
-    if model.startswith("gpt-5"):
-        return "gpt-4o-mini"
     if not model:
         return "gpt-4o-mini"
+    # MYU is OpenAI-only: normalize obvious non-OpenAI leftovers.
+    if "gemini" in model.lower() or "emergent" in model.lower():
+        return "gpt-4o-mini"
     return model
+
+
+def _extract_response_text(response_obj) -> str:
+    """Extract text from OpenAI Responses API object safely."""
+    output_text = getattr(response_obj, "output_text", None)
+    if output_text:
+        return output_text.strip()
+
+    parts = []
+    for item in getattr(response_obj, "output", []) or []:
+        for content in getattr(item, "content", []) or []:
+            text = getattr(content, "text", None)
+            if text:
+                parts.append(text)
+    return "\n".join(parts).strip()
 
 
 async def get_llm_config() -> dict:
@@ -148,18 +159,26 @@ async def call_llm(
     logger.debug("LLM prompt prepared session=%s chars=%s", session_id, len(prompt))
 
     try:
-        from emergentintegrations.llm.chat import LlmChat, UserMessage
-
-        chat = LlmChat(
-            api_key=config["api_key"],
-            session_id=f"myu_{session_id}",
-            system_message=SYSTEM_PROMPT,
+        client = AsyncOpenAI(api_key=config["api_key"])
+        logger.info("Sending message to OpenAI Responses API model=%s session=%s", config["model"], session_id)
+        response = await client.responses.create(
+            model=config["model"],
+            input=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": prompt},
+            ],
+            max_output_tokens=config["max_tokens"],
+            temperature=config["temperature"],
         )
-        chat.with_model("openai", config["model"])
-
-        logger.info("Sending message to LLM provider=openai model=%s session=%s", config["model"], session_id)
-        raw = await chat.send_message(UserMessage(text=prompt))
-        logger.info("LLM response received session=%s chars=%s", session_id, len(raw))
+        raw = _extract_response_text(response)
+        if not raw:
+            raise RuntimeError("Risposta vuota da OpenAI Responses API.")
+        logger.info(
+            "LLM response received session=%s response_id=%s chars=%s",
+            session_id,
+            getattr(response, "id", "n/a"),
+            len(raw),
+        )
 
         parsed = _parse_llm_response(raw)
         logger.debug("LLM parsed response keys=%s", list(parsed.keys()))

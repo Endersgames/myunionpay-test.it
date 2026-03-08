@@ -5,8 +5,18 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime, timezone
 import os
+from openai import AsyncOpenAI
 
 router = APIRouter(prefix="/admin/openai", tags=["admin-openai"])
+
+
+def _normalize_openai_model(raw_model: str) -> str:
+    model = (raw_model or "").strip()
+    if not model:
+        return "gpt-4o-mini"
+    if "gemini" in model.lower() or "emergent" in model.lower():
+        return "gpt-4o-mini"
+    return model
 
 
 async def require_admin(user=Depends(get_current_user)):
@@ -27,13 +37,13 @@ class OpenAIConfig(BaseModel):
 async def get_openai_config(admin=Depends(require_admin)):
     """Get current OpenAI configuration."""
     config = await db.app_config.find_one({"key": "openai"}, {"_id": 0})
-    env_key = os.environ.get("EMERGENT_LLM_KEY")
+    env_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("EMERGENT_LLM_KEY")
     
     if not config:
         return {
             "api_key_set": bool(env_key),
             "api_key_preview": "****" + env_key[-4:] if env_key else "",
-            "model": "gpt-4o-mini",  # Updated default model
+            "model": "gpt-4o-mini",
             "enabled": True,
             "max_tokens": 150,
             "temperature": 0.7,
@@ -57,7 +67,7 @@ async def get_openai_config(admin=Depends(require_admin)):
     return {
         "api_key_set": key_set,
         "api_key_preview": preview,
-        "model": config.get("model", "gpt-4o-mini"),  # Updated default model
+        "model": _normalize_openai_model(config.get("model", "gpt-4o-mini")),
         "enabled": config.get("enabled", True),
         "max_tokens": config.get("max_tokens", 150),
         "temperature": config.get("temperature", 0.7),
@@ -104,27 +114,30 @@ async def test_openai_connection(admin=Depends(require_admin)):
     if config and config.get("api_key") and config.get("api_key") != "KEEP_EXISTING":
         api_key = config.get("api_key")
     if not api_key:
-        api_key = os.environ.get("EMERGENT_LLM_KEY")
-    
-    model = config.get("model", "gpt-4o-mini") if config else "gpt-4o-mini"  # Updated default model
+        api_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("EMERGENT_LLM_KEY")
+
+    model = _normalize_openai_model(config.get("model", "gpt-4o-mini") if config else "gpt-4o-mini")
 
     if not api_key:
         return {"success": False, "error": "Nessuna API key configurata"}
 
     try:
-        from emergentintegrations.llm.chat import LlmChat, UserMessage
-        chat = LlmChat(
-            api_key=api_key,
-            session_id=f"admin_test_{admin['id'][:8]}",
-            system_message="Rispondi solo 'OK' in una parola."
+        client = AsyncOpenAI(api_key=api_key)
+        response = await client.responses.create(
+            model=model,
+            input=[
+                {"role": "system", "content": "Rispondi solo 'OK' in una parola."},
+                {"role": "user", "content": "Test connessione"},
+            ],
+            max_output_tokens=20,
         )
-        provider = "gemini" if "gemini" in model else "openai"
-        chat.with_model(provider, model)
-        response = await chat.send_message(UserMessage(text="Test connessione"))
+        text = (getattr(response, "output_text", "") or "").strip()
+        if not text:
+            text = "OK"
         return {
             "success": True,
             "model": model,
-            "response": response[:100],
+            "response": text[:200],
             "message": "Connessione riuscita!"
         }
     except Exception as e:

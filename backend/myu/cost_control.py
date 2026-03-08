@@ -18,7 +18,6 @@ TOKEN_COSTS = {
     "gpt-4.1-mini": {"input": 0.40, "output": 1.60},
     "gpt-4o-mini": {"input": 0.15, "output": 0.60},
     "gpt-4o": {"input": 2.50, "output": 10.00},
-    "gemini-2.0-flash-lite": {"input": 0.075, "output": 0.30},
 }
 
 DEFAULT_MODEL = "gpt-4o-mini"

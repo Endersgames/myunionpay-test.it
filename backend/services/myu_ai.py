@@ -4,10 +4,10 @@ import logging
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 from pathlib import Path
+from openai import AsyncOpenAI
 
 load_dotenv(Path(__file__).parent.parent / '.env')
 
-from emergentintegrations.llm.chat import LlmChat, UserMessage
 from database import db
 
 logger = logging.getLogger("myu_ai")
@@ -113,17 +113,24 @@ async def send_message(user_id: str, user_text: str, session_id: str) -> dict:
     
     prompt_text = f"CONTESTO UTENTE:\n{context}\n\nMESSAGGIO: {user_text}"
 
-    chat = LlmChat(
-        api_key=os.environ.get("EMERGENT_LLM_KEY"),
-        session_id=f"myu_{session_id}",
-        system_message=SYSTEM_PROMPT
-    )
-    chat.with_model("openai", "gpt-4o-mini")
-
-    user_message = UserMessage(text=prompt_text)
-    
     try:
-        raw_response = await chat.send_message(user_message)
+        api_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("EMERGENT_LLM_KEY")
+        if not api_key:
+            raise RuntimeError("Nessuna API key trovata (OPENAI_API_KEY o EMERGENT_LLM_KEY).")
+
+        client = AsyncOpenAI(api_key=api_key)
+        response = await client.responses.create(
+            model="gpt-4o-mini",
+            input=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": prompt_text},
+            ],
+            max_output_tokens=200,
+            temperature=0.7,
+        )
+        raw_response = (getattr(response, "output_text", "") or "").strip()
+        if not raw_response:
+            raw_response = "Scusa, al momento non riesco a rispondere."
         
         try:
             clean = raw_response.strip()
