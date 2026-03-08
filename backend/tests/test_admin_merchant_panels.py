@@ -205,7 +205,7 @@ class TestAdminOpenAIAPI:
             headers=self.auth_headers(),
             json={
                 "api_key": "KEEP_EXISTING",
-                "model": "gpt-4.1-nano",
+                "model": "gpt-4o-mini",
                 "enabled": True,
                 "max_tokens": 150,
                 "temperature": 0.7

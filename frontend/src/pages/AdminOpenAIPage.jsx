@@ -21,7 +21,7 @@ export default function AdminOpenAIPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [config, setConfig] = useState(null);
-  const [form, setForm] = useState({ api_key: "", model: "gpt-4.1-nano", enabled: true, max_tokens: 150, temperature: 0.7 });
+  const [form, setForm] = useState({ api_key: "", model: "gpt-4o-mini", enabled: true, max_tokens: 150, temperature: 0.7 });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -35,7 +35,7 @@ export default function AdminOpenAIPage() {
       if (res.ok) {
         const d = await res.json();
         setConfig(d);
-        setForm(prev => ({ ...prev, model: d.model || "gpt-4.1-nano", enabled: d.enabled !== false, max_tokens: d.max_tokens || 150, temperature: d.temperature || 0.7 }));
+        setForm(prev => ({ ...prev, model: d.model || "gpt-4o-mini", enabled: d.enabled !== false, max_tokens: d.max_tokens || 150, temperature: d.temperature || 0.7 }));
       }
     } catch {}
     setLoading(false);

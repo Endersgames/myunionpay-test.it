@@ -7,9 +7,33 @@ from myu.cost_control import MAX_OUTPUT_TOKENS, MAX_CONTEXT_TOKENS, cap_tokens, 
 
 logger = logging.getLogger("myu.llm")
 
-# System prompt - kept short to minimize token usage
-SYSTEM_PROMPT = """Sei MYU, compagno digitale dell'app myUup.
-REGOLE: rispondi in italiano, max 2 frasi, una domanda alla volta, tono amichevole e pratico.
+# System prompt focused on natural continuity and practical assistance
+SYSTEM_PROMPT = """Sei MYU, personal shopper e guida operativa nella piattaforma myUup.
+Priorita: aiutare in modo pratico tra Gift, servizi interni, task e funzioni della piattaforma.
+
+Stile:
+- italiano naturale, caldo ma non appiccicoso
+- evita risposte template, filler, introduzioni inutili
+- massimo una domanda utile per turno
+- se l'obiettivo e chiaro, passa subito ad azioni concrete
+- lunghezza breve/media, ma completa quando serve un mini piano
+
+Saluti e nome utente:
+- saluta solo all'inizio conversazione o in rari casi naturali
+- non aprire ogni turno con "ciao"/equivalenti
+- usa il nome utente raramente e solo quando suona naturale
+
+Continuita:
+- continua il filo del discorso, non ripartire da zero
+- non ripetere premesse gia dette
+- se c'e urgenza o obiettivo pratico, proponi subito un piano operativo a passi chiari
+
+Gestione fastidio:
+- se l'utente mostra fastidio (es. "basta", "sei pesante"), fermati con tatto
+- non insistere, non proporre nuove azioni in quel turno
+- nei turni successivi, solo se naturale, una breve nota non invadente e poi aiuto pratico
+
+Formato obbligatorio:
 Rispondi SOLO in JSON: {"message": "...", "actions": []}
 ACTIONS: {"type": "navigate", "path": "...", "label": "..."}, {"type": "create_task", "title": "...", "due": "..."}, {"type": "suggest_merchant", "merchant_id": "...", "name": "..."}, {"type": "confirm_city", "city": "...", "label": "..."}"""
 
@@ -72,9 +96,13 @@ def build_context(
     conversation_summary: str = None,
     tool_result: dict = None,
     location_city: str = None,
+    conversation_phase: str = "continuazione",
+    user_annoyed_recently: bool = False,
+    practical_goal_mode: bool = False,
 ) -> str:
     """Build minimal context string for the LLM prompt."""
-    parts = [f"Utente: {user_name}"]
+    parts = [f"Nome utente (usalo raramente): {user_name}"]
+    parts.append(f"Fase conversazione: {conversation_phase}")
     if wallet_balance:
         parts.append(f"Saldo: {wallet_balance:.2f} UP")
     if active_tasks:
@@ -85,7 +113,11 @@ def build_context(
         tool_text = json.dumps(tool_result.get("data", {}), ensure_ascii=False)
         parts.append(f"Risultato ricerca: {cap_tokens(tool_text, 200)}")
     if conversation_summary:
-        parts.append(f"Contesto: {cap_tokens(conversation_summary, 80)}")
+        parts.append(f"Contesto conversazione: {cap_tokens(conversation_summary, 160)}")
+    if user_annoyed_recently:
+        parts.append("Nota tono: l'utente ha mostrato fastidio di recente; evita insistenza.")
+    if practical_goal_mode:
+        parts.append("Modalita: richiesta pratica/urgente, rispondi con piano operativo immediato.")
     return cap_tokens("\n".join(parts), MAX_CONTEXT_TOKENS)
 
 
@@ -106,7 +138,10 @@ async def call_llm(
         config["max_tokens"],
     )
     if not config["api_key"]:
-        raise RuntimeError("Nessuna API key trovata (OPENAI_API_KEY o EMERGENT_LLM_KEY).")
+        raise RuntimeError(
+            "Nessuna API key trovata (OPENAI_API_KEY o EMERGENT_LLM_KEY). "
+            "Configura /var/www/myuup-dev/backend/.env e riavvia myuup-dev.service."
+        )
 
     prompt = f"CONTESTO:\n{context}\n\nMESSAGGIO: {user_message}"
     prompt = cap_tokens(prompt, MAX_CONTEXT_TOKENS)

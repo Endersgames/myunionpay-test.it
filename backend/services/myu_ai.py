@@ -118,7 +118,7 @@ async def send_message(user_id: str, user_text: str, session_id: str) -> dict:
         session_id=f"myu_{session_id}",
         system_message=SYSTEM_PROMPT
     )
-    chat.with_model("openai", "gpt-4.1-nano")
+    chat.with_model("openai", "gpt-4o-mini")
 
     user_message = UserMessage(text=prompt_text)
     

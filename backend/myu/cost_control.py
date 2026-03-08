@@ -21,7 +21,7 @@ TOKEN_COSTS = {
     "gemini-2.0-flash-lite": {"input": 0.075, "output": 0.30},
 }
 
-DEFAULT_MODEL = "gpt-4.1-nano"
+DEFAULT_MODEL = "gpt-4o-mini"
 
 # Tool costs (estimated per call, USD)
 TOOL_COSTS = {

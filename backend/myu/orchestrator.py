@@ -29,6 +29,15 @@ MYU_COST_PER_MSG = 0.01  # UP cost deducted from user wallet
 FALLBACK_BUDGET = "Mi sa che questa richiesta e un po' complessa. Prova a riformulare in modo piu semplice!"
 FALLBACK_TOOL_ERROR = "Non sono riuscito a trovare quello che cercavi. Dimmi la citta e riprovo."
 FALLBACK_GENERIC = "Scusa, ho avuto un problema. Riprova tra un momento."
+ANNOYANCE_MARKERS = (
+    "basta", "non scocciare", "sei pesante", "lascia stare",
+    "non mi va", "mi stai dando fastidio", "smettila", "non insistere",
+)
+PRACTICAL_URGENCY_MARKERS = (
+    "domani ho un esame", "che facciamo in", "devo scegliere un regalo",
+    "mi aiuti a trovare una gift", "voglio organizzarmi adesso", "urgente",
+    "subito", "adesso", "devo",
+)
 
 
 def get_fallback_message(error: Exception = None, is_dev: bool = False) -> str:
@@ -36,6 +45,11 @@ def get_fallback_message(error: Exception = None, is_dev: bool = False) -> str:
     if is_dev and error:
         return f"Errore LLM in sviluppo: {str(error)[:200]}. Riprova o controlla i log."
     return FALLBACK_GENERIC
+
+
+def _contains_any_marker(text: str, markers: tuple[str, ...]) -> bool:
+    lowered = (text or "").lower().strip()
+    return any(marker in lowered for marker in markers)
 
 
 async def handle_chat(user_id: str, message: str, session_id: str) -> dict:
@@ -57,8 +71,14 @@ async def handle_chat(user_id: str, message: str, session_id: str) -> dict:
     # 2. Load user state
     user = await db.users.find_one({"id": user_id}, {"_id": 0, "full_name": 1, "profile_tags": 1})
     user_name = user.get("full_name", "Utente") if user else "Utente"
-    conv_state = await db.myu_conversation_state.find_one({"user_id": user_id}, {"_id": 0, "summary": 1, "awaiting_city_confirm": 1, "pending_intent": 1})
+    conv_state = await db.myu_conversation_state.find_one(
+        {"user_id": user_id},
+        {"_id": 0, "summary": 1, "awaiting_city_confirm": 1, "pending_intent": 1, "user_annoyed_recently": 1},
+    )
     location = await get_location_state(user_id)
+    is_first_turn = not conv_state or not conv_state.get("summary")
+    user_annoyed_recently = bool(conv_state.get("user_annoyed_recently")) if conv_state else False
+    practical_goal_mode = _contains_any_marker(message, PRACTICAL_URGENCY_MARKERS)
 
     # 3. Check if awaiting city confirmation from previous turn
     classification = None
@@ -90,7 +110,24 @@ async def handle_chat(user_id: str, message: str, session_id: str) -> dict:
         classification.get("needs_llm"),
     )
 
+    # 4.1 If user is annoyed, stop gracefully and avoid pushy follow-up
+    if _contains_any_marker(message, ANNOYANCE_MARKERS):
+        stop_msg = "Capito, mi fermo qui. Quando vuoi riprendere, ci sono e non insisto."
+        new_balance = await _deduct_cost(user_id)
+        await _save_conversation(user_id, session_id, message, stop_msg, classification, now)
+        await db.myu_conversation_state.update_one(
+            {"user_id": user_id},
+            {"$set": {"user_annoyed_recently": True, "updated_at": now}},
+            upsert=True,
+        )
+        await log_request_cost(request_id, user_id, "none", 0, 0, fallback_triggered=False)
+        return _build_response(request_id, stop_msg, classification, [], MYU_COST_PER_MSG, new_balance)
+
     # 5. Static response shortcut (e.g., greetings)
+    if classification.get("intent") == "greeting" and not is_first_turn:
+        classification["static_response"] = None
+        classification["needs_llm"] = True
+
     if classification["static_response"] and not classification["needs_llm"]:
         new_balance = await _deduct_cost(user_id)
         await _save_conversation(user_id, session_id, message, classification["static_response"], classification, now)
@@ -177,6 +214,9 @@ async def handle_chat(user_id: str, message: str, session_id: str) -> dict:
         conversation_summary=conv_state.get("summary") if conv_state else None,
         tool_result=tool_result,
         location_city=tool_city,
+        conversation_phase="inizio" if is_first_turn else "continuazione",
+        user_annoyed_recently=user_annoyed_recently,
+        practical_goal_mode=practical_goal_mode,
     )
 
     try:
@@ -206,6 +246,12 @@ async def handle_chat(user_id: str, message: str, session_id: str) -> dict:
     new_balance = await _deduct_cost(user_id)
     await _save_conversation(user_id, session_id, message, response_msg, classification, now, actions)
     await _update_state(user_id, message, response_msg)
+    if user_annoyed_recently:
+        await db.myu_conversation_state.update_one(
+            {"user_id": user_id},
+            {"$set": {"user_annoyed_recently": False, "updated_at": now}},
+            upsert=True,
+        )
 
     # 12. Log cost
     tool_cost = TOOL_COSTS.get(tool_name, 0) if tool_name else 0
@@ -289,7 +335,15 @@ async def _handle_city_confirmation(user_id, message, session_id, request_id, co
     # Call LLM
     wallet = await db.wallets.find_one({"user_id": user_id}, {"_id": 0, "balance": 1})
     balance = wallet.get("balance", 0) if wallet else 0
-    context = build_context(user_name=user_name, wallet_balance=balance, tool_result=tool_result, location_city=confirmed_city)
+    context = build_context(
+        user_name=user_name,
+        wallet_balance=balance,
+        tool_result=tool_result,
+        location_city=confirmed_city,
+        conversation_phase="continuazione",
+        user_annoyed_recently=bool(conv_state.get("user_annoyed_recently")) if conv_state else False,
+        practical_goal_mode=_contains_any_marker(pending_msg or message, PRACTICAL_URGENCY_MARKERS),
+    )
 
     try:
         llm_result = await call_llm(context, pending_msg or message, session_id)
