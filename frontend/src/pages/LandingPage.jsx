@@ -7,7 +7,10 @@ import { QrCode, Wallet, Users, Bell, ArrowRight, Download, Share, Plus, MoreVer
 
 const API = process.env.REACT_APP_BACKEND_URL || "";
 
-const MYU_INTRO = "Ciao, mi chiamo MYU! Se mi installi saro il tuo personal shopper e ti aiuto a risparmiare tra oltre 1000 Brand con cashback che arrivano al 30%!";
+const MYU_TEXTS = [
+  "Saro il tuo personal shopper, per te tanti cashback fino al 30%!",
+  "Nuovi modi di guadagnare e tante funzioni da scoprire!",
+];
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -18,6 +21,7 @@ export default function LandingPage() {
   const [isStandalone, setIsStandalone] = useState(false);
   const [myuVisible, setMyuVisible] = useState(false);
   const [installing, setInstalling] = useState(false);
+  const [myuTextIdx, setMyuTextIdx] = useState(0);
 
   useEffect(() => {
     if (!loading && user) {
@@ -42,6 +46,11 @@ export default function LandingPage() {
     // MYU appears after 1s
     const myuTimer = setTimeout(() => setMyuVisible(true), 1000);
 
+    // Alternate text every 4s
+    const textTimer = setInterval(() => {
+      setMyuTextIdx(prev => (prev + 1) % MYU_TEXTS.length);
+    }, 4000);
+
     // iOS: show instructions automatically after 3s
     if (isIOSDevice && !standalone) {
       setTimeout(() => setShowInstructions(true), 3000);
@@ -50,6 +59,7 @@ export default function LandingPage() {
     return () => {
       window.removeEventListener("beforeinstallprompt", handler);
       clearTimeout(myuTimer);
+      clearInterval(textTimer);
     };
   }, []);
 
@@ -126,29 +136,32 @@ export default function LandingPage() {
             <div className="flex items-start gap-3">
               {/* MYU avatar */}
               <div
-                className="flex-shrink-0 w-16 h-16 rounded-full overflow-hidden shadow-lg border-2 border-white"
+                className="flex-shrink-0 w-14 h-14 rounded-full overflow-hidden shadow-lg border-2 border-white"
                 style={{ animation: "myuBounce 2s ease infinite" }}
               >
                 <img src="/myu-icon.png" alt="MYU" className="w-full h-full object-cover" />
               </div>
-              {/* Speech bubble */}
+              {/* Speech bubble + install */}
               <div
-                className="flex-1 bg-white rounded-2xl rounded-tl-sm p-4 shadow-md border border-black/5"
+                className="flex-1 bg-white rounded-2xl rounded-tl-sm px-4 py-3 shadow-md border border-black/5"
                 style={{ animation: "myuFadeIn 0.5s ease" }}
                 data-testid="myu-landing-bubble"
               >
-                <p className="text-[13px] font-medium text-[#1A1A1A] leading-relaxed mb-3">
-                  {MYU_INTRO}
+                <p className="text-base font-bold text-[#1A1A1A] mb-1">Ciao, mi chiamo MYU!</p>
+                <p className="text-sm text-[#6B7280] leading-snug mb-3" key={myuTextIdx} style={{ animation: "myuFadeIn 0.4s ease" }}>
+                  {MYU_TEXTS[myuTextIdx]}
                 </p>
-                <button
-                  onClick={handleInstall}
-                  disabled={installing}
-                  className="w-full flex items-center justify-center gap-2 bg-[#2B7AB8] hover:bg-[#236699] active:scale-[0.97] text-white font-bold text-base py-3.5 rounded-2xl shadow-lg shadow-[#2B7AB8]/25 transition-all disabled:opacity-70"
-                  data-testid="myu-install-btn"
-                >
-                  <Download className="w-5 h-5" />
-                  {installing ? "Installazione..." : "Installa myUup"}
-                </button>
+                <div className="flex justify-end">
+                  <button
+                    onClick={handleInstall}
+                    disabled={installing}
+                    className="flex items-center gap-1.5 bg-[#2B7AB8] hover:bg-[#236699] active:scale-[0.97] text-white font-bold text-sm px-5 py-2.5 rounded-xl shadow-md shadow-[#2B7AB8]/20 transition-all disabled:opacity-70"
+                    data-testid="myu-install-btn"
+                  >
+                    <Download className="w-4 h-4" />
+                    {installing ? "..." : "Installa Ora"}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
