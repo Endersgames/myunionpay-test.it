@@ -88,6 +88,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Add MYU specific logger
+myu_logger = logging.getLogger("myu")
+myu_logger.setLevel(logging.DEBUG if os.environ.get("DEBUG") == "true" else logging.INFO)
+
 @app.on_event("startup")
 async def startup_event():
     await seed_test_data()

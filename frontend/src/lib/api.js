@@ -516,8 +516,13 @@ export const myuAPI = {
         body: JSON.stringify(body),
       });
     } catch (err) {
+      console.error('MYU chat error:', err);
       if (err.message?.includes('402') || err.message?.includes('Saldo')) {
         throw new Error('Saldo insufficiente per chattare con MYU');
+      }
+      // For other errors, include more diagnostic info in dev
+      if (process.env.NODE_ENV === 'development') {
+        throw new Error(`Errore MYU: ${err.message}`);
       }
       throw err;
     }

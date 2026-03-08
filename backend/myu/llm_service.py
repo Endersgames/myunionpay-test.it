@@ -14,25 +14,52 @@ Rispondi SOLO in JSON: {"message": "...", "actions": []}
 ACTIONS: {"type": "navigate", "path": "...", "label": "..."}, {"type": "create_task", "title": "...", "due": "..."}, {"type": "suggest_merchant", "merchant_id": "...", "name": "..."}, {"type": "confirm_city", "city": "...", "label": "..."}"""
 
 
+def normalize_model_for_responses(raw_model: str) -> str:
+    """Normalize configured model to a known-safe OpenAI Responses model."""
+    model = (raw_model or "").strip()
+    aliases = {
+        "gpt-4.1-nano": "gpt-4o-mini",
+        "gpt-4o": "gpt-4o-mini",
+    }
+    if model in aliases:
+        return aliases[model]
+    if model.startswith("gpt-5"):
+        return "gpt-4o-mini"
+    if not model:
+        return "gpt-4o-mini"
+    return model
+
+
 async def get_llm_config() -> dict:
     """Get LLM model config from DB or fallback to env defaults."""
     config = await db.app_config.find_one({"key": "openai"}, {"_id": 0})
-    env_key = os.environ.get("EMERGENT_LLM_KEY")
+    emergent_key = os.environ.get("EMERGENT_LLM_KEY")
+    openai_key = os.environ.get("OPENAI_API_KEY")
+
+    # Prefer OPENAI_API_KEY if available, fallback to EMERGENT_LLM_KEY
+    env_key = openai_key or emergent_key
+    env_key_source = "OPENAI_API_KEY" if openai_key else ("EMERGENT_LLM_KEY" if emergent_key else "none")
 
     if config and config.get("enabled", True):
         api_key = config.get("api_key")
+        key_source = "db"
         # Fallback to env if DB key is invalid/placeholder
         if not api_key or api_key == "KEEP_EXISTING" or len(api_key) < 10:
             api_key = env_key
+            key_source = env_key_source
+        model = normalize_model_for_responses(config.get("model", "gpt-4o-mini"))
+        logger.info("Resolved LLM config from db: model=%s key_source=%s", model, key_source)
         return {
             "api_key": api_key,
-            "model": config.get("model", "gpt-4.1-nano"),
+            "model": model,
             "max_tokens": min(config.get("max_tokens", MAX_OUTPUT_TOKENS), MAX_OUTPUT_TOKENS),
             "temperature": config.get("temperature", 0.7),
         }
+    model = normalize_model_for_responses("gpt-4o-mini")
+    logger.info("Resolved LLM config from env: model=%s key_source=%s", model, env_key_source)
     return {
         "api_key": env_key,
-        "model": "gpt-4.1-nano",
+        "model": model,
         "max_tokens": MAX_OUTPUT_TOKENS,
         "temperature": 0.7,
     }
@@ -68,37 +95,53 @@ async def call_llm(
     session_id: str,
 ) -> dict:
     """Call LLM with minimal context. Returns parsed response + token estimates."""
-    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    logger.info("Starting LLM call for session=%s", session_id)
 
     config = await get_llm_config()
-    prompt = f"CONTESTO:\n{context}\n\nMESSAGGIO: {user_message}"
-
-    # Cap the prompt
-    prompt = cap_tokens(prompt, MAX_CONTEXT_TOKENS)
-
-    chat = LlmChat(
-        api_key=config["api_key"],
-        session_id=f"myu_{session_id}",
-        system_message=SYSTEM_PROMPT,
+    logger.info(
+        "LLM request config session=%s model=%s api_key_set=%s max_tokens=%s",
+        session_id,
+        config["model"],
+        bool(config["api_key"]),
+        config["max_tokens"],
     )
-    chat.with_model("openai", config["model"])
+    if not config["api_key"]:
+        raise RuntimeError("Nessuna API key trovata (OPENAI_API_KEY o EMERGENT_LLM_KEY).")
 
-    raw = await chat.send_message(UserMessage(text=prompt))
+    prompt = f"CONTESTO:\n{context}\n\nMESSAGGIO: {user_message}"
+    prompt = cap_tokens(prompt, MAX_CONTEXT_TOKENS)
+    logger.debug("LLM prompt prepared session=%s chars=%s", session_id, len(prompt))
 
-    # Parse JSON response
-    parsed = _parse_llm_response(raw)
+    try:
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
 
-    # Estimate tokens
-    input_tokens = count_tokens(SYSTEM_PROMPT) + count_tokens(prompt)
-    output_tokens = count_tokens(raw)
+        chat = LlmChat(
+            api_key=config["api_key"],
+            session_id=f"myu_{session_id}",
+            system_message=SYSTEM_PROMPT,
+        )
+        chat.with_model("openai", config["model"])
 
-    return {
-        "parsed": parsed,
-        "raw": raw,
-        "model": config["model"],
-        "input_tokens": input_tokens,
-        "output_tokens": output_tokens,
-    }
+        logger.info("Sending message to LLM provider=openai model=%s session=%s", config["model"], session_id)
+        raw = await chat.send_message(UserMessage(text=prompt))
+        logger.info("LLM response received session=%s chars=%s", session_id, len(raw))
+
+        parsed = _parse_llm_response(raw)
+        logger.debug("LLM parsed response keys=%s", list(parsed.keys()))
+
+        input_tokens = count_tokens(SYSTEM_PROMPT) + count_tokens(prompt)
+        output_tokens = count_tokens(raw)
+
+        return {
+            "parsed": parsed,
+            "raw": raw,
+            "model": config["model"],
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+        }
+    except Exception as e:
+        logger.error("LLM call failed session=%s model=%s error=%s", session_id, config["model"], e, exc_info=True)
+        raise
 
 
 def _parse_llm_response(raw: str) -> dict:

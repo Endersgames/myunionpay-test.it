@@ -3,6 +3,7 @@
 Flow: message → classify → budget check → city confirm → tool → LLM → response
 """
 import logging
+import os
 from datetime import datetime, timezone
 from database import db
 from myu.cost_control import (
@@ -28,6 +29,13 @@ MYU_COST_PER_MSG = 0.01  # UP cost deducted from user wallet
 FALLBACK_BUDGET = "Mi sa che questa richiesta e un po' complessa. Prova a riformulare in modo piu semplice!"
 FALLBACK_TOOL_ERROR = "Non sono riuscito a trovare quello che cercavi. Dimmi la citta e riprovo."
 FALLBACK_GENERIC = "Scusa, ho avuto un problema. Riprova tra un momento."
+
+
+def get_fallback_message(error: Exception = None, is_dev: bool = False) -> str:
+    """Get fallback message with diagnostic info in dev mode."""
+    if is_dev and error:
+        return f"Errore LLM in sviluppo: {str(error)[:200]}. Riprova o controlla i log."
+    return FALLBACK_GENERIC
 
 
 async def handle_chat(user_id: str, message: str, session_id: str) -> dict:
@@ -157,10 +165,12 @@ async def handle_chat(user_id: str, message: str, session_id: str) -> dict:
         llm_result = await call_llm(context, message, session_id)
     except Exception as e:
         logger.error(f"LLM call failed: {e}")
+        is_dev = os.environ.get("ENV") == "development" or os.environ.get("DEBUG") == "true"
+        fallback_msg = get_fallback_message(e, is_dev)
         new_balance = await _deduct_cost(user_id)
-        await _save_conversation(user_id, session_id, message, FALLBACK_GENERIC, classification, now)
+        await _save_conversation(user_id, session_id, message, fallback_msg, classification, now)
         await log_request_cost(request_id, user_id, model, 0, 0, tool_name, 0, True)
-        return _build_response(request_id, FALLBACK_GENERIC, classification, [], MYU_COST_PER_MSG, new_balance)
+        return _build_response(request_id, fallback_msg, classification, [], MYU_COST_PER_MSG, new_balance)
 
     parsed = llm_result["parsed"]
     response_msg = parsed.get("message", "")
@@ -265,7 +275,7 @@ async def _handle_city_confirmation(user_id, message, session_id, request_id, co
     new_balance = await _deduct_cost(user_id)
     await _save_conversation(user_id, session_id, message, response_msg, classification, now, actions)
     await _update_state(user_id, message, response_msg)
-    await log_request_cost(request_id, user_id, "gpt-4.1-nano", MAX_CONTEXT_TOKENS, MAX_OUTPUT_TOKENS, tool_name, 0, False)
+    await log_request_cost(request_id, user_id, "gpt-4o-mini", MAX_CONTEXT_TOKENS, MAX_OUTPUT_TOKENS, tool_name, 0, False)
 
     return _build_response(request_id, response_msg, classification, actions, MYU_COST_PER_MSG, new_balance)
 

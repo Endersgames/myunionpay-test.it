@@ -17,7 +17,7 @@ async def require_admin(user=Depends(get_current_user)):
 
 class OpenAIConfig(BaseModel):
     api_key: str
-    model: str = "gpt-4.1-nano"
+    model: str = "gpt-4o-mini"  # Updated default model
     enabled: bool = True
     max_tokens: int = 150
     temperature: float = 0.7
@@ -33,7 +33,7 @@ async def get_openai_config(admin=Depends(require_admin)):
         return {
             "api_key_set": bool(env_key),
             "api_key_preview": "****" + env_key[-4:] if env_key else "",
-            "model": "gpt-4.1-nano",
+            "model": "gpt-4o-mini",  # Updated default model
             "enabled": True,
             "max_tokens": 150,
             "temperature": 0.7,
@@ -57,7 +57,7 @@ async def get_openai_config(admin=Depends(require_admin)):
     return {
         "api_key_set": key_set,
         "api_key_preview": preview,
-        "model": config.get("model", "gpt-4.1-nano"),
+        "model": config.get("model", "gpt-4o-mini"),  # Updated default model
         "enabled": config.get("enabled", True),
         "max_tokens": config.get("max_tokens", 150),
         "temperature": config.get("temperature", 0.7),
@@ -106,7 +106,7 @@ async def test_openai_connection(admin=Depends(require_admin)):
     if not api_key:
         api_key = os.environ.get("EMERGENT_LLM_KEY")
     
-    model = config.get("model", "gpt-4.1-nano") if config else "gpt-4.1-nano"
+    model = config.get("model", "gpt-4o-mini") if config else "gpt-4o-mini"  # Updated default model
 
     if not api_key:
         return {"success": False, "error": "Nessuna API key configurata"}

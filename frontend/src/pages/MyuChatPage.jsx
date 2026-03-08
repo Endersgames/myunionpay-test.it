@@ -129,7 +129,10 @@ export default function MyuChatPage() {
           created_at: new Date().toISOString()
         }]);
       } else {
-        toast.error("Errore nella chat");
+        console.error('MYU chat error:', err);
+        const isDev = process.env.NODE_ENV === 'development';
+        const errorMsg = isDev ? `Errore: ${err.message}` : "Errore nella chat";
+        toast.error(errorMsg);
       }
     }
     setLoading(false);

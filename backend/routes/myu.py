@@ -43,6 +43,8 @@ class ToolQuery(BaseModel):
 @router.post("/chat")
 async def chat(data: ChatMessage, user=Depends(get_current_user)):
     """Main MYU chat endpoint - orchestrated response."""
+    logger.info(f"MYU chat request from user {user['id']}: {data.text[:100]}...")
+    
     # If location provided, update it silently
     if data.latitude and data.longitude:
         await save_location(user["id"], data.latitude, data.longitude)
@@ -59,10 +61,25 @@ async def chat(data: ChatMessage, user=Depends(get_current_user)):
     wallet = await db.wallets.find_one({"user_id": user["id"]}, {"_id": 0, "balance": 1})
     balance = wallet.get("balance", 0) if wallet else 0
     if balance < MYU_COST_PER_MSG:
+        logger.warning(f"Insufficient balance for user {user['id']}: {balance} < {MYU_COST_PER_MSG}")
         raise HTTPException(status_code=402, detail=f"Saldo insufficiente. Servono almeno {MYU_COST_PER_MSG} UP.")
 
-    result = await handle_chat(user["id"], data.text, session_id)
-    return result
+    try:
+        result = await handle_chat(user["id"], data.text, session_id)
+        logger.info(f"MYU chat response for user {user['id']}: {result['message'][:100]}...")
+        return result
+    except Exception as e:
+        logger.error(f"MYU chat error for user {user['id']}: {e}", exc_info=True)
+        # Return consistent JSON error response
+        return {
+            "message": "Errore interno del server. Riprova più tardi.",
+            "intent": {"domain": "error", "intent": "server_error", "confidence": 1.0},
+            "actions": [],
+            "cost": 0,
+            "balance_after": balance,
+            "request_id": generate_request_id(),
+            "error": str(e) if os.environ.get("ENV") == "development" else None
+        }
 
 
 @router.get("/history")
