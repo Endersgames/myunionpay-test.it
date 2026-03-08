@@ -133,6 +133,12 @@ export default function MyuChatPage() {
         const isDev = process.env.NODE_ENV === 'development';
         const errorMsg = isDev ? `Errore: ${err.message}` : "Errore nella chat";
         toast.error(errorMsg);
+        setMessages(prev => [...prev, {
+          role: "assistant",
+          text: isDev ? `Errore MYU (dev): ${err.message}` : "Scusa, ho avuto un problema. Riprova tra un momento.",
+          actions: [],
+          created_at: new Date().toISOString()
+        }]);
       }
     }
     setLoading(false);

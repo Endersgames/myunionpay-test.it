@@ -50,6 +50,8 @@ const apiRequest = async (endpoint, options = {}) => {
         const data = JSON.parse(responseText);
         if (typeof data.detail === 'string') {
           errorMessage = data.detail;
+        } else if (data.detail && typeof data.detail === 'object' && typeof data.detail.message === 'string') {
+          errorMessage = data.detail.message;
         } else if (Array.isArray(data.detail)) {
           errorMessage = data.detail.map(d => d.msg || d.message).join(', ');
         } else if (data.message) {
@@ -505,16 +507,24 @@ export const menuAPI = {
 // ========================
 export const myuAPI = {
   async chat(text, latitude = null, longitude = null) {
+    const endpoint = '/myu/chat';
     try {
       const body = { text };
       if (latitude && longitude) {
         body.latitude = latitude;
         body.longitude = longitude;
       }
-      return await apiRequest('/myu/chat', {
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('MYU chat request', { endpoint: `/api${endpoint}`, hasLocation: !!(latitude && longitude) });
+      }
+      const result = await apiRequest(endpoint, {
         method: 'POST',
         body: JSON.stringify(body),
       });
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('MYU chat response', { requestId: result?.request_id, intent: result?.intent });
+      }
+      return result;
     } catch (err) {
       console.error('MYU chat error:', err);
       if (err.message?.includes('402') || err.message?.includes('Saldo')) {

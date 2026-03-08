@@ -45,11 +45,13 @@ async def handle_chat(user_id: str, message: str, session_id: str) -> dict:
     """
     request_id = generate_request_id()
     now = datetime.now(timezone.utc).isoformat()
+    logger.info("MYU pipeline start request_id=%s user_id=%s session_id=%s", request_id, user_id, session_id)
 
     # 1. Check balance
     wallet = await db.wallets.find_one({"user_id": user_id}, {"_id": 0, "balance": 1})
     balance = wallet.get("balance", 0) if wallet else 0
     if balance < MYU_COST_PER_MSG:
+        logger.warning("MYU balance check failed request_id=%s balance=%s required=%s", request_id, balance, MYU_COST_PER_MSG)
         return _error_response(request_id, "Saldo insufficiente per chattare con MYU.", balance)
 
     # 2. Load user state
@@ -78,7 +80,15 @@ async def handle_chat(user_id: str, message: str, session_id: str) -> dict:
     # 4. Classify intent (keyword-based, no LLM)
     if not classification:
         classification = classify_intent(message)
-    logger.info(f"Intent: {classification['domain']}/{classification['intent']} conf={classification['confidence']}")
+    logger.info(
+        "MYU intent request_id=%s domain=%s intent=%s conf=%s needs_tool=%s needs_llm=%s",
+        request_id,
+        classification["domain"],
+        classification["intent"],
+        classification["confidence"],
+        classification.get("needs_tool"),
+        classification.get("needs_llm"),
+    )
 
     # 5. Static response shortcut (e.g., greetings)
     if classification["static_response"] and not classification["needs_llm"]:
@@ -126,6 +136,13 @@ async def handle_chat(user_id: str, message: str, session_id: str) -> dict:
     tool_name = classification.get("needs_tool")
     est_cost = estimate_request_cost(model, est_input, est_output, tool_name)
     budget = check_budget(est_cost)
+    logger.info(
+        "MYU budget check request_id=%s model=%s est_cost=%s allowed=%s",
+        request_id,
+        model,
+        est_cost,
+        budget["allowed"],
+    )
 
     if not budget["allowed"]:
         # Budget exceeded - use fallback
@@ -137,6 +154,7 @@ async def handle_chat(user_id: str, message: str, session_id: str) -> dict:
     # 8. Call tool if needed (max 1 per request)
     tool_result = None
     if tool_name:
+        logger.info("MYU tool stage request_id=%s tool=%s city=%s", request_id, tool_name, tool_city)
         cache_key = build_cache_key(tool_name, location.get("geohash_4", "") if location else "", message[:60])
         tool_result = await get_cached(cache_key)
         if not tool_result:
@@ -144,7 +162,7 @@ async def handle_chat(user_id: str, message: str, session_id: str) -> dict:
             if tool_result and not tool_result.get("error"):
                 await set_cached(cache_key, tool_name, location.get("geohash_4", "") if location else "", tool_city or "", classification["intent"], tool_result.get("data", {}))
             elif tool_result and tool_result.get("error"):
-                logger.warning(f"Tool error: {tool_result['error']}")
+                logger.warning("MYU tool error request_id=%s tool=%s err=%s", request_id, tool_name, tool_result["error"])
 
     # 9. Build context and call LLM (1 call)
     active_tasks_data = await db.myu_tasks.find(
@@ -162,9 +180,10 @@ async def handle_chat(user_id: str, message: str, session_id: str) -> dict:
     )
 
     try:
+        logger.info("MYU llm stage request_id=%s session_id=%s model=%s", request_id, session_id, model)
         llm_result = await call_llm(context, message, session_id)
     except Exception as e:
-        logger.error(f"LLM call failed: {e}")
+        logger.error("MYU llm stage failed request_id=%s error=%s", request_id, e)
         is_dev = os.environ.get("ENV") == "development" or os.environ.get("DEBUG") == "true"
         fallback_msg = get_fallback_message(e, is_dev)
         new_balance = await _deduct_cost(user_id)
@@ -181,6 +200,7 @@ async def handle_chat(user_id: str, message: str, session_id: str) -> dict:
         for action in actions:
             if action.get("type") == "create_task" and action.get("title"):
                 await create_task(user_id, action["title"], action.get("due"))
+                logger.info("MYU task created request_id=%s title=%s", request_id, action["title"][:80])
 
     # 11. Deduct cost and save conversation
     new_balance = await _deduct_cost(user_id)
@@ -193,6 +213,13 @@ async def handle_chat(user_id: str, message: str, session_id: str) -> dict:
         request_id, user_id, llm_result["model"],
         llm_result["input_tokens"], llm_result["output_tokens"],
         tool_name, tool_cost, False,
+    )
+    logger.info(
+        "MYU pipeline success request_id=%s model=%s input_tokens=%s output_tokens=%s",
+        request_id,
+        llm_result["model"],
+        llm_result["input_tokens"],
+        llm_result["output_tokens"],
     )
 
     # 13. Log intent
@@ -247,6 +274,7 @@ async def _handle_city_confirmation(user_id, message, session_id, request_id, co
     # Re-classify using the original message
     classification = pending if pending.get("domain") else classify_intent(pending_msg or message)
     tool_name = classification.get("needs_tool")
+    logger.info("MYU city-confirm flow request_id=%s city=%s tool=%s", request_id, confirmed_city, tool_name)
 
     # Call tool with confirmed city
     tool_result = None
@@ -268,14 +296,27 @@ async def _handle_city_confirmation(user_id, message, session_id, request_id, co
         parsed = llm_result["parsed"]
         response_msg = parsed.get("message", "")
         actions = parsed.get("actions", [])
-    except Exception:
-        response_msg = f"Cerco a {confirmed_city}... ma ho avuto un problema. Riprova!"
+    except Exception as e:
+        is_dev = os.environ.get("ENV") == "development" or os.environ.get("DEBUG") == "true"
+        response_msg = get_fallback_message(e, is_dev)
         actions = []
 
     new_balance = await _deduct_cost(user_id)
     await _save_conversation(user_id, session_id, message, response_msg, classification, now, actions)
     await _update_state(user_id, message, response_msg)
-    await log_request_cost(request_id, user_id, "gpt-4o-mini", MAX_CONTEXT_TOKENS, MAX_OUTPUT_TOKENS, tool_name, 0, False)
+    if "llm_result" in locals():
+        await log_request_cost(
+            request_id,
+            user_id,
+            llm_result["model"],
+            llm_result["input_tokens"],
+            llm_result["output_tokens"],
+            tool_name,
+            0,
+            False,
+        )
+    else:
+        await log_request_cost(request_id, user_id, "none", 0, 0, tool_name, 0, True)
 
     return _build_response(request_id, response_msg, classification, actions, MYU_COST_PER_MSG, new_balance)
 

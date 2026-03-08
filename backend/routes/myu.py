@@ -1,5 +1,7 @@
 """MYU API Routes - Chat, location, tools, costs."""
+import os
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Optional
 import uuid
@@ -68,18 +70,22 @@ async def chat(data: ChatMessage, user=Depends(get_current_user)):
         result = await handle_chat(user["id"], data.text, session_id)
         logger.info(f"MYU chat response for user {user['id']}: {result['message'][:100]}...")
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"MYU chat error for user {user['id']}: {e}", exc_info=True)
-        # Return consistent JSON error response
-        return {
+        error_payload = {
             "message": "Errore interno del server. Riprova più tardi.",
             "intent": {"domain": "error", "intent": "server_error", "confidence": 1.0},
             "actions": [],
             "cost": 0,
             "balance_after": balance,
             "request_id": generate_request_id(),
-            "error": str(e) if os.environ.get("ENV") == "development" else None
+            "error_code": "MYU_CHAT_INTERNAL_ERROR",
         }
+        if os.environ.get("ENV") == "development" or os.environ.get("DEBUG") == "true":
+            error_payload["error"] = str(e)
+        return JSONResponse(status_code=500, content=error_payload)
 
 
 @router.get("/history")

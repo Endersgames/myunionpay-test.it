@@ -90,7 +90,8 @@ logger = logging.getLogger(__name__)
 
 # Add MYU specific logger
 myu_logger = logging.getLogger("myu")
-myu_logger.setLevel(logging.DEBUG if os.environ.get("DEBUG") == "true" else logging.INFO)
+debug_enabled = os.environ.get("DEBUG", "").lower() == "true"
+myu_logger.setLevel(logging.DEBUG if debug_enabled else logging.INFO)
 
 @app.on_event("startup")
 async def startup_event():
