@@ -7,11 +7,7 @@ import { QrCode, Wallet, Users, Bell, ArrowRight, Download, Share, Plus, MoreVer
 
 const API = process.env.REACT_APP_BACKEND_URL || "";
 
-const MYU_BUBBLES = [
-  "Ehi! Installa myUup sulla Home per accesso veloce!",
-  "Cashback su Amazon, IKEA, Decathlon... installa e scopri!",
-  "Tocca qui per installarmi! Ci metto un attimo.",
-];
+const MYU_INTRO = "Ciao, mi chiamo MYU! Se mi installi saro il tuo personal shopper e ti aiuto a risparmiare tra oltre 1000 Brand con cashback che arrivano al 30%!";
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -20,8 +16,8 @@ export default function LandingPage() {
   const [showInstructions, setShowInstructions] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
-  const [myuBubbleIdx, setMyuBubbleIdx] = useState(0);
   const [myuVisible, setMyuVisible] = useState(false);
+  const [installing, setInstalling] = useState(false);
 
   useEffect(() => {
     if (!loading && user) {
@@ -43,31 +39,44 @@ export default function LandingPage() {
     };
     window.addEventListener("beforeinstallprompt", handler);
 
-    // MYU appears after 1.5s
-    const myuTimer = setTimeout(() => setMyuVisible(true), 1500);
-    // Cycle bubbles every 5s
-    const bubbleTimer = setInterval(() => {
-      setMyuBubbleIdx(prev => (prev + 1) % MYU_BUBBLES.length);
-    }, 5000);
+    // MYU appears after 1s
+    const myuTimer = setTimeout(() => setMyuVisible(true), 1000);
+
+    // iOS: show instructions automatically after 3s
+    if (isIOSDevice && !standalone) {
+      setTimeout(() => setShowInstructions(true), 3000);
+    }
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handler);
       clearTimeout(myuTimer);
-      clearInterval(bubbleTimer);
     };
   }, []);
 
   const handleInstall = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === "accepted") {
-        setShowInstall(false);
+    setInstalling(true);
+    try {
+      if (deferredPrompt) {
+        // Android/Chrome: trigger native install prompt immediately
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        setDeferredPrompt(null);
+        if (outcome === "accepted") return; // installed!
       }
-      setDeferredPrompt(null);
-    } else {
+      // Fallback: try relatedApps check (some browsers)
+      if ('getInstalledRelatedApps' in navigator) {
+        const apps = await navigator.getInstalledRelatedApps();
+        if (apps.length > 0) {
+          setInstalling(false);
+          return; // already installed
+        }
+      }
+      // iOS or browsers without beforeinstallprompt: show manual guide
+      setShowInstructions(true);
+    } catch (e) {
       setShowInstructions(true);
     }
+    setInstalling(false);
   };
 
   const features = [
@@ -114,34 +123,32 @@ export default function LandingPage() {
         {/* MYU Mascot + Install CTA */}
         {!isStandalone && myuVisible && (
           <div className="mb-8 animate-slideUp" style={{ animationDelay: '0.1s' }} data-testid="myu-landing-section">
-            <div className="flex items-end gap-3">
+            <div className="flex items-start gap-3">
               {/* MYU avatar */}
-              <button
-                onClick={handleInstall}
-                className="flex-shrink-0 w-16 h-16 rounded-full overflow-hidden shadow-lg border-2 border-white hover:scale-105 transition-transform"
-                data-testid="myu-landing-avatar"
+              <div
+                className="flex-shrink-0 w-16 h-16 rounded-full overflow-hidden shadow-lg border-2 border-white"
                 style={{ animation: "myuBounce 2s ease infinite" }}
               >
                 <img src="/myu-icon.png" alt="MYU" className="w-full h-full object-cover" />
-              </button>
+              </div>
               {/* Speech bubble */}
               <div
-                className="flex-1 bg-white rounded-2xl rounded-bl-sm p-3 shadow-md border border-black/5 cursor-pointer hover:shadow-lg transition-shadow"
-                onClick={handleInstall}
+                className="flex-1 bg-white rounded-2xl rounded-tl-sm p-4 shadow-md border border-black/5"
+                style={{ animation: "myuFadeIn 0.5s ease" }}
                 data-testid="myu-landing-bubble"
-                style={{ animation: "myuFadeIn 0.4s ease" }}
-                key={myuBubbleIdx}
               >
-                <p className="text-sm font-medium text-[#1A1A1A] leading-snug">
-                  {MYU_BUBBLES[myuBubbleIdx]}
+                <p className="text-[13px] font-medium text-[#1A1A1A] leading-relaxed mb-3">
+                  {MYU_INTRO}
                 </p>
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="inline-flex items-center gap-1 bg-[#2B7AB8] text-white text-[11px] font-bold px-3 py-1.5 rounded-full hover:bg-[#236699] transition-colors">
-                    <Download className="w-3 h-3" />
-                    Installa
-                  </span>
-                  <span className="text-[10px] text-[#6B7280]">1 tap</span>
-                </div>
+                <button
+                  onClick={handleInstall}
+                  disabled={installing}
+                  className="w-full flex items-center justify-center gap-2 bg-[#E85A24] hover:bg-[#D04D1A] active:scale-[0.97] text-white font-bold text-base py-3.5 rounded-2xl shadow-lg shadow-[#E85A24]/25 transition-all disabled:opacity-70"
+                  data-testid="myu-install-btn"
+                >
+                  <Download className="w-5 h-5" />
+                  {installing ? "Installazione..." : "Installa myUup"}
+                </button>
               </div>
             </div>
           </div>
