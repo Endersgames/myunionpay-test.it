@@ -143,7 +143,7 @@ export default function LandingPage() {
                 <button
                   onClick={handleInstall}
                   disabled={installing}
-                  className="w-full flex items-center justify-center gap-2 bg-[#E85A24] hover:bg-[#D04D1A] active:scale-[0.97] text-white font-bold text-base py-3.5 rounded-2xl shadow-lg shadow-[#E85A24]/25 transition-all disabled:opacity-70"
+                  className="w-full flex items-center justify-center gap-2 bg-[#2B7AB8] hover:bg-[#236699] active:scale-[0.97] text-white font-bold text-base py-3.5 rounded-2xl shadow-lg shadow-[#2B7AB8]/25 transition-all disabled:opacity-70"
                   data-testid="myu-install-btn"
                 >
                   <Download className="w-5 h-5" />
