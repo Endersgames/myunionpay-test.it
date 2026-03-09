@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/App";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -104,6 +105,17 @@ export default function LoginPage() {
             )}
           </Button>
         </form>
+
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-black/10" />
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="bg-white px-4 text-[#6B7280]">oppure</span>
+          </div>
+        </div>
+
+        <GoogleSignInButton label="Accedi con Google" />
 
         <p className="text-center text-[#6B7280] mt-8">
           Non hai un account?{" "}

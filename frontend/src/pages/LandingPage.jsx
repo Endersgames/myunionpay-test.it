@@ -4,20 +4,21 @@ import { useAuth } from "@/App";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { QrCode, Wallet, Users, Bell, ArrowRight, Download, Share, Plus, MoreVertical, Percent } from "lucide-react";
+import { usePwaInstall } from "@/lib/usePwaInstall";
 
 const API = process.env.REACT_APP_BACKEND_URL || "";
 
-const MYU_INTRO = "Ciao, mi chiamo MYU! Se mi installi saro il tuo personal shopper e ti aiuto a risparmiare tra oltre 1000 Brand con cashback che arrivano al 30%!";
+const MYU_TEXTS = [
+  "Saro il tuo personal shopper, per te tanti cashback fino al 30%!",
+  "Nuovi modi di guadagnare e tante funzioni da scoprire!",
+];
 
 export default function LandingPage() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [showInstructions, setShowInstructions] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
-  const [isStandalone, setIsStandalone] = useState(false);
+  const { isInstalled, installing, triggerInstall, showIOSGuide, setShowIOSGuide } = usePwaInstall();
   const [myuVisible, setMyuVisible] = useState(false);
-  const [installing, setInstalling] = useState(false);
+  const [myuTextIdx, setMyuTextIdx] = useState(0);
 
   useEffect(() => {
     if (!loading && user) {
@@ -26,58 +27,10 @@ export default function LandingPage() {
   }, [user, loading, navigate]);
 
   useEffect(() => {
-    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    setIsIOS(isIOSDevice);
-    
-    const standalone = window.matchMedia('(display-mode: standalone)').matches || 
-                       window.navigator.standalone === true;
-    setIsStandalone(standalone);
-    
-    const handler = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-    window.addEventListener("beforeinstallprompt", handler);
-
-    // MYU appears after 1s
     const myuTimer = setTimeout(() => setMyuVisible(true), 1000);
-
-    // iOS: show instructions automatically after 3s
-    if (isIOSDevice && !standalone) {
-      setTimeout(() => setShowInstructions(true), 3000);
-    }
-
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handler);
-      clearTimeout(myuTimer);
-    };
+    const textTimer = setInterval(() => setMyuTextIdx(prev => (prev + 1) % MYU_TEXTS.length), 4000);
+    return () => { clearTimeout(myuTimer); clearInterval(textTimer); };
   }, []);
-
-  const handleInstall = async () => {
-    setInstalling(true);
-    try {
-      if (deferredPrompt) {
-        // Android/Chrome: trigger native install prompt immediately
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        setDeferredPrompt(null);
-        if (outcome === "accepted") return; // installed!
-      }
-      // Fallback: try relatedApps check (some browsers)
-      if ('getInstalledRelatedApps' in navigator) {
-        const apps = await navigator.getInstalledRelatedApps();
-        if (apps.length > 0) {
-          setInstalling(false);
-          return; // already installed
-        }
-      }
-      // iOS or browsers without beforeinstallprompt: show manual guide
-      setShowInstructions(true);
-    } catch (e) {
-      setShowInstructions(true);
-    }
-    setInstalling(false);
-  };
 
   const features = [
     { icon: QrCode, title: "Pagamenti QR", desc: "Paga e ricevi denaro con un semplice scan" },
@@ -109,46 +62,38 @@ export default function LandingPage() {
           />
         </div>
 
-        {/* Hero */}
-        <div className="mb-12 animate-slideUp text-center">
-          <h1 className="font-heading text-4xl sm:text-5xl font-extrabold leading-tight mb-4 text-[#1A1A1A]">
-            Paga. Guadagna.<br />
-            <span className="text-[#E85A24]">Unisciti.</span>
-          </h1>
-          <p className="text-[#6B7280] text-lg">
-            Pagamenti P2P istantanei, marketplace merchant e ricompense per ogni notifica che ricevi.
-          </p>
-        </div>
-
         {/* MYU Mascot + Install CTA */}
-        {!isStandalone && myuVisible && (
+        {!isInstalled && myuVisible && (
           <div className="mb-8 animate-slideUp" style={{ animationDelay: '0.1s' }} data-testid="myu-landing-section">
             <div className="flex items-start gap-3">
               {/* MYU avatar */}
               <div
-                className="flex-shrink-0 w-16 h-16 rounded-full overflow-hidden shadow-lg border-2 border-white"
+                className="flex-shrink-0 w-14 h-14 rounded-full overflow-hidden shadow-lg border-2 border-white"
                 style={{ animation: "myuBounce 2s ease infinite" }}
               >
                 <img src="/myu-icon.png" alt="MYU" className="w-full h-full object-cover" />
               </div>
-              {/* Speech bubble */}
+              {/* Speech bubble + install */}
               <div
-                className="flex-1 bg-white rounded-2xl rounded-tl-sm p-4 shadow-md border border-black/5"
+                className="flex-1 bg-white rounded-2xl rounded-tl-sm px-4 py-3 shadow-md border border-black/5"
                 style={{ animation: "myuFadeIn 0.5s ease" }}
                 data-testid="myu-landing-bubble"
               >
-                <p className="text-[13px] font-medium text-[#1A1A1A] leading-relaxed mb-3">
-                  {MYU_INTRO}
+                <p className="text-base font-bold text-[#1A1A1A] mb-1">Ciao, mi chiamo MYU!</p>
+                <p className="text-sm text-[#6B7280] leading-snug mb-3" key={myuTextIdx} style={{ animation: "myuFadeIn 0.4s ease" }}>
+                  {MYU_TEXTS[myuTextIdx]}
                 </p>
-                <button
-                  onClick={handleInstall}
-                  disabled={installing}
-                  className="w-full flex items-center justify-center gap-2 bg-[#2B7AB8] hover:bg-[#236699] active:scale-[0.97] text-white font-bold text-base py-3.5 rounded-2xl shadow-lg shadow-[#2B7AB8]/25 transition-all disabled:opacity-70"
-                  data-testid="myu-install-btn"
-                >
-                  <Download className="w-5 h-5" />
-                  {installing ? "Installazione..." : "Installa myUup"}
-                </button>
+                <div className="flex justify-end">
+                  <button
+                    onClick={triggerInstall}
+                    disabled={installing}
+                    className="flex items-center gap-1.5 bg-[#2B7AB8] hover:bg-[#236699] active:scale-[0.97] text-white font-bold text-sm px-5 py-2.5 rounded-xl shadow-md shadow-[#2B7AB8]/20 transition-all disabled:opacity-70"
+                    data-testid="myu-install-btn"
+                  >
+                    <Download className="w-4 h-4" />
+                    {installing ? "..." : "Installa Ora"}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -221,63 +166,35 @@ export default function LandingPage() {
       </div>
 
       {/* Install Instructions Dialog */}
-      <Dialog open={showInstructions} onOpenChange={setShowInstructions}>
+      <Dialog open={showIOSGuide} onOpenChange={setShowIOSGuide}>
         <DialogContent className="bg-white border-black/10 text-[#1A1A1A] max-w-sm mx-4">
           <DialogHeader>
             <DialogTitle className="font-heading text-xl">Installa myUup.com</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            {isIOS ? (
-              <>
-                <p className="text-[#6B7280]">Per installare myUup.com su iPhone/iPad:</p>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 bg-[#F5F5F5] p-3 rounded-xl">
-                    <div className="w-10 h-10 rounded-full bg-[#2B7AB8]/10 flex items-center justify-center">
-                      <Share className="w-5 h-5 text-[#2B7AB8]" />
-                    </div>
-                    <div>
-                      <p className="font-medium">1. Tocca Condividi</p>
-                      <p className="text-sm text-[#6B7280]">L'icona in basso al centro</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 bg-[#F5F5F5] p-3 rounded-xl">
-                    <div className="w-10 h-10 rounded-full bg-[#E85A24]/10 flex items-center justify-center">
-                      <Plus className="w-5 h-5 text-[#E85A24]" />
-                    </div>
-                    <div>
-                      <p className="font-medium">2. Aggiungi a Home</p>
-                      <p className="text-sm text-[#6B7280]">Scorri e seleziona l'opzione</p>
-                    </div>
-                  </div>
+            <p className="text-[#6B7280]">Per installare myUup.com:</p>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 bg-[#F5F5F5] p-3 rounded-xl">
+                <div className="w-10 h-10 rounded-full bg-[#2B7AB8]/10 flex items-center justify-center">
+                  <Share className="w-5 h-5 text-[#2B7AB8]" />
                 </div>
-              </>
-            ) : (
-              <>
-                <p className="text-[#6B7280]">Per installare myUup.com:</p>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 bg-[#F5F5F5] p-3 rounded-xl">
-                    <div className="w-10 h-10 rounded-full bg-[#2B7AB8]/10 flex items-center justify-center">
-                      <MoreVertical className="w-5 h-5 text-[#2B7AB8]" />
-                    </div>
-                    <div>
-                      <p className="font-medium">1. Apri il menu</p>
-                      <p className="text-sm text-[#6B7280]">Tocca ⋮ in alto a destra</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 bg-[#F5F5F5] p-3 rounded-xl">
-                    <div className="w-10 h-10 rounded-full bg-[#E85A24]/10 flex items-center justify-center">
-                      <Download className="w-5 h-5 text-[#E85A24]" />
-                    </div>
-                    <div>
-                      <p className="font-medium">2. Installa app</p>
-                      <p className="text-sm text-[#6B7280]">Seleziona "Installa app" o "Aggiungi a Home"</p>
-                    </div>
-                  </div>
+                <div>
+                  <p className="font-medium">1. Tocca Condividi / Menu</p>
+                  <p className="text-sm text-[#6B7280]">In basso (iOS) o ⋮ in alto (Android)</p>
                 </div>
-              </>
-            )}
+              </div>
+              <div className="flex items-center gap-3 bg-[#F5F5F5] p-3 rounded-xl">
+                <div className="w-10 h-10 rounded-full bg-[#E85A24]/10 flex items-center justify-center">
+                  <Plus className="w-5 h-5 text-[#E85A24]" />
+                </div>
+                <div>
+                  <p className="font-medium">2. Aggiungi a Home</p>
+                  <p className="text-sm text-[#6B7280]">Seleziona "Installa app" o "Aggiungi"</p>
+                </div>
+              </div>
+            </div>
             <Button 
-              onClick={() => setShowInstructions(false)}
+              onClick={() => setShowIOSGuide(false)}
               className="w-full mt-4 rounded-full bg-[#2B7AB8] hover:bg-[#236699] text-white"
             >
               Ho capito

@@ -1,65 +1,77 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/App";
-import { 
-  Download, Smartphone, CheckCircle, ArrowRight, Share, Plus, 
-  Store, UtensilsCrossed, ShoppingBag, Gift, Menu
+import {
+  Download, ArrowRight, Share, Plus, Smartphone,
+  Store, UtensilsCrossed, Gift, Menu as MenuIcon, Percent
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-// API
 import { paymentAPI } from "@/lib/api";
+import { usePwaInstall } from "@/lib/usePwaInstall";
 
-/**
- * Smart QR Landing Page with Strong PWA Install Prompt
- * - Detects if QR belongs to a merchant (shows menu option)
- * - Prompts to install the app before proceeding
- * - If user is logged in → redirect to payment page
- * - If user is NOT logged in → redirect to register with referral
- */
+const API = process.env.REACT_APP_BACKEND_URL || "";
+
+const MYU_MESSAGES = {
+  merchant: [
+    "Questo locale ha cashback e offerte per te!",
+  ],
+  menu: [
+    "Questo locale ha cashback e offerte per te!",
+  ],
+  user: [
+    "Questo locale ha cashback e offerte per te!",
+  ],
+  error: ["Ops, questo QR non funziona. Torna alla Home!"],
+};
+
+const BRAND_LOGOS = [
+  { brand: "Amazon", cashback: "1.87%", logo: "/api/giftcards/logo/986ef34a-13b7-4250-9414-905c982c75b7.JPG" },
+  { brand: "IKEA", cashback: "6.5%", logo: "/api/giftcards/logo/1aa843df-62b9-45d3-9365-cd11ef930443.JPG" },
+  { brand: "Conad", cashback: "1.69%", logo: "/api/giftcards/logo/bcddd511-c663-4175-b959-2cebdccaf9cd.JPG" },
+  { brand: "Decathlon", cashback: "1%", logo: "/api/giftcards/logo/62091058-c72f-4759-828f-5642bcfe2c73.JPG" },
+];
+
+// Brand Cashback Banner + MYU Install CTA
+function BrandBanner({ onInstall, installing, isInstalled }) {
+  return (
+    <div className="mt-6 pt-4 border-t border-black/5" data-testid="brand-cashback-banner">
+      <div className="flex items-center gap-1.5 mb-2.5">
+        <Percent className="w-3.5 h-3.5 text-[#E85A24]" />
+        <span className="text-xs font-bold text-[#1A1A1A]">Cashback sui tuoi brand</span>
+      </div>
+      <div className="grid grid-cols-4 gap-2">
+        {BRAND_LOGOS.map(b => (
+          <div key={b.brand} className="bg-white rounded-xl border border-black/5 overflow-hidden shadow-sm">
+            <div className="aspect-[4/3] overflow-hidden bg-[#FAFAFA]">
+              <img src={`${API}${b.logo}`} alt={b.brand} className="w-full h-full object-contain p-1" />
+            </div>
+            <div className="px-1 py-0.5 text-center border-t border-black/5">
+              <span className="text-[9px] font-bold text-[#E85A24]">{b.cashback}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      {/* MYU Install CTA under brands - removed */}
+    </div>
+  );
+}
+
 export default function ScanRedirectPage() {
   const navigate = useNavigate();
   const { qrCode } = useParams();
   const { user, loading: authLoading } = useAuth();
+  const { isInstalled, installing, triggerInstall, showIOSGuide, setShowIOSGuide, isIOS } = usePwaInstall();
   const [error, setError] = useState(null);
   const [recipientName, setRecipientName] = useState("");
-  const [recipientType, setRecipientType] = useState("user"); // "user" or "merchant"
+  const [recipientType, setRecipientType] = useState("user");
   const [merchantData, setMerchantData] = useState(null);
-  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
-  const [showIOSInstructions, setShowIOSInstructions] = useState(false);
-  const deferredPromptRef = useRef(null);
+  const [myuTextIdx, setMyuTextIdx] = useState(0);
 
-  // Check if already installed or can be installed
   useEffect(() => {
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                         window.navigator.standalone === true;
-    setIsInstalled(isStandalone);
-
-    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    setIsIOS(iOS);
-
-    const handleBeforeInstall = (e) => {
-      e.preventDefault();
-      deferredPromptRef.current = e;
-      if (!isStandalone) {
-        setShowInstallPrompt(true);
-      }
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
-
-    if (!isStandalone) {
-      setTimeout(() => {
-        setShowInstallPrompt(true);
-      }, 500);
-    }
-
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+    const textTimer = setInterval(() => setMyuTextIdx(prev => prev + 1), 4500);
+    return () => clearInterval(textTimer);
   }, []);
 
-  // Fetch recipient info
   useEffect(() => {
     const fetchRecipient = async () => {
       try {
@@ -67,260 +79,178 @@ export default function ScanRedirectPage() {
         if (qrOwner) {
           setRecipientName(qrOwner.name);
           setRecipientType(qrOwner.type || "user");
-          
           if (qrOwner.type === "merchant" && qrOwner.merchant_id) {
             setMerchantData({
-              id: qrOwner.merchant_id,
-              business_name: qrOwner.name,
-              category: qrOwner.merchant_category || "",
-              description: qrOwner.merchant_description || "",
-              address: qrOwner.merchant_address || "",
-              qr_code: qrCode,
+              id: qrOwner.merchant_id, business_name: qrOwner.name,
+              category: qrOwner.merchant_category || "", address: qrOwner.merchant_address || "", qr_code: qrCode,
             });
           }
-        } else {
-          setError("QR Code non valido");
-        }
-      } catch (err) {
-        console.error("QR error:", err);
-        setError("QR Code non valido");
-      }
+        } else { setError("QR Code non valido"); }
+      } catch { setError("QR Code non valido"); }
     };
     fetchRecipient();
   }, [qrCode]);
 
-  // Handle install click
-  const handleInstall = async () => {
-    if (deferredPromptRef.current) {
-      deferredPromptRef.current.prompt();
-      const { outcome } = await deferredPromptRef.current.userChoice;
-      if (outcome === 'accepted') {
-        setIsInstalled(true);
-        setShowInstallPrompt(false);
-      }
-      deferredPromptRef.current = null;
-    } else if (isIOS) {
-      setShowIOSInstructions(true);
-    }
-  };
-
-  // Proceed to app
   const handleContinue = () => {
     if (authLoading) return;
-    
-    if (user) {
-      navigate(`/pay/${qrCode}`, { replace: true });
-    } else {
-      navigate(`/register?ref=${qrCode}&redirect=/pay/${qrCode}`, { replace: true });
-    }
+    if (user) navigate(`/pay/${qrCode}`, { replace: true });
+    else navigate(`/register?ref=${qrCode}&redirect=/pay/${qrCode}`, { replace: true });
   };
 
-  // View menu (for merchants)
-  const handleViewMenu = () => {
-    if (merchantData) {
-      navigate(`/menu/${merchantData.id}?ref=${qrCode}`);
-    }
+  const handleViewMenu = () => merchantData && navigate(`/menu/${merchantData.id}?ref=${qrCode}`);
+  const handleViewMenuRegister = () => merchantData && navigate(`/register?ref=${qrCode}&redirect=/menu/${merchantData.id}`);
+  const handleRegisterAndPay = () => navigate(`/register?ref=${qrCode}&redirect=/pay/${qrCode}`);
+
+  const getMyuMsg = (type) => {
+    const msgs = MYU_MESSAGES[type] || MYU_MESSAGES.user;
+    return msgs[myuTextIdx % msgs.length];
   };
 
-  // View menu + register first to get UP
-  const handleViewMenuRegister = () => {
-    if (merchantData) {
-      navigate(`/register?ref=${qrCode}&redirect=/menu/${merchantData.id}`);
-    }
-  };
+  // --- MYU Bubble ---
+  const MyuBubble = ({ type }) => (
+    <div className="flex items-start gap-3 mb-5" data-testid="myu-qr-bubble">
+      <div className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden shadow-md border-2 border-white" style={{ animation: "myuBounce 2s ease infinite" }}>
+        <img src="/myu-icon.png" alt="MYU" className="w-full h-full object-cover" />
+      </div>
+      <div className="flex-1 bg-white rounded-2xl rounded-tl-sm px-3.5 py-2.5 shadow-sm border border-black/5" style={{ animation: "myuFadeIn 0.5s ease" }}>
+        <p className="text-xs font-bold text-[#1A1A1A] mb-0.5">Ciao io sono MYU!</p>
+        <p className="text-[11px] text-[#6B7280] leading-snug">
+          {getMyuMsg(type)}
+        </p>
+        {!isInstalled && (
+          <div className="flex justify-end mt-1.5">
+            <button onClick={triggerInstall} disabled={installing}
+              className="flex items-center gap-1 bg-[#2B7AB8] hover:bg-[#236699] active:scale-[0.97] text-white font-bold text-[10px] px-3 py-1.5 rounded-lg shadow-sm transition-all disabled:opacity-70"
+              data-testid="myu-qr-install-btn">
+              <Download className="w-3 h-3" />
+              {installing ? "..." : "Installa Ora"}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
-  // Register + get UP + pay
-  const handleRegisterAndPay = () => {
-    navigate(`/register?ref=${qrCode}&redirect=/pay/${qrCode}`);
-  };
-
+  // --- ERROR ---
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#1A1A1A] to-[#2D2D2D] flex flex-col items-center justify-center px-6 text-white">
-        <div className="w-20 h-20 rounded-2xl bg-red-500/20 flex items-center justify-center mb-6">
-          <span className="text-4xl">❌</span>
-        </div>
-        <h2 className="font-heading text-2xl font-bold mb-2">QR Non Valido</h2>
-        <p className="text-white/60 text-center mb-6">{error}</p>
-        <Button
-          onClick={() => navigate("/")}
-          className="rounded-full bg-[#2B7AB8] hover:bg-[#236699]"
-        >
+      <div className="min-h-screen bg-[#FAFAFA] flex flex-col items-center justify-center px-6">
+        <MyuBubble type="error" />
+        <p className="text-sm text-[#6B7280] mb-4">{error}</p>
+        <Button onClick={() => navigate("/")} className="rounded-full bg-[#2B7AB8] hover:bg-[#236699]" data-testid="qr-home-btn">
           Vai alla Home
         </Button>
       </div>
     );
   }
 
-  // iOS Instructions Modal
-  if (showIOSInstructions) {
+  // --- iOS Instructions ---
+  if (showIOSGuide) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#1A1A1A] to-[#2D2D2D] flex flex-col px-6 py-8 text-white">
+      <div className="min-h-screen bg-[#FAFAFA] flex flex-col px-6 py-8">
         <div className="flex-1 flex flex-col items-center justify-center">
-          <div className="w-20 h-20 rounded-2xl bg-[#2B7AB8] flex items-center justify-center mb-6">
-            <Smartphone className="w-10 h-10" />
+          <div className="w-16 h-16 rounded-2xl bg-[#2B7AB8] flex items-center justify-center mb-4">
+            <Smartphone className="w-8 h-8 text-white" />
           </div>
-          <h2 className="font-heading text-2xl font-bold mb-2 text-center">Installa myUup.com</h2>
-          <p className="text-white/60 text-center mb-8">Segui questi semplici passi:</p>
-          
-          <div className="w-full max-w-sm space-y-4">
-            <div className="bg-white/10 rounded-xl p-4 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-[#2B7AB8] flex items-center justify-center font-bold">1</div>
-              <div className="flex-1">
-                <p className="font-medium">Tocca l'icona Condividi</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <Share className="w-5 h-5 text-[#2B7AB8]" />
-                  <span className="text-sm text-white/60">in basso nella barra di Safari</span>
+          <h2 className="font-bold text-xl text-[#1A1A1A] mb-1 text-center">Installa myUup.com</h2>
+          <p className="text-sm text-[#6B7280] text-center mb-6">Segui questi passi:</p>
+          <div className="w-full max-w-sm space-y-3">
+            {[
+              { n: "1", icon: Share, color: "#2B7AB8", text: "Tocca Condividi", sub: "in basso in Safari" },
+              { n: "2", icon: Plus, color: "#E85A24", text: "Aggiungi a Home", sub: "scorri e tocca" },
+              { n: "3", icon: null, color: "#16a34a", text: "Conferma \"Aggiungi\"", sub: "apparira sulla Home" },
+            ].map(s => (
+              <div key={s.n} className="bg-white rounded-xl p-4 flex items-center gap-3 border border-black/5">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-white text-sm" style={{ background: s.color }}>{s.n}</div>
+                <div>
+                  <p className="font-medium text-sm text-[#1A1A1A]">{s.text}</p>
+                  <p className="text-xs text-[#6B7280]">{s.sub}</p>
                 </div>
               </div>
-            </div>
-            
-            <div className="bg-white/10 rounded-xl p-4 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-[#E85A24] flex items-center justify-center font-bold">2</div>
-              <div className="flex-1">
-                <p className="font-medium">Scorri e tocca</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <Plus className="w-5 h-5 text-[#E85A24]" />
-                  <span className="text-sm text-white/60">"Aggiungi a Home"</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white/10 rounded-xl p-4 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center font-bold">3</div>
-              <div className="flex-1">
-                <p className="font-medium">Conferma toccando "Aggiungi"</p>
-                <span className="text-sm text-white/60">L'app apparirà sulla tua Home</span>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
-        
-        <Button
-          onClick={() => setShowIOSInstructions(false)}
-          variant="outline"
-          className="w-full h-14 rounded-full border-white/30 text-white hover:bg-white/10 mt-6"
-        >
+        <Button onClick={() => setShowIOSGuide(false)} variant="outline" className="w-full h-12 rounded-full border-black/10 text-[#1A1A1A] mt-6">
           Ho capito, continua
         </Button>
       </div>
     );
   }
 
-  // MERCHANT QR - Show options based on auth state
+  // --- MERCHANT QR ---
   if (recipientType === "merchant" && merchantData) {
     const isLoggedIn = !!user;
-
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#1A1A1A] to-[#2D2D2D] flex flex-col px-6 py-8 text-white">
-        {/* Header */}
-        <div className="text-center mb-6">
-          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#E85A24] to-[#D14E1A] flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <Store className="w-10 h-10" />
+      <div className="min-h-screen bg-[#FAFAFA] flex flex-col px-5 py-6" data-testid="qr-merchant-landing">
+        {/* Merchant Header */}
+        <div className="text-center mb-4">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#E85A24] to-[#D14E1A] flex items-center justify-center mx-auto mb-2 shadow-lg">
+            <Store className="w-7 h-7 text-white" />
           </div>
-          <h1 className="font-heading text-2xl font-bold mb-1">{recipientName}</h1>
-          <p className="text-white/60 text-sm">{merchantData.category}</p>
-          {merchantData.address && (
-            <p className="text-white/40 text-xs mt-1">{merchantData.address}</p>
-          )}
+          <h1 className="font-bold text-xl text-[#1A1A1A]">{recipientName}</h1>
+          <p className="text-xs text-[#6B7280]">{merchantData.category}</p>
+          {merchantData.address && <p className="text-[10px] text-[#9CA3AF] mt-0.5">{merchantData.address}</p>}
         </div>
 
-        {/* Action Cards */}
-        <div className="flex-1 space-y-4">
+        <MyuBubble type="merchant" />
+
+        {/* Actions */}
+        <div className="flex-1 space-y-3">
           {isLoggedIn ? (
             <>
-              {/* REGISTERED: Option 1 - View Menu */}
-              <button
-                onClick={handleViewMenu}
-                className="w-full bg-white/10 hover:bg-white/15 rounded-2xl p-5 text-left transition-colors"
-                data-testid="qr-view-menu"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-xl bg-[#2B7AB8]/30 flex items-center justify-center">
-                    <Menu className="w-7 h-7 text-[#2B7AB8]" />
-                  </div>
+              <button onClick={handleViewMenu} className="w-full bg-white hover:bg-[#F5F5F5] rounded-2xl p-4 text-left border border-black/5 transition-colors" data-testid="qr-view-menu">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-xl bg-[#2B7AB8]/10 flex items-center justify-center"><MenuIcon className="w-5 h-5 text-[#2B7AB8]" /></div>
                   <div className="flex-1">
-                    <p className="font-semibold text-lg">Visualizza il Menu</p>
-                    <p className="text-white/60 text-sm">Scopri piatti e offerte</p>
+                    <p className="font-semibold text-sm text-[#1A1A1A]">Visualizza il Menu</p>
+                    <p className="text-[11px] text-[#6B7280]">Scopri piatti e offerte</p>
                   </div>
-                  <ArrowRight className="w-5 h-5 text-white/40" />
+                  <ArrowRight className="w-4 h-4 text-[#9CA3AF]" />
                 </div>
               </button>
-
-              {/* REGISTERED: Option 2 - Pay */}
-              <button
-                onClick={() => navigate(`/pay/${qrCode}`, { replace: true })}
-                className="w-full bg-gradient-to-r from-[#E85A24] to-[#D14E1A] rounded-2xl p-5 text-left"
-                data-testid="qr-pay-merchant"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
-                    <UtensilsCrossed className="w-7 h-7" />
-                  </div>
+              <button onClick={() => navigate(`/pay/${qrCode}`, { replace: true })}
+                className="w-full bg-gradient-to-r from-[#E85A24] to-[#D14E1A] rounded-2xl p-4 text-left text-white" data-testid="qr-pay-merchant">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center"><UtensilsCrossed className="w-5 h-5" /></div>
                   <div className="flex-1">
-                    <p className="font-semibold text-lg">Paga</p>
-                    <p className="text-white/80 text-sm">Paga il merchant direttamente</p>
+                    <p className="font-semibold text-sm">Paga</p>
+                    <p className="text-[11px] text-white/80">Paga il merchant direttamente</p>
                   </div>
-                  <ArrowRight className="w-5 h-5 text-white/40" />
+                  <ArrowRight className="w-4 h-4 text-white/50" />
                 </div>
               </button>
             </>
           ) : (
             <>
-              {/* NOT REGISTERED: Option 1 - View Menu only */}
-              <button
-                onClick={handleViewMenu}
-                className="w-full bg-white/10 hover:bg-white/15 rounded-2xl p-5 text-left transition-colors"
-                data-testid="qr-view-menu-only"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-xl bg-[#2B7AB8]/30 flex items-center justify-center">
-                    <Menu className="w-7 h-7 text-[#2B7AB8]" />
-                  </div>
+              <button onClick={handleViewMenu} className="w-full bg-white hover:bg-[#F5F5F5] rounded-2xl p-4 text-left border border-black/5 transition-colors" data-testid="qr-view-menu-only">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-xl bg-[#6B7280]/10 flex items-center justify-center"><MenuIcon className="w-5 h-5 text-[#6B7280]" /></div>
                   <div className="flex-1">
-                    <p className="font-semibold text-lg">Visualizza il Menu</p>
-                    <p className="text-white/60 text-sm">Scopri piatti e offerte</p>
+                    <p className="font-semibold text-sm text-[#1A1A1A]">Visualizza il Menu</p>
+                    <p className="text-[11px] text-[#6B7280]">Scopri piatti e offerte</p>
                   </div>
-                  <ArrowRight className="w-5 h-5 text-white/40" />
+                  <ArrowRight className="w-4 h-4 text-[#9CA3AF]" />
                 </div>
               </button>
-
-              {/* NOT REGISTERED: Option 2 - View Menu + Get 1 UP */}
-              <button
-                onClick={handleViewMenuRegister}
-                className="w-full bg-gradient-to-r from-[#2B7AB8] to-[#1E5F8A] rounded-2xl p-5 text-left relative overflow-hidden"
-                data-testid="qr-menu-and-up"
-              >
-                <div className="absolute top-3 right-3 bg-white/20 backdrop-blur px-3 py-1 rounded-full">
-                  <span className="text-xs font-bold">+1 UP</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
-                    <Menu className="w-7 h-7" />
-                  </div>
+              <button onClick={handleViewMenuRegister}
+                className="w-full bg-gradient-to-r from-[#2B7AB8] to-[#1E5F8A] rounded-2xl p-4 text-left text-white relative overflow-hidden" data-testid="qr-menu-and-up">
+                <span className="absolute top-2.5 right-3 bg-white/20 backdrop-blur px-2.5 py-0.5 rounded-full text-[10px] font-bold">+1 UP</span>
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center"><MenuIcon className="w-5 h-5" /></div>
                   <div className="flex-1">
-                    <p className="font-semibold text-lg">Menu + Ottieni 1 UP</p>
-                    <p className="text-white/80 text-sm">Registrati e guadagna il tuo primo UP</p>
+                    <p className="font-semibold text-sm">Menu + Ottieni 1 UP</p>
+                    <p className="text-[11px] text-white/80">Registrati e guadagna il tuo primo UP</p>
                   </div>
                 </div>
               </button>
-
-              {/* NOT REGISTERED: Option 3 - Register + UP + Pay */}
-              <button
-                onClick={handleRegisterAndPay}
-                className="w-full bg-gradient-to-r from-[#E85A24] to-[#D14E1A] rounded-2xl p-5 text-left relative overflow-hidden"
-                data-testid="qr-register-pay"
-              >
-                <div className="absolute top-3 right-3 bg-white/20 backdrop-blur px-3 py-1 rounded-full">
-                  <span className="text-xs font-bold">+1 UP</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
-                    <Gift className="w-7 h-7" />
-                  </div>
+              <button onClick={handleRegisterAndPay}
+                className="w-full bg-gradient-to-r from-[#E85A24] to-[#D14E1A] rounded-2xl p-4 text-left text-white relative overflow-hidden" data-testid="qr-register-pay">
+                <span className="absolute top-2.5 right-3 bg-white/20 backdrop-blur px-2.5 py-0.5 rounded-full text-[10px] font-bold">+1 UP</span>
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center"><Gift className="w-5 h-5" /></div>
                   <div className="flex-1">
-                    <p className="font-semibold text-lg">Registrati e Paga</p>
-                    <p className="text-white/80 text-sm">Ottieni 1 UP e paga il merchant</p>
+                    <p className="font-semibold text-sm">Registrati e Paga</p>
+                    <p className="text-[11px] text-white/80">Ottieni 1 UP e paga il merchant</p>
                   </div>
                 </div>
               </button>
@@ -328,147 +258,49 @@ export default function ScanRedirectPage() {
           )}
         </div>
 
-        {/* PWA Install Prompt */}
-        {!isInstalled && showInstallPrompt && (
-          <div className="mt-4 bg-white/5 border border-white/10 rounded-2xl p-4">
-            <div className="flex items-center gap-3">
-              <Smartphone className="w-8 h-8 text-[#2B7AB8]" />
-              <div className="flex-1">
-                <p className="font-medium text-sm">Installa l'app</p>
-                <p className="text-xs text-white/50">Per un'esperienza migliore</p>
-              </div>
-              <Button
-                onClick={handleInstall}
-                size="sm"
-                className="bg-[#2B7AB8] hover:bg-[#236699] text-xs rounded-full"
-              >
-                Installa
-              </Button>
-            </div>
-          </div>
-        )}
-
-        <p className="text-center text-xs text-white/40 mt-6">
-          myUup.com
-        </p>
+        {/* Brand Cashback Banner */}
+        <BrandBanner onInstall={triggerInstall} installing={installing} isInstalled={isInstalled} />
+        <p className="text-center text-[10px] text-[#9CA3AF] mt-4">myUup.com</p>
       </div>
     );
   }
 
-  // USER QR - Standard Install Prompt
-  if (showInstallPrompt && !isInstalled) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-[#1A1A1A] to-[#2D2D2D] flex flex-col px-6 py-8 text-white">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-[#2B7AB8] to-[#1E5F8A] flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <img src="/logo.png" alt="UP" className="h-14 w-auto" />
-          </div>
-          <h1 className="font-heading text-3xl font-bold mb-2">myUup.com</h1>
-          <p className="text-white/60">Paga. Guadagna. Unisciti.</p>
-        </div>
-
-        {/* Recipient Info */}
-        {recipientName && (
-          <div className="bg-[#E85A24]/20 border border-[#E85A24]/30 rounded-2xl p-4 mb-6 text-center">
-            <p className="text-white/70 text-sm">Stai per pagare</p>
-            <p className="text-xl font-bold text-[#E85A24]">{recipientName}</p>
-          </div>
-        )}
-
-        {/* Install Benefits */}
-        <div className="flex-1">
-          <h2 className="font-semibold text-lg mb-4 text-center">Installa l'app per continuare</h2>
-          
-          <div className="space-y-3">
-            <div className="bg-white/10 rounded-xl p-4 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-[#2B7AB8]/30 flex items-center justify-center">
-                <Smartphone className="w-6 h-6 text-[#2B7AB8]" />
-              </div>
-              <div>
-                <p className="font-medium">Accesso Rapido</p>
-                <p className="text-sm text-white/60">Apri l'app dalla Home del telefono</p>
-              </div>
-            </div>
-            
-            <div className="bg-white/10 rounded-xl p-4 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-[#E85A24]/30 flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-[#E85A24]" />
-              </div>
-              <div>
-                <p className="font-medium">Pagamenti Sicuri</p>
-                <p className="text-sm text-white/60">Paga con QR code in modo sicuro</p>
-              </div>
-            </div>
-            
-            <div className="bg-white/10 rounded-xl p-4 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-green-500/30 flex items-center justify-center">
-                <Download className="w-6 h-6 text-green-500" />
-              </div>
-              <div>
-                <p className="font-medium">Funziona Offline</p>
-                <p className="text-sm text-white/60">Usa l'app anche senza connessione</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="space-y-3 mt-6">
-          <Button
-            onClick={handleInstall}
-            className="w-full h-14 rounded-full bg-[#E85A24] hover:bg-[#D14E1A] text-lg font-semibold"
-          >
-            <Download className="w-5 h-5 mr-2" />
-            Installa Gratis e guadagna +1 UP
-          </Button>
-          
-          <Button
-            onClick={handleContinue}
-            variant="outline"
-            className="w-full h-14 rounded-full border-white/30 text-white hover:bg-white/10"
-          >
-            Continua nel browser
-            <ArrowRight className="w-5 h-5 ml-2" />
-          </Button>
-        </div>
-        
-        <p className="text-center text-xs text-white/40 mt-4">
-          Nessun download da store • Installazione istantanea • 0 MB di spazio
-        </p>
-      </div>
-    );
-  }
-
-  // Loading / Redirect state
+  // --- USER QR ---
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1A1A1A] to-[#2D2D2D] flex flex-col items-center justify-center px-6 text-white">
-      <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#2B7AB8] to-[#1E5F8A] flex items-center justify-center mb-6 animate-pulse">
-        <img src="/logo.png" alt="UP" className="h-12 w-auto" />
+    <div className="min-h-screen bg-[#FAFAFA] flex flex-col px-5 py-6" data-testid="qr-user-landing">
+      <div className="text-center mb-4">
+        <img src="/logo.png" alt="myUup" className="h-14 w-auto mx-auto mb-2" />
       </div>
-      
-      {recipientName ? (
-        <>
-          <p className="text-white/60 mb-2">
-            {recipientType === "merchant" ? "Negozio" : "Pagamento a"}
-          </p>
-          <p className="text-2xl font-bold text-[#E85A24] mb-4">{recipientName}</p>
-        </>
-      ) : (
-        <div className="w-8 h-8 border-2 border-[#2B7AB8] border-t-transparent rounded-full animate-spin mb-4" />
+
+      {recipientName && (
+        <div className="bg-[#E85A24]/5 border border-[#E85A24]/15 rounded-2xl p-3 mb-4 text-center">
+          <p className="text-[11px] text-[#6B7280]">Stai per pagare</p>
+          <p className="text-lg font-bold text-[#E85A24]">{recipientName}</p>
+        </div>
       )}
-      
-      <p className="text-white/60 text-sm">Caricamento...</p>
-      
-      {isInstalled && recipientName && (
-        <Button
-          onClick={handleContinue}
-          className="mt-6 rounded-full bg-[#2B7AB8] hover:bg-[#236699]"
-        >
-          Continua
-          <ArrowRight className="w-4 h-4 ml-2" />
+
+      <MyuBubble type="user" />
+
+      <div className="flex-1" />
+
+      {/* Actions */}
+      <div className="space-y-3">
+        {!isInstalled && (
+          <Button onClick={triggerInstall} disabled={installing}
+            className="w-full h-14 rounded-full bg-[#2B7AB8] hover:bg-[#236699] text-base font-bold" data-testid="qr-install-btn">
+            <Download className="w-5 h-5 mr-2" />
+            {installing ? "Installazione..." : "Installa e guadagna +1 UP"}
+          </Button>
+        )}
+        <Button onClick={handleContinue} variant="outline"
+          className="w-full h-12 rounded-full border-black/10 text-[#1A1A1A]" data-testid="qr-continue-btn">
+          {user ? "Continua al pagamento" : "Continua nel browser"} <ArrowRight className="w-4 h-4 ml-2" />
         </Button>
-      )}
+      </div>
+
+      {/* Brand Cashback Banner */}
+      <BrandBanner onInstall={triggerInstall} installing={installing} isInstalled={isInstalled} />
+      <p className="text-center text-[10px] text-[#9CA3AF] mt-3">Installazione istantanea - 0 MB</p>
     </div>
   );
 }

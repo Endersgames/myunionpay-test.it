@@ -30,6 +30,7 @@ import MyuChatPage from "@/pages/MyuChatPage";
 import AdminUsersPage from "@/pages/AdminUsersPage";
 import AdminOpenAIPage from "@/pages/AdminOpenAIPage";
 import MerchantReferredUsersPage from "@/pages/MerchantReferredUsersPage";
+import GoogleAuthCallback from "@/pages/GoogleAuthCallback";
 import MyuMascot from "@/components/MyuMascot";
 import ChromePromptBanner from "@/components/ChromePromptBanner";
 
@@ -45,6 +46,13 @@ const AuthProvider = ({ children }) => {
   // Check for existing token on mount
   useEffect(() => {
     const initAuth = async () => {
+      // CRITICAL: If returning from Google OAuth callback, skip the /me check.
+      // GoogleAuthCallback will exchange the session_id and establish the session first.
+      if (window.location.hash?.includes('session_id=')) {
+        setLoading(false);
+        return;
+      }
+
       const token = getAuthToken();
       if (token) {
         try {
@@ -126,6 +134,43 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+function AppContent() {
+  // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+  // Detect session_id synchronously during render to prevent race conditions
+  if (window.location.hash?.includes('session_id=')) {
+    return <GoogleAuthCallback />;
+  }
+
+  return (
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/s/:qrCode" element={<ScanRedirectPage />} />
+      <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+      <Route path="/qr" element={<ProtectedRoute><QRCodePage /></ProtectedRoute>} />
+      <Route path="/scan" element={<ProtectedRoute><ScannerPage /></ProtectedRoute>} />
+      <Route path="/pay/:qrCode" element={<ProtectedRoute><PaymentPage /></ProtectedRoute>} />
+      <Route path="/marketplace" element={<ProtectedRoute><MarketplacePage /></ProtectedRoute>} />
+      <Route path="/merchant/:id" element={<MerchantDetailPage />} />
+      <Route path="/menu/:merchantId" element={<PublicMenuPage />} />
+      <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+      <Route path="/merchant-dashboard" element={<ProtectedRoute><MerchantDashboardPage /></ProtectedRoute>} />
+      <Route path="/send-notification" element={<ProtectedRoute><SendNotificationPage /></ProtectedRoute>} />
+      <Route path="/sim-activation" element={<ProtectedRoute><SimActivationPage /></ProtectedRoute>} />
+      <Route path="/sim-dashboard" element={<ProtectedRoute><SimDashboardPage /></ProtectedRoute>} />
+      <Route path="/admin/giftcards" element={<ProtectedRoute><AdminGiftCardsPage /></ProtectedRoute>} />
+      <Route path="/menu-manage" element={<ProtectedRoute><MenuManagePage /></ProtectedRoute>} />
+      <Route path="/myu" element={<ProtectedRoute><MyuChatPage /></ProtectedRoute>} />
+      <Route path="/admin/users" element={<ProtectedRoute><AdminUsersPage /></ProtectedRoute>} />
+      <Route path="/admin/openai" element={<ProtectedRoute><AdminOpenAIPage /></ProtectedRoute>} />
+      <Route path="/merchant/referred-users" element={<ProtectedRoute><MerchantReferredUsersPage /></ProtectedRoute>} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -142,32 +187,7 @@ function App() {
             }
           }}
         />
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/s/:qrCode" element={<ScanRedirectPage />} />
-          <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-          <Route path="/qr" element={<ProtectedRoute><QRCodePage /></ProtectedRoute>} />
-          <Route path="/scan" element={<ProtectedRoute><ScannerPage /></ProtectedRoute>} />
-          <Route path="/pay/:qrCode" element={<ProtectedRoute><PaymentPage /></ProtectedRoute>} />
-          <Route path="/marketplace" element={<ProtectedRoute><MarketplacePage /></ProtectedRoute>} />
-          <Route path="/merchant/:id" element={<MerchantDetailPage />} />
-          <Route path="/menu/:merchantId" element={<PublicMenuPage />} />
-          <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
-          <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-          <Route path="/merchant-dashboard" element={<ProtectedRoute><MerchantDashboardPage /></ProtectedRoute>} />
-          <Route path="/send-notification" element={<ProtectedRoute><SendNotificationPage /></ProtectedRoute>} />
-          <Route path="/sim-activation" element={<ProtectedRoute><SimActivationPage /></ProtectedRoute>} />
-          <Route path="/sim-dashboard" element={<ProtectedRoute><SimDashboardPage /></ProtectedRoute>} />
-          <Route path="/admin/giftcards" element={<ProtectedRoute><AdminGiftCardsPage /></ProtectedRoute>} />
-          <Route path="/menu-manage" element={<ProtectedRoute><MenuManagePage /></ProtectedRoute>} />
-          <Route path="/myu" element={<ProtectedRoute><MyuChatPage /></ProtectedRoute>} />
-          <Route path="/admin/users" element={<ProtectedRoute><AdminUsersPage /></ProtectedRoute>} />
-          <Route path="/admin/openai" element={<ProtectedRoute><AdminOpenAIPage /></ProtectedRoute>} />
-          <Route path="/merchant/referred-users" element={<ProtectedRoute><MerchantReferredUsersPage /></ProtectedRoute>} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <AppContent />
         <MyuMascot />
       </AuthProvider>
     </BrowserRouter>
