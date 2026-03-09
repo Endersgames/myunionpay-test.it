@@ -1,0 +1,59 @@
+{
+  "summary": "Dynamic Pricing System Testing Complete. Backend: 13/13 tests passed. Frontend: 7/7 UI verifications passed. All dynamic pricing features working correctly - admin can configure prices, and they appear dynamically in ProfilePage (Conto UP activation) and MerchantDashboard (menu scan).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_pricing.py",
+    "/app/test_reports/pytest/pricing_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "All 4 pricing keys properly implemented (myu_chat_per_message, menu_scan_per_item, visura_scan, conto_up_activation)",
+    "Public pricing endpoint /api/admin/features/public/pricing works without auth",
+    "Admin pricing endpoint properly requires admin authentication (returns 403 for non-admin)",
+    "get_price() helper in admin_features.py correctly used by merchant_ai.py and sim.py",
+    "Frontend fetches pricing via featuresAPI.getPublicPricing() and displays dynamically",
+    "Pricing section placed correctly between feature toggles and API config sections",
+    "Orange 'Salva Prezzi' button matches design spec",
+    "Price inputs use step=0.01 for decimal precision"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_pricing.py"
+  ],
+  "success_rate": {
+    "backend": "100% (13/13 passed)",
+    "frontend": "100% (7/7 verifications passed)"
+  },
+  "test_credentials": {
+    "admin_user": "admin@test.com / test123 (is_admin=true)",
+    "merchant_user": "test@test.com / test123 (Trattoria da Mario)",
+    "regular_user_no_sim": "giulia.rossi@test.com / test123 (no SIM - shows activation price)"
+  },
+  "seed_data_creation": "None - using existing seeded data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Dynamic Pricing System fully tested. Key findings: 1) GET /api/admin/features/public/pricing returns {myu_chat_per_message: 0.01, menu_scan_per_item: 0.01, visura_scan: 0, conto_up_activation: 15.99} - all numeric values in UP currency. 2) GET /api/admin/features/pricing (admin only) returns full pricing objects with labels. 3) PUT /api/admin/features/pricing accepts {key: newPrice} to update prices. 4) Admin Features page shows 'Prezzi Servizi (UP)' section with 4 number inputs and orange 'Salva Prezzi' button. 5) ProfilePage (for users without SIM) shows dynamic '15.99 UP' for Conto UP activation (fetched from featuresAPI.getPublicPricing). 6) MerchantDashboard shows '0.01 UP/piatto' badge and 'Costo: 0.01 UP per ogni piatto estratto' from dynamic pricing. 7) Existing feature toggles and API config sections still work correctly. 8) Non-admin users get 403 when trying to access admin pricing endpoints.",
+  "verified_features": {
+    "GET /api/admin/features/public/pricing": "PASS - Returns all 4 pricing keys as numeric values",
+    "GET /api/admin/features/pricing (admin)": "PASS - Returns pricing with labels, currency",
+    "GET /api/admin/features/pricing (no auth)": "PASS - Returns 403",
+    "GET /api/admin/features/pricing (non-admin)": "PASS - Returns 403",
+    "PUT /api/admin/features/pricing (admin)": "PASS - Updates prices, changes reflect in public endpoint",
+    "PUT /api/admin/features/pricing (no auth)": "PASS - Returns 403",
+    "PUT /api/admin/features/pricing (non-admin)": "PASS - Returns 403",
+    "GET /api/admin/features/public": "PASS - Feature toggles still work",
+    "GET /api/admin/features": "PASS - Admin features still work",
+    "GET /api/admin/features/api-config": "PASS - API config still works",
+    "Frontend Admin Prezzi Servizi section": "PASS - Shows 4 inputs with correct values",
+    "Frontend Admin Salva Prezzi button": "PASS - Orange button, updates prices with toast",
+    "Frontend ProfilePage dynamic price": "PASS - Shows '15.99 UP' for Conto UP activation",
+    "Frontend MerchantDashboard menu price": "PASS - Shows '0.01 UP/piatto' badge and cost text"
+  }
+}

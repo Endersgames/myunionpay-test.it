@@ -23,6 +23,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [uploadingPic, setUploadingPic] = useState(false);
   const [features, setFeatures] = useState({});
+  const [pricing, setPricing] = useState({});
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -31,18 +32,20 @@ export default function ProfilePage() {
 
   const fetchData = async () => {
     try {
-      const [tagsData, refStats, simData, tasksData, featData] = await Promise.all([
+      const [tagsData, refStats, simData, tasksData, featData, pricingData] = await Promise.all([
         profileAPI.getMyTags(),
         referralAPI.getStats(),
         simAPI.getMySim(),
         tasksAPI.getMyTasks(),
-        featuresAPI.getPublic()
+        featuresAPI.getPublic(),
+        featuresAPI.getPublicPricing()
       ]);
       setMyTags(tagsData.tags || []);
       setReferralStats(refStats);
       setSim(simData);
       setTasks(tasksData || []);
       setFeatures(featData || {});
+      setPricing(pricingData || {});
     } catch (err) {
       console.error("Profile fetch error:", err);
     }
@@ -397,7 +400,7 @@ export default function ProfilePage() {
               </div>
               <div className="flex items-center justify-between mb-4 px-1">
                 <span className="text-white/60">Attivazione</span>
-                <span className="font-mono text-2xl font-bold text-[#E85A24]">15,99 UP</span>
+                <span className="font-mono text-2xl font-bold text-[#E85A24]">{pricing.conto_up_activation?.toFixed?.(2) || '15.99'} UP</span>
               </div>
               <Button
                 onClick={() => navigate("/sim-activation")}

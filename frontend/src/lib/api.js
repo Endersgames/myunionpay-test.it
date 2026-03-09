@@ -698,6 +698,10 @@ export const featuresAPI = {
     return apiRequest('/admin/features/public');
   },
 
+  async getPublicPricing() {
+    return apiRequest('/admin/features/public/pricing');
+  },
+
   async adminGet() {
     return apiRequest('/admin/features');
   },
@@ -715,6 +719,17 @@ export const featuresAPI = {
 
   async adminUpdateApiConfig(section, data) {
     return apiRequest(`/admin/features/api-config/${section}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async adminGetPricing() {
+    return apiRequest('/admin/features/pricing');
+  },
+
+  async adminUpdatePricing(data) {
+    return apiRequest('/admin/features/pricing', {
       method: 'PUT',
       body: JSON.stringify(data),
     });

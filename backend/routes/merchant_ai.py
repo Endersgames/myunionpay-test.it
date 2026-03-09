@@ -145,8 +145,10 @@ async def scan_menu(file: UploadFile = File(...), user: dict = Depends(get_curre
         raise HTTPException(status_code=400, detail="File troppo grande (max 10MB)")
 
     wallet = await db.wallets.find_one({"user_id": user["id"]}, {"_id": 0})
-    if not wallet or wallet.get("balance", 0) < 1:
-        raise HTTPException(status_code=402, detail="Saldo UP insufficiente. Serve almeno 1 UP per voce del menu.")
+    from routes.admin_features import get_price
+    price_per_item = await get_price("menu_scan_per_item")
+    if not wallet or wallet.get("balance", 0) < price_per_item:
+        raise HTTPException(status_code=402, detail=f"Saldo UP insufficiente. Serve almeno {price_per_item} UP per voce del menu.")
 
     img_b64 = base64.b64encode(content).decode("utf-8")
     mime = file.content_type or "image/jpeg"
@@ -178,11 +180,11 @@ async def scan_menu(file: UploadFile = File(...), user: dict = Depends(get_curre
     if not isinstance(items, list) or len(items) == 0:
         raise HTTPException(status_code=422, detail="Nessun piatto trovato nell'immagine.")
 
-    total_cost = len(items)
+    total_cost = round(len(items) * price_per_item, 2)
     if wallet.get("balance", 0) < total_cost:
         raise HTTPException(
             status_code=402,
-            detail=f"Saldo insufficiente. Trovati {total_cost} piatti, servono {total_cost} UP. Saldo attuale: {wallet['balance']:.0f} UP."
+            detail=f"Saldo insufficiente. Trovati {len(items)} piatti, servono {total_cost} UP. Saldo attuale: {wallet['balance']:.2f} UP."
         )
 
     created_items = []

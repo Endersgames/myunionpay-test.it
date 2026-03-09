@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  ArrowLeft, ToggleLeft, Phone, Landmark, Save, Eye, EyeOff, Key, Globe, Server
+  ArrowLeft, ToggleLeft, Phone, Landmark, Save, Eye, EyeOff, Key, Globe, Server, DollarSign
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,8 +22,10 @@ export default function AdminFeaturesPage() {
   const navigate = useNavigate();
   const [toggles, setToggles] = useState({});
   const [apiConfigs, setApiConfigs] = useState({});
+  const [pricing, setPricing] = useState({});
   const [loading, setLoading] = useState(true);
   const [savingApi, setSavingApi] = useState(null);
+  const [savingPricing, setSavingPricing] = useState(false);
   const [showSecrets, setShowSecrets] = useState({});
 
   useEffect(() => {
@@ -32,12 +34,14 @@ export default function AdminFeaturesPage() {
 
   const fetchData = async () => {
     try {
-      const [featData, apiData] = await Promise.all([
+      const [featData, apiData, pricingData] = await Promise.all([
         featuresAPI.adminGet(),
         featuresAPI.adminGetApiConfig(),
+        featuresAPI.adminGetPricing(),
       ]);
       setToggles(featData.toggles || {});
       setApiConfigs(apiData.configs || {});
+      setPricing(pricingData.pricing || {});
     } catch (err) {
       toast.error("Errore nel caricamento");
     }
@@ -67,6 +71,28 @@ export default function AdminFeaturesPage() {
       ...prev,
       [section]: { ...prev[section], [field]: value }
     }));
+  };
+
+  const handlePricingChange = (key, value) => {
+    setPricing(prev => ({
+      ...prev,
+      [key]: { ...prev[key], price: value }
+    }));
+  };
+
+  const savePricing = async () => {
+    setSavingPricing(true);
+    try {
+      const updates = {};
+      Object.entries(pricing).forEach(([key, val]) => {
+        updates[key] = parseFloat(val.price) || 0;
+      });
+      await featuresAPI.adminUpdatePricing(updates);
+      toast.success("Prezzi aggiornati!");
+    } catch (err) {
+      toast.error("Errore nel salvataggio prezzi");
+    }
+    setSavingPricing(false);
   };
 
   const saveApiConfig = async (section) => {
@@ -159,6 +185,57 @@ export default function AdminFeaturesPage() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Pricing Section */}
+        <div className="mb-10">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-[#E85A24]/10 flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-[#E85A24]" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-[#1A1A1A]">Prezzi Servizi (UP)</h2>
+              <p className="text-xs text-[#6B7280]">Configura il costo di ogni servizio in UP</p>
+            </div>
+          </div>
+
+          <div className="bg-[#F5F5F5] rounded-2xl p-5 border border-black/5 space-y-4">
+            {Object.entries(pricing).map(([key, item]) => (
+              <div key={key} className="flex items-center justify-between gap-4" data-testid={`pricing-${key}`}>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-[#1A1A1A]">{item.label}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={item.price}
+                    onChange={(e) => handlePricingChange(key, e.target.value)}
+                    className="w-24 h-9 rounded-lg border border-black/10 bg-white px-3 text-sm text-right font-mono text-[#1A1A1A] focus:outline-none focus:border-[#2B7AB8]"
+                    data-testid={`price-input-${key}`}
+                  />
+                  <span className="text-sm font-bold text-[#E85A24]">UP</span>
+                </div>
+              </div>
+            ))}
+
+            <Button
+              onClick={savePricing}
+              disabled={savingPricing}
+              className="w-full h-11 rounded-xl bg-[#E85A24] hover:bg-[#D14E1A] text-white mt-2"
+              data-testid="save-pricing-btn"
+            >
+              {savingPricing ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Salva Prezzi
+                </>
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* API Telefonia */}

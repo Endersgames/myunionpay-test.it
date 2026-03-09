@@ -24,7 +24,10 @@ async def activate_sim(data: SimActivationRequest, user: dict = Depends(get_curr
         raise HTTPException(status_code=400, detail="Hai già una SIM attiva")
 
     wallet = await db.wallets.find_one({"user_id": user["id"]}, {"_id": 0})
-    activation_cost = 15.99
+    from routes.admin_features import get_price
+    activation_cost = await get_price("conto_up_activation")
+    if not activation_cost:
+        activation_cost = 15.99
     if wallet["balance"] < activation_cost:
         raise HTTPException(status_code=400, detail=f"Saldo insufficiente. Servono {activation_cost} UP")
 

@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import QRCode from "@/components/QRCode";
-import { walletAPI, merchantAPI, MERCHANT_CATEGORIES } from "@/lib/api";
+import { walletAPI, merchantAPI, MERCHANT_CATEGORIES, featuresAPI } from "@/lib/api";
 
 export default function MerchantDashboardPage() {
   const navigate = useNavigate();
@@ -32,6 +32,7 @@ export default function MerchantDashboardPage() {
   // Menu scan state
   const [menuScanning, setMenuScanning] = useState(false);
   const [scanResult, setScanResult] = useState(null);
+  const [menuPrice, setMenuPrice] = useState(0.01);
   const menuRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -61,6 +62,11 @@ export default function MerchantDashboardPage() {
       } else {
         setShowForm(true);
       }
+      // Fetch dynamic pricing
+      try {
+        const pricingData = await featuresAPI.getPublicPricing();
+        if (pricingData?.menu_scan_per_item) setMenuPrice(pricingData.menu_scan_per_item);
+      } catch {}
     } catch (err) {
       console.error("Merchant dashboard error:", err);
       if (!user?.is_merchant) setShowForm(true);
@@ -365,7 +371,7 @@ export default function MerchantDashboardPage() {
               </div>
               <div className="flex items-center gap-1 bg-[#E85A24]/10 px-2 py-1 rounded-full">
                 <Sparkles className="w-3 h-3 text-[#E85A24]" />
-                <span className="text-xs font-bold text-[#E85A24]">1 UP/piatto</span>
+                <span className="text-xs font-bold text-[#E85A24]">{menuPrice} UP/piatto</span>
               </div>
             </div>
 
@@ -380,7 +386,7 @@ export default function MerchantDashboardPage() {
                     <li>Stima <strong>calorie</strong> per piatto</li>
                     <li>Indica <strong>buono per</strong> / <strong>non indicato per</strong></li>
                   </ul>
-                  <p className="text-[#E85A24] font-medium mt-2">Costo: 1 UP per ogni piatto estratto</p>
+                  <p className="text-[#E85A24] font-medium mt-2">Costo: {menuPrice} UP per ogni piatto estratto</p>
                 </div>
               </div>
             </div>
