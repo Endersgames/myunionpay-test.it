@@ -13,16 +13,13 @@ const API = process.env.REACT_APP_BACKEND_URL || "";
 
 const MYU_MESSAGES = {
   merchant: [
-    "Questo locale ha cashback e offerte! Installa e scopri tutto.",
-    "Registrati e guadagna subito 1 UP gratis!",
+    "Questo locale ha cashback e offerte per te!",
   ],
   menu: [
-    "Guarda che menu! Registrati per ottenere 1 UP.",
-    "Cashback anche qui! Installa e inizia a risparmiare.",
+    "Questo locale ha cashback e offerte per te!",
   ],
   user: [
-    "Installa myUup e risparmia su oltre 1000 brand.",
-    "Per te tanti cashback fino al 30%!",
+    "Questo locale ha cashback e offerte per te!",
   ],
   error: ["Ops, questo QR non funziona. Torna alla Home!"],
 };
@@ -116,8 +113,8 @@ export default function ScanRedirectPage() {
         <img src="/myu-icon.png" alt="MYU" className="w-full h-full object-cover" />
       </div>
       <div className="flex-1 bg-white rounded-2xl rounded-tl-sm px-3.5 py-2.5 shadow-sm border border-black/5" style={{ animation: "myuFadeIn 0.5s ease" }}>
-        <p className="text-xs font-bold text-[#1A1A1A] mb-0.5">MYU</p>
-        <p className="text-[11px] text-[#6B7280] leading-snug" key={myuTextIdx} style={{ animation: "myuFadeIn 0.4s ease" }}>
+        <p className="text-xs font-bold text-[#1A1A1A] mb-0.5">Ciao io sono MYU!</p>
+        <p className="text-[11px] text-[#6B7280] leading-snug">
           {getMyuMsg(type)}
         </p>
         {!isInstalled && (
