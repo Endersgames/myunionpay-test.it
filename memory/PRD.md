@@ -85,6 +85,15 @@ App PWA per pagamenti digitali con wallet UP, gift card, merchant affiliati, QR 
 - [x] City aliases (roma/rome/Roma, milano/milan/Milano...)
 - [x] Persistenza stato location in MongoDB
 
+### Google Authentication (Completato - Marzo 2026)
+- [x] Backend endpoints: POST /api/auth/google/callback, POST /api/auth/google/complete
+- [x] Verifica token Google via Emergent Auth
+- [x] Controllo utente esistente per email
+- [x] Raccolta numero telefono obbligatoria per nuovi utenti
+- [x] Pulsante "Continua con Google" su Login e Register
+- [x] Flusso completo: Google sign-in → callback → phone form → registrazione
+- [x] Compatibilità JWT mantenuta con auth esistente
+
 ### Notifiche Avanzate (Completato)
 - [x] Hub notifiche con template merchant
 - [x] Upload immagini, CTA link, interazioni MYU
@@ -97,6 +106,13 @@ App PWA per pagamenti digitali con wallet UP, gift card, merchant affiliati, QR 
 - myu_conversations, myu_conversation_state, myu_tasks, myu_intent_logs
 - app_config, user_notifications, notification_interactions
 - **NEW**: user_location_state, tool_cache, request_cost_logs
+
+## API Endpoints Auth
+- POST /api/auth/register - Registrazione classica
+- POST /api/auth/login - Login classico
+- GET /api/auth/me - Info utente corrente
+- POST /api/auth/google/callback - Verifica sessione Google (nuovo/esistente)
+- POST /api/auth/google/complete - Completa registrazione Google con telefono
 
 ## API Endpoints MYU
 - POST /api/myu/chat - Chat principale orchestrato
@@ -122,9 +138,10 @@ App PWA per pagamenti digitali con wallet UP, gift card, merchant affiliati, QR 
 ## Backlog Prioritizzato
 
 ### P0 - Critico
-- [ ] Funzione modifica piatto esistente nel menu merchant
+- [x] Google Authentication con verifica numero telefono
 
 ### P1 - Importante
+- [ ] Funzione modifica piatto esistente nel menu merchant
 - [ ] Integrare API reali per cinema/weather/restaurant (sostituire mock)
 - [ ] Finalizzare PWA Install flow
 - [ ] Implementare "Paga Merchant" con GestPay
@@ -148,6 +165,8 @@ App PWA per pagamenti digitali con wallet UP, gift card, merchant affiliati, QR 
 - Tool wallet/merchant/tasks/notifications: REALI (MongoDB)
 - Costo MYU: ~$0.00004/richiesta con gpt-4.1-nano
 - Merchant "Utenti Presentati" mostra solo nome/email
+- Google Auth via Emergent-managed OAuth (auth.emergentagent.com)
+- Utenti Google senza password (password_hash vuoto, google_auth: true)
 
 ---
-Ultimo aggiornamento: Marzo 2026
+Ultimo aggiornamento: Marzo 2026 (Google Auth aggiunto)
