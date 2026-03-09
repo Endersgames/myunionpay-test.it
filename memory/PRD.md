@@ -132,7 +132,12 @@ App PWA per pagamenti digitali con wallet UP, gift card, merchant affiliati, QR 
 - GET /api/admin/features - Admin: tutti i toggle con categorie
 
 ## API Endpoints Admin Features & API Config
+- GET /api/admin/features/public - Feature toggles pubblici
+- GET /api/admin/features/public/pricing - Prezzi servizi pubblici
+- GET /api/admin/features - Admin: tutti i toggle
 - PUT /api/admin/features - Admin: aggiorna toggle {feature: bool}
+- GET /api/admin/features/pricing - Admin: prezzi con label
+- PUT /api/admin/features/pricing - Admin: aggiorna prezzi
 - GET /api/admin/features/api-config - Admin: config API telefonia/fintech
 - PUT /api/admin/features/api-config/{section} - Admin: aggiorna config API
 
