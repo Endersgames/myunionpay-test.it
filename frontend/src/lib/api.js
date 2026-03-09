@@ -198,7 +198,43 @@ export const merchantAPI = {
 
   async getCategories() {
     return apiRequest('/merchants/categories/list');
-  }
+  },
+
+  async uploadVisura(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const headers = {};
+    const token = getAuthToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await fetch('/api/merchant/ai/upload-visura', {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+    if (!response.ok) {
+      const err = await response.text().catch(() => '');
+      try { throw new Error(JSON.parse(err).detail); } catch (e) { if (e.message) throw e; throw new Error('Errore upload visura'); }
+    }
+    return response.json();
+  },
+
+  async scanMenu(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const headers = {};
+    const token = getAuthToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await fetch('/api/merchant/ai/scan-menu', {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+    if (!response.ok) {
+      const err = await response.text().catch(() => '');
+      try { throw new Error(JSON.parse(err).detail); } catch (e) { if (e.message) throw e; throw new Error('Errore scansione menu'); }
+    }
+    return response.json();
+  },
 };
 
 // ========================
