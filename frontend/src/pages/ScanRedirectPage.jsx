@@ -56,21 +56,13 @@ function BrandBanner({ onInstall, installing, isInstalled }) {
       </div>
       {/* MYU Install CTA under brands */}
       {!isInstalled && (
-        <div className="flex items-start gap-2.5 mt-4 pt-3 border-t border-black/5" data-testid="myu-brand-cta">
-          <div className="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden shadow-sm border border-white" style={{ animation: "myuBounce 2s ease infinite" }}>
-            <img src="/myu-icon.png" alt="MYU" className="w-full h-full object-cover" />
-          </div>
-          <div className="flex-1">
-            <p className="text-xs text-[#1A1A1A] leading-snug">
-              <strong>Ciao io sono MYU!</strong> Questo locale ha cashback e offerte per te!
-            </p>
-            <button onClick={onInstall} disabled={installing}
-              className="mt-2 flex items-center gap-1.5 bg-[#2B7AB8] hover:bg-[#236699] active:scale-[0.97] text-white font-bold text-xs px-4 py-2 rounded-xl shadow-md shadow-[#2B7AB8]/20 transition-all disabled:opacity-70"
-              data-testid="myu-brand-install-btn">
-              <Download className="w-3.5 h-3.5" />
-              {installing ? "..." : "Installa Ora"}
-            </button>
-          </div>
+        <div className="flex justify-center mt-4 pt-3 border-t border-black/5" data-testid="myu-brand-cta">
+          <button onClick={onInstall} disabled={installing}
+            className="flex items-center gap-1.5 bg-[#2B7AB8] hover:bg-[#236699] active:scale-[0.97] text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-md shadow-[#2B7AB8]/20 transition-all disabled:opacity-70"
+            data-testid="myu-brand-install-btn">
+            <Download className="w-3.5 h-3.5" />
+            {installing ? "..." : "Installa Ora"}
+          </button>
         </div>
       )}
     </div>
