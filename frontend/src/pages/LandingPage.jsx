@@ -172,57 +172,29 @@ export default function LandingPage() {
             <DialogTitle className="font-heading text-xl">Installa myUup.com</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            {isIOS ? (
-              <>
-                <p className="text-[#6B7280]">Per installare myUup.com su iPhone/iPad:</p>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 bg-[#F5F5F5] p-3 rounded-xl">
-                    <div className="w-10 h-10 rounded-full bg-[#2B7AB8]/10 flex items-center justify-center">
-                      <Share className="w-5 h-5 text-[#2B7AB8]" />
-                    </div>
-                    <div>
-                      <p className="font-medium">1. Tocca Condividi</p>
-                      <p className="text-sm text-[#6B7280]">L'icona in basso al centro</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 bg-[#F5F5F5] p-3 rounded-xl">
-                    <div className="w-10 h-10 rounded-full bg-[#E85A24]/10 flex items-center justify-center">
-                      <Plus className="w-5 h-5 text-[#E85A24]" />
-                    </div>
-                    <div>
-                      <p className="font-medium">2. Aggiungi a Home</p>
-                      <p className="text-sm text-[#6B7280]">Scorri e seleziona l'opzione</p>
-                    </div>
-                  </div>
+            <p className="text-[#6B7280]">Per installare myUup.com:</p>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 bg-[#F5F5F5] p-3 rounded-xl">
+                <div className="w-10 h-10 rounded-full bg-[#2B7AB8]/10 flex items-center justify-center">
+                  <Share className="w-5 h-5 text-[#2B7AB8]" />
                 </div>
-              </>
-            ) : (
-              <>
-                <p className="text-[#6B7280]">Per installare myUup.com:</p>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 bg-[#F5F5F5] p-3 rounded-xl">
-                    <div className="w-10 h-10 rounded-full bg-[#2B7AB8]/10 flex items-center justify-center">
-                      <MoreVertical className="w-5 h-5 text-[#2B7AB8]" />
-                    </div>
-                    <div>
-                      <p className="font-medium">1. Apri il menu</p>
-                      <p className="text-sm text-[#6B7280]">Tocca ⋮ in alto a destra</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 bg-[#F5F5F5] p-3 rounded-xl">
-                    <div className="w-10 h-10 rounded-full bg-[#E85A24]/10 flex items-center justify-center">
-                      <Download className="w-5 h-5 text-[#E85A24]" />
-                    </div>
-                    <div>
-                      <p className="font-medium">2. Installa app</p>
-                      <p className="text-sm text-[#6B7280]">Seleziona "Installa app" o "Aggiungi a Home"</p>
-                    </div>
-                  </div>
+                <div>
+                  <p className="font-medium">1. Tocca Condividi / Menu</p>
+                  <p className="text-sm text-[#6B7280]">In basso (iOS) o ⋮ in alto (Android)</p>
                 </div>
-              </>
-            )}
+              </div>
+              <div className="flex items-center gap-3 bg-[#F5F5F5] p-3 rounded-xl">
+                <div className="w-10 h-10 rounded-full bg-[#E85A24]/10 flex items-center justify-center">
+                  <Plus className="w-5 h-5 text-[#E85A24]" />
+                </div>
+                <div>
+                  <p className="font-medium">2. Aggiungi a Home</p>
+                  <p className="text-sm text-[#6B7280]">Seleziona "Installa app" o "Aggiungi"</p>
+                </div>
+              </div>
+            </div>
             <Button 
-              onClick={() => setShowInstructions(false)}
+              onClick={() => setShowIOSGuide(false)}
               className="w-full mt-4 rounded-full bg-[#2B7AB8] hover:bg-[#236699] text-white"
             >
               Ho capito
