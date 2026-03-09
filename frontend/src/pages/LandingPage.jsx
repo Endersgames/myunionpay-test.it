@@ -119,17 +119,6 @@ export default function LandingPage() {
           />
         </div>
 
-        {/* Hero */}
-        <div className="mb-12 animate-slideUp text-center">
-          <h1 className="font-heading text-4xl sm:text-5xl font-extrabold leading-tight mb-4 text-[#1A1A1A]">
-            Paga. Guadagna.<br />
-            <span className="text-[#E85A24]">Unisciti.</span>
-          </h1>
-          <p className="text-[#6B7280] text-lg">
-            Pagamenti P2P istantanei, marketplace merchant e ricompense per ogni notifica che ricevi.
-          </p>
-        </div>
-
         {/* MYU Mascot + Install CTA */}
         {!isStandalone && myuVisible && (
           <div className="mb-8 animate-slideUp" style={{ animationDelay: '0.1s' }} data-testid="myu-landing-section">
