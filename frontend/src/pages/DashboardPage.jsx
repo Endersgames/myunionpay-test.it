@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { 
   Wallet, QrCode, Scan, Bell, 
   ArrowUpRight, ArrowDownLeft, Plus, TrendingUp, Settings,
-  CreditCard, Gift, Users, Bot
+  CreditCard, Gift, Users, Bot, ToggleLeft
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BottomNav from "@/components/BottomNav";
@@ -257,6 +257,15 @@ export default function DashboardPage() {
             >
               <Settings className="w-4 h-4 mr-2" />
               Admin - Contenuti
+            </Button>
+            <Button
+              onClick={() => navigate("/admin/features")}
+              variant="outline"
+              className="w-full h-12 rounded-xl border-[#1A1A1A] text-[#1A1A1A] font-semibold"
+              data-testid="admin-features-btn"
+            >
+              <ToggleLeft className="w-4 h-4 mr-2" />
+              Admin - Funzionalità & API
             </Button>
           </div>
         )}

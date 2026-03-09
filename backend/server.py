@@ -28,6 +28,7 @@ from routes.merchant_users import router as merchant_users_router
 from routes.admin_users import router as admin_users_router
 from routes.admin_openai import router as admin_openai_router
 from routes.admin_content import router as admin_content_router
+from routes.admin_features import router as admin_features_router
 
 # Create the main app
 app = FastAPI(title="myUup.com API", version="2.0.0")
@@ -55,6 +56,7 @@ api_router.include_router(merchant_users_router)
 api_router.include_router(admin_users_router)
 api_router.include_router(admin_openai_router)
 api_router.include_router(admin_content_router)
+api_router.include_router(admin_features_router)
 
 
 # ========================

@@ -652,3 +652,35 @@ export const contentAPI = {
     });
   },
 };
+
+// ========================
+// FEATURES API (Public + Admin)
+// ========================
+
+export const featuresAPI = {
+  async getPublic() {
+    return apiRequest('/admin/features/public');
+  },
+
+  async adminGet() {
+    return apiRequest('/admin/features');
+  },
+
+  async adminUpdate(toggles) {
+    return apiRequest('/admin/features', {
+      method: 'PUT',
+      body: JSON.stringify(toggles),
+    });
+  },
+
+  async adminGetApiConfig() {
+    return apiRequest('/admin/features/api-config');
+  },
+
+  async adminUpdateApiConfig(section, data) {
+    return apiRequest(`/admin/features/api-config/${section}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+};

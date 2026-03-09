@@ -38,6 +38,7 @@ import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage";
 import RimuoviAccountPage from "@/pages/RimuoviAccountPage";
 import MieGiftCardPage from "@/pages/MieGiftCardPage";
 import AdminContentPage from "@/pages/AdminContentPage";
+import AdminFeaturesPage from "@/pages/AdminFeaturesPage";
 import MyuMascot from "@/components/MyuMascot";
 import ChromePromptBanner from "@/components/ChromePromptBanner";
 
@@ -180,6 +181,7 @@ function AppContent() {
       <Route path="/settings/delete-account" element={<ProtectedRoute><RimuoviAccountPage /></ProtectedRoute>} />
       <Route path="/settings/gift-cards" element={<ProtectedRoute><MieGiftCardPage /></ProtectedRoute>} />
       <Route path="/admin/content" element={<ProtectedRoute><AdminContentPage /></ProtectedRoute>} />
+      <Route path="/admin/features" element={<ProtectedRoute><AdminFeaturesPage /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

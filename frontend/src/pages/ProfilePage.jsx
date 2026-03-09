@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import BottomNav from "@/components/BottomNav";
-import { profileAPI, referralAPI, simAPI, tasksAPI, PROFILE_TAGS } from "@/lib/api";
+import { profileAPI, referralAPI, simAPI, tasksAPI, PROFILE_TAGS, featuresAPI } from "@/lib/api";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -22,6 +22,7 @@ export default function ProfilePage() {
   const [showTags, setShowTags] = useState(false);
   const [loading, setLoading] = useState(true);
   const [uploadingPic, setUploadingPic] = useState(false);
+  const [features, setFeatures] = useState({});
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -30,16 +31,18 @@ export default function ProfilePage() {
 
   const fetchData = async () => {
     try {
-      const [tagsData, refStats, simData, tasksData] = await Promise.all([
+      const [tagsData, refStats, simData, tasksData, featData] = await Promise.all([
         profileAPI.getMyTags(),
         referralAPI.getStats(),
         simAPI.getMySim(),
-        tasksAPI.getMyTasks()
+        tasksAPI.getMyTasks(),
+        featuresAPI.getPublic()
       ]);
       setMyTags(tagsData.tags || []);
       setReferralStats(refStats);
       setSim(simData);
       setTasks(tasksData || []);
+      setFeatures(featData || {});
     } catch (err) {
       console.error("Profile fetch error:", err);
     }
@@ -198,6 +201,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Referral Section */}
+        {features.invita_amici !== false && (
         <div className="bg-[#F5F5F5] rounded-2xl p-5 border border-black/5 mb-6">
           <div className="flex items-center gap-3 mb-4">
             <Users className="w-5 h-5 text-[#E85A24]" />
@@ -221,8 +225,10 @@ export default function ProfilePage() {
             Condividi Link
           </Button>
         </div>
+        )}
 
         {/* Tasks Section */}
+        {features.tasks !== false && (
         <div className="bg-[#F5F5F5] rounded-2xl p-5 border border-black/5 mb-6">
           <div className="flex items-center gap-3 mb-4">
             <ClipboardCheck className="w-5 h-5 text-[#2B7AB8]" />
@@ -293,8 +299,11 @@ export default function ProfilePage() {
             </div>
           )}
         </div>
+        )}
 
         {/* Conto UP Section */}
+        {features.conto_up !== false && (
+        <>
         {sim ? (
           <button
             onClick={() => navigate("/sim-dashboard")}
@@ -388,7 +397,7 @@ export default function ProfilePage() {
               </div>
               <div className="flex items-center justify-between mb-4 px-1">
                 <span className="text-white/60">Attivazione</span>
-                <span className="font-mono text-2xl font-bold text-[#E85A24]">15,99 EUR</span>
+                <span className="font-mono text-2xl font-bold text-[#E85A24]">15,99 UP</span>
               </div>
               <Button
                 onClick={() => navigate("/sim-activation")}
@@ -401,8 +410,11 @@ export default function ProfilePage() {
             </div>
           </div>
         )}
+        </>
+        )}
 
         {/* Profile Tags */}
+        {features.interessi !== false && (
         <div className="bg-[#F5F5F5] rounded-2xl p-5 border border-black/5 mb-6">
           <button
             onClick={() => setShowTags(!showTags)}
@@ -440,8 +452,11 @@ export default function ProfilePage() {
             </div>
           )}
         </div>
+        )}
 
         {/* Merchant Section */}
+        {features.merchant !== false && (
+        <>
         {user?.is_merchant ? (
           <button
             onClick={() => navigate("/merchant-dashboard")}
@@ -472,6 +487,8 @@ export default function ProfilePage() {
             </div>
             <ChevronRight className="w-5 h-5 text-[#6B7280]" />
           </button>
+        )}
+        </>
         )}
       </div>
 
