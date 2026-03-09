@@ -125,9 +125,13 @@ App PWA per pagamenti digitali con wallet UP, gift card, merchant affiliati, QR 
 - GET /api/admin/content - Admin: tutti i contenuti
 - PUT /api/admin/content/{key} - Admin: aggiorna contenuto
 
-## API Endpoints Admin Features & API Config
+## API Endpoints Merchant AI
+- POST /api/merchant/ai/upload-visura - Upload visura camerale, AI estrae dati aziendali
+- POST /api/merchant/ai/scan-menu - Foto menu, AI estrae piatti + 5 lingue + calorie + salute (1 UP/piatto)
 - GET /api/admin/features/public - Feature toggles pubblici (no auth)
 - GET /api/admin/features - Admin: tutti i toggle con categorie
+
+## API Endpoints Admin Features & API Config
 - PUT /api/admin/features - Admin: aggiorna toggle {feature: bool}
 - GET /api/admin/features/api-config - Admin: config API telefonia/fintech
 - PUT /api/admin/features/api-config/{section} - Admin: aggiorna config API
