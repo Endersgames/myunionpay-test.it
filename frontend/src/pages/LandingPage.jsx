@@ -4,6 +4,7 @@ import { useAuth } from "@/App";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { QrCode, Wallet, Users, Bell, ArrowRight, Download, Share, Plus, MoreVertical, Percent } from "lucide-react";
+import { usePwaInstall } from "@/lib/usePwaInstall";
 
 const API = process.env.REACT_APP_BACKEND_URL || "";
 
@@ -15,12 +16,8 @@ const MYU_TEXTS = [
 export default function LandingPage() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [showInstructions, setShowInstructions] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
-  const [isStandalone, setIsStandalone] = useState(false);
+  const { isInstalled, installing, triggerInstall, showIOSGuide, setShowIOSGuide } = usePwaInstall();
   const [myuVisible, setMyuVisible] = useState(false);
-  const [installing, setInstalling] = useState(false);
   const [myuTextIdx, setMyuTextIdx] = useState(0);
 
   useEffect(() => {
@@ -30,64 +27,10 @@ export default function LandingPage() {
   }, [user, loading, navigate]);
 
   useEffect(() => {
-    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    setIsIOS(isIOSDevice);
-    
-    const standalone = window.matchMedia('(display-mode: standalone)').matches || 
-                       window.navigator.standalone === true;
-    setIsStandalone(standalone);
-    
-    const handler = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-    window.addEventListener("beforeinstallprompt", handler);
-
-    // MYU appears after 1s
     const myuTimer = setTimeout(() => setMyuVisible(true), 1000);
-
-    // Alternate text every 4s
-    const textTimer = setInterval(() => {
-      setMyuTextIdx(prev => (prev + 1) % MYU_TEXTS.length);
-    }, 4000);
-
-    // iOS: show instructions automatically after 3s
-    if (isIOSDevice && !standalone) {
-      setTimeout(() => setShowInstructions(true), 3000);
-    }
-
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handler);
-      clearTimeout(myuTimer);
-      clearInterval(textTimer);
-    };
+    const textTimer = setInterval(() => setMyuTextIdx(prev => (prev + 1) % MYU_TEXTS.length), 4000);
+    return () => { clearTimeout(myuTimer); clearInterval(textTimer); };
   }, []);
-
-  const handleInstall = async () => {
-    setInstalling(true);
-    try {
-      if (deferredPrompt) {
-        // Android/Chrome: trigger native install prompt immediately
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        setDeferredPrompt(null);
-        if (outcome === "accepted") return; // installed!
-      }
-      // Fallback: try relatedApps check (some browsers)
-      if ('getInstalledRelatedApps' in navigator) {
-        const apps = await navigator.getInstalledRelatedApps();
-        if (apps.length > 0) {
-          setInstalling(false);
-          return; // already installed
-        }
-      }
-      // iOS or browsers without beforeinstallprompt: show manual guide
-      setShowInstructions(true);
-    } catch (e) {
-      setShowInstructions(true);
-    }
-    setInstalling(false);
-  };
 
   const features = [
     { icon: QrCode, title: "Pagamenti QR", desc: "Paga e ricevi denaro con un semplice scan" },
@@ -120,7 +63,7 @@ export default function LandingPage() {
         </div>
 
         {/* MYU Mascot + Install CTA */}
-        {!isStandalone && myuVisible && (
+        {!isInstalled && myuVisible && (
           <div className="mb-8 animate-slideUp" style={{ animationDelay: '0.1s' }} data-testid="myu-landing-section">
             <div className="flex items-start gap-3">
               {/* MYU avatar */}
@@ -142,7 +85,7 @@ export default function LandingPage() {
                 </p>
                 <div className="flex justify-end">
                   <button
-                    onClick={handleInstall}
+                    onClick={triggerInstall}
                     disabled={installing}
                     className="flex items-center gap-1.5 bg-[#2B7AB8] hover:bg-[#236699] active:scale-[0.97] text-white font-bold text-sm px-5 py-2.5 rounded-xl shadow-md shadow-[#2B7AB8]/20 transition-all disabled:opacity-70"
                     data-testid="myu-install-btn"
@@ -223,7 +166,7 @@ export default function LandingPage() {
       </div>
 
       {/* Install Instructions Dialog */}
-      <Dialog open={showInstructions} onOpenChange={setShowInstructions}>
+      <Dialog open={showIOSGuide} onOpenChange={setShowIOSGuide}>
         <DialogContent className="bg-white border-black/10 text-[#1A1A1A] max-w-sm mx-4">
           <DialogHeader>
             <DialogTitle className="font-heading text-xl">Installa myUup.com</DialogTitle>

@@ -1,12 +1,15 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/App";
 import {
   Download, ArrowRight, Share, Plus, Smartphone,
-  Store, UtensilsCrossed, Gift, Menu as MenuIcon
+  Store, UtensilsCrossed, Gift, Menu as MenuIcon, Percent
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { paymentAPI } from "@/lib/api";
+import { usePwaInstall } from "@/lib/usePwaInstall";
+
+const API = process.env.REACT_APP_BACKEND_URL || "";
 
 const MYU_MESSAGES = {
   merchant: [
@@ -18,37 +21,57 @@ const MYU_MESSAGES = {
     "Cashback anche qui! Installa e inizia a risparmiare.",
   ],
   user: [
-    "Paga in un attimo e guadagna UP!",
     "Installa myUup e risparmia su oltre 1000 brand.",
+    "Per te tanti cashback fino al 30%!",
   ],
   error: ["Ops, questo QR non funziona. Torna alla Home!"],
 };
+
+const BRAND_LOGOS = [
+  { brand: "Amazon", cashback: "1.87%", logo: "/api/giftcards/logo/986ef34a-13b7-4250-9414-905c982c75b7.JPG" },
+  { brand: "IKEA", cashback: "6.5%", logo: "/api/giftcards/logo/1aa843df-62b9-45d3-9365-cd11ef930443.JPG" },
+  { brand: "Conad", cashback: "1.69%", logo: "/api/giftcards/logo/bcddd511-c663-4175-b959-2cebdccaf9cd.JPG" },
+  { brand: "Decathlon", cashback: "1%", logo: "/api/giftcards/logo/62091058-c72f-4759-828f-5642bcfe2c73.JPG" },
+];
+
+// Brand Cashback Banner
+function BrandBanner() {
+  return (
+    <div className="mt-6 pt-4 border-t border-black/5" data-testid="brand-cashback-banner">
+      <div className="flex items-center gap-1.5 mb-2.5">
+        <Percent className="w-3.5 h-3.5 text-[#E85A24]" />
+        <span className="text-xs font-bold text-[#1A1A1A]">Cashback sui tuoi brand</span>
+      </div>
+      <div className="grid grid-cols-4 gap-2">
+        {BRAND_LOGOS.map(b => (
+          <div key={b.brand} className="bg-white rounded-xl border border-black/5 overflow-hidden shadow-sm">
+            <div className="aspect-[4/3] overflow-hidden bg-[#FAFAFA]">
+              <img src={`${API}${b.logo}`} alt={b.brand} className="w-full h-full object-contain p-1" />
+            </div>
+            <div className="px-1 py-0.5 text-center border-t border-black/5">
+              <span className="text-[9px] font-bold text-[#E85A24]">{b.cashback}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function ScanRedirectPage() {
   const navigate = useNavigate();
   const { qrCode } = useParams();
   const { user, loading: authLoading } = useAuth();
+  const { isInstalled, installing, triggerInstall, showIOSGuide, setShowIOSGuide, isIOS } = usePwaInstall();
   const [error, setError] = useState(null);
   const [recipientName, setRecipientName] = useState("");
   const [recipientType, setRecipientType] = useState("user");
   const [merchantData, setMerchantData] = useState(null);
-  const [isInstalled, setIsInstalled] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
-  const [showIOSInstructions, setShowIOSInstructions] = useState(false);
-  const [installing, setInstalling] = useState(false);
   const [myuTextIdx, setMyuTextIdx] = useState(0);
-  const deferredPromptRef = useRef(null);
 
   useEffect(() => {
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-    setIsInstalled(isStandalone);
-    setIsIOS(/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream);
-
-    const handler = (e) => { e.preventDefault(); deferredPromptRef.current = e; };
-    window.addEventListener('beforeinstallprompt', handler);
-
     const textTimer = setInterval(() => setMyuTextIdx(prev => prev + 1), 4500);
-    return () => { window.removeEventListener('beforeinstallprompt', handler); clearInterval(textTimer); };
+    return () => clearInterval(textTimer);
   }, []);
 
   useEffect(() => {
@@ -70,24 +93,6 @@ export default function ScanRedirectPage() {
     fetchRecipient();
   }, [qrCode]);
 
-  const handleInstall = async () => {
-    setInstalling(true);
-    try {
-      if (deferredPromptRef.current) {
-        deferredPromptRef.current.prompt();
-        const { outcome } = await deferredPromptRef.current.userChoice;
-        deferredPromptRef.current = null;
-        if (outcome === 'accepted') { setIsInstalled(true); setInstalling(false); return; }
-      }
-      if ('getInstalledRelatedApps' in navigator) {
-        const apps = await navigator.getInstalledRelatedApps();
-        if (apps.length > 0) { setIsInstalled(true); setInstalling(false); return; }
-      }
-      if (isIOS) { setShowIOSInstructions(true); }
-    } catch {}
-    setInstalling(false);
-  };
-
   const handleContinue = () => {
     if (authLoading) return;
     if (user) navigate(`/pay/${qrCode}`, { replace: true });
@@ -103,21 +108,21 @@ export default function ScanRedirectPage() {
     return msgs[myuTextIdx % msgs.length];
   };
 
-  // --- MYU Bubble Component ---
+  // --- MYU Bubble ---
   const MyuBubble = ({ type }) => (
-    <div className="flex items-start gap-3 mb-6" data-testid="myu-qr-bubble">
+    <div className="flex items-start gap-3 mb-5" data-testid="myu-qr-bubble">
       <div className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden shadow-md border-2 border-white" style={{ animation: "myuBounce 2s ease infinite" }}>
         <img src="/myu-icon.png" alt="MYU" className="w-full h-full object-cover" />
       </div>
-      <div className="flex-1 bg-white rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm border border-black/5" style={{ animation: "myuFadeIn 0.5s ease" }}>
-        <p className="text-sm font-bold text-[#1A1A1A] mb-0.5">MYU</p>
-        <p className="text-xs text-[#6B7280] leading-snug" key={myuTextIdx} style={{ animation: "myuFadeIn 0.4s ease" }}>
+      <div className="flex-1 bg-white rounded-2xl rounded-tl-sm px-3.5 py-2.5 shadow-sm border border-black/5" style={{ animation: "myuFadeIn 0.5s ease" }}>
+        <p className="text-xs font-bold text-[#1A1A1A] mb-0.5">MYU</p>
+        <p className="text-[11px] text-[#6B7280] leading-snug" key={myuTextIdx} style={{ animation: "myuFadeIn 0.4s ease" }}>
           {getMyuMsg(type)}
         </p>
         {!isInstalled && (
-          <div className="flex justify-end mt-2">
-            <button onClick={handleInstall} disabled={installing}
-              className="flex items-center gap-1 bg-[#2B7AB8] hover:bg-[#236699] active:scale-[0.97] text-white font-bold text-[11px] px-3.5 py-1.5 rounded-lg shadow-sm transition-all disabled:opacity-70"
+          <div className="flex justify-end mt-1.5">
+            <button onClick={triggerInstall} disabled={installing}
+              className="flex items-center gap-1 bg-[#2B7AB8] hover:bg-[#236699] active:scale-[0.97] text-white font-bold text-[10px] px-3 py-1.5 rounded-lg shadow-sm transition-all disabled:opacity-70"
               data-testid="myu-qr-install-btn">
               <Download className="w-3 h-3" />
               {installing ? "..." : "Installa Ora"}
@@ -142,7 +147,7 @@ export default function ScanRedirectPage() {
   }
 
   // --- iOS Instructions ---
-  if (showIOSInstructions) {
+  if (showIOSGuide) {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex flex-col px-6 py-8">
         <div className="flex-1 flex flex-col items-center justify-center">
@@ -167,7 +172,7 @@ export default function ScanRedirectPage() {
             ))}
           </div>
         </div>
-        <Button onClick={() => setShowIOSInstructions(false)} variant="outline" className="w-full h-12 rounded-full border-black/10 text-[#1A1A1A] mt-6">
+        <Button onClick={() => setShowIOSGuide(false)} variant="outline" className="w-full h-12 rounded-full border-black/10 text-[#1A1A1A] mt-6">
           Ho capito, continua
         </Button>
       </div>
@@ -180,16 +185,15 @@ export default function ScanRedirectPage() {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex flex-col px-5 py-6" data-testid="qr-merchant-landing">
         {/* Merchant Header */}
-        <div className="text-center mb-5">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#E85A24] to-[#D14E1A] flex items-center justify-center mx-auto mb-3 shadow-lg">
-            <Store className="w-8 h-8 text-white" />
+        <div className="text-center mb-4">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#E85A24] to-[#D14E1A] flex items-center justify-center mx-auto mb-2 shadow-lg">
+            <Store className="w-7 h-7 text-white" />
           </div>
           <h1 className="font-bold text-xl text-[#1A1A1A]">{recipientName}</h1>
           <p className="text-xs text-[#6B7280]">{merchantData.category}</p>
           {merchantData.address && <p className="text-[10px] text-[#9CA3AF] mt-0.5">{merchantData.address}</p>}
         </div>
 
-        {/* MYU */}
         <MyuBubble type="merchant" />
 
         {/* Actions */}
@@ -198,12 +202,10 @@ export default function ScanRedirectPage() {
             <>
               <button onClick={handleViewMenu} className="w-full bg-white hover:bg-[#F5F5F5] rounded-2xl p-4 text-left border border-black/5 transition-colors" data-testid="qr-view-menu">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-[#2B7AB8]/10 flex items-center justify-center">
-                    <MenuIcon className="w-6 h-6 text-[#2B7AB8]" />
-                  </div>
+                  <div className="w-11 h-11 rounded-xl bg-[#2B7AB8]/10 flex items-center justify-center"><MenuIcon className="w-5 h-5 text-[#2B7AB8]" /></div>
                   <div className="flex-1">
-                    <p className="font-semibold text-[#1A1A1A]">Visualizza il Menu</p>
-                    <p className="text-xs text-[#6B7280]">Scopri piatti e offerte</p>
+                    <p className="font-semibold text-sm text-[#1A1A1A]">Visualizza il Menu</p>
+                    <p className="text-[11px] text-[#6B7280]">Scopri piatti e offerte</p>
                   </div>
                   <ArrowRight className="w-4 h-4 text-[#9CA3AF]" />
                 </div>
@@ -211,12 +213,10 @@ export default function ScanRedirectPage() {
               <button onClick={() => navigate(`/pay/${qrCode}`, { replace: true })}
                 className="w-full bg-gradient-to-r from-[#E85A24] to-[#D14E1A] rounded-2xl p-4 text-left text-white" data-testid="qr-pay-merchant">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
-                    <UtensilsCrossed className="w-6 h-6" />
-                  </div>
+                  <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center"><UtensilsCrossed className="w-5 h-5" /></div>
                   <div className="flex-1">
-                    <p className="font-semibold">Paga</p>
-                    <p className="text-xs text-white/80">Paga il merchant direttamente</p>
+                    <p className="font-semibold text-sm">Paga</p>
+                    <p className="text-[11px] text-white/80">Paga il merchant direttamente</p>
                   </div>
                   <ArrowRight className="w-4 h-4 text-white/50" />
                 </div>
@@ -226,12 +226,10 @@ export default function ScanRedirectPage() {
             <>
               <button onClick={handleViewMenu} className="w-full bg-white hover:bg-[#F5F5F5] rounded-2xl p-4 text-left border border-black/5 transition-colors" data-testid="qr-view-menu-only">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-[#6B7280]/10 flex items-center justify-center">
-                    <MenuIcon className="w-6 h-6 text-[#6B7280]" />
-                  </div>
+                  <div className="w-11 h-11 rounded-xl bg-[#6B7280]/10 flex items-center justify-center"><MenuIcon className="w-5 h-5 text-[#6B7280]" /></div>
                   <div className="flex-1">
-                    <p className="font-semibold text-[#1A1A1A]">Visualizza il Menu</p>
-                    <p className="text-xs text-[#6B7280]">Scopri piatti e offerte</p>
+                    <p className="font-semibold text-sm text-[#1A1A1A]">Visualizza il Menu</p>
+                    <p className="text-[11px] text-[#6B7280]">Scopri piatti e offerte</p>
                   </div>
                   <ArrowRight className="w-4 h-4 text-[#9CA3AF]" />
                 </div>
@@ -240,12 +238,10 @@ export default function ScanRedirectPage() {
                 className="w-full bg-gradient-to-r from-[#2B7AB8] to-[#1E5F8A] rounded-2xl p-4 text-left text-white relative overflow-hidden" data-testid="qr-menu-and-up">
                 <span className="absolute top-2.5 right-3 bg-white/20 backdrop-blur px-2.5 py-0.5 rounded-full text-[10px] font-bold">+1 UP</span>
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
-                    <MenuIcon className="w-6 h-6" />
-                  </div>
+                  <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center"><MenuIcon className="w-5 h-5" /></div>
                   <div className="flex-1">
-                    <p className="font-semibold">Menu + Ottieni 1 UP</p>
-                    <p className="text-xs text-white/80">Registrati e guadagna il tuo primo UP</p>
+                    <p className="font-semibold text-sm">Menu + Ottieni 1 UP</p>
+                    <p className="text-[11px] text-white/80">Registrati e guadagna il tuo primo UP</p>
                   </div>
                 </div>
               </button>
@@ -253,77 +249,60 @@ export default function ScanRedirectPage() {
                 className="w-full bg-gradient-to-r from-[#E85A24] to-[#D14E1A] rounded-2xl p-4 text-left text-white relative overflow-hidden" data-testid="qr-register-pay">
                 <span className="absolute top-2.5 right-3 bg-white/20 backdrop-blur px-2.5 py-0.5 rounded-full text-[10px] font-bold">+1 UP</span>
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
-                    <Gift className="w-6 h-6" />
-                  </div>
+                  <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center"><Gift className="w-5 h-5" /></div>
                   <div className="flex-1">
-                    <p className="font-semibold">Registrati e Paga</p>
-                    <p className="text-xs text-white/80">Ottieni 1 UP e paga il merchant</p>
+                    <p className="font-semibold text-sm">Registrati e Paga</p>
+                    <p className="text-[11px] text-white/80">Ottieni 1 UP e paga il merchant</p>
                   </div>
                 </div>
               </button>
             </>
           )}
         </div>
-        <p className="text-center text-[10px] text-[#9CA3AF] mt-6">myUup.com</p>
+
+        {/* Brand Cashback Banner */}
+        <BrandBanner />
+        <p className="text-center text-[10px] text-[#9CA3AF] mt-4">myUup.com</p>
       </div>
     );
   }
 
   // --- USER QR ---
-  if (!isInstalled) {
-    return (
-      <div className="min-h-screen bg-[#FAFAFA] flex flex-col px-5 py-6" data-testid="qr-user-landing">
-        {/* Logo */}
-        <div className="text-center mb-4">
-          <img src="/logo.png" alt="myUup" className="h-16 w-auto mx-auto mb-2" />
+  return (
+    <div className="min-h-screen bg-[#FAFAFA] flex flex-col px-5 py-6" data-testid="qr-user-landing">
+      <div className="text-center mb-4">
+        <img src="/logo.png" alt="myUup" className="h-14 w-auto mx-auto mb-2" />
+      </div>
+
+      {recipientName && (
+        <div className="bg-[#E85A24]/5 border border-[#E85A24]/15 rounded-2xl p-3 mb-4 text-center">
+          <p className="text-[11px] text-[#6B7280]">Stai per pagare</p>
+          <p className="text-lg font-bold text-[#E85A24]">{recipientName}</p>
         </div>
+      )}
 
-        {/* Recipient */}
-        {recipientName && (
-          <div className="bg-[#E85A24]/5 border border-[#E85A24]/15 rounded-2xl p-3 mb-4 text-center">
-            <p className="text-xs text-[#6B7280]">Stai per pagare</p>
-            <p className="text-lg font-bold text-[#E85A24]">{recipientName}</p>
-          </div>
-        )}
+      <MyuBubble type="user" />
 
-        {/* MYU */}
-        <MyuBubble type="user" />
+      <div className="flex-1" />
 
-        {/* Actions */}
-        <div className="space-y-3 mt-auto">
-          <Button onClick={handleInstall} disabled={installing}
+      {/* Actions */}
+      <div className="space-y-3">
+        {!isInstalled && (
+          <Button onClick={triggerInstall} disabled={installing}
             className="w-full h-14 rounded-full bg-[#2B7AB8] hover:bg-[#236699] text-base font-bold" data-testid="qr-install-btn">
             <Download className="w-5 h-5 mr-2" />
             {installing ? "Installazione..." : "Installa e guadagna +1 UP"}
           </Button>
-          <Button onClick={handleContinue} variant="outline"
-            className="w-full h-12 rounded-full border-black/10 text-[#1A1A1A]" data-testid="qr-continue-btn">
-            Continua nel browser <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
-        </div>
-        <p className="text-center text-[10px] text-[#9CA3AF] mt-4">Installazione istantanea - 0 MB</p>
-      </div>
-    );
-  }
-
-  // --- Loading / Redirect ---
-  return (
-    <div className="min-h-screen bg-[#FAFAFA] flex flex-col items-center justify-center px-6">
-      <img src="/logo.png" alt="myUup" className="h-16 w-auto mb-4" />
-      {recipientName ? (
-        <>
-          <p className="text-xs text-[#6B7280] mb-1">{recipientType === "merchant" ? "Negozio" : "Pagamento a"}</p>
-          <p className="text-xl font-bold text-[#E85A24] mb-4">{recipientName}</p>
-        </>
-      ) : (
-        <div className="w-8 h-8 border-2 border-[#2B7AB8] border-t-transparent rounded-full animate-spin mb-4" />
-      )}
-      {recipientName && (
-        <Button onClick={handleContinue} className="rounded-full bg-[#2B7AB8] hover:bg-[#236699]" data-testid="qr-continue-redirect">
-          Continua <ArrowRight className="w-4 h-4 ml-2" />
+        )}
+        <Button onClick={handleContinue} variant="outline"
+          className="w-full h-12 rounded-full border-black/10 text-[#1A1A1A]" data-testid="qr-continue-btn">
+          {user ? "Continua al pagamento" : "Continua nel browser"} <ArrowRight className="w-4 h-4 ml-2" />
         </Button>
-      )}
+      </div>
+
+      {/* Brand Cashback Banner */}
+      <BrandBanner />
+      <p className="text-center text-[10px] text-[#9CA3AF] mt-3">Installazione istantanea - 0 MB</p>
     </div>
   );
 }

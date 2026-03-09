@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Download } from "lucide-react";
+import { usePwaInstall } from "@/lib/usePwaInstall";
 
 const MYU_ICON = "/myu-icon.png";
 
@@ -30,17 +31,13 @@ const TIPS = {
 export default function MyuMascot() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { isInstalled, installing, triggerInstall } = usePwaInstall();
   const [currentAnim, setCurrentAnim] = useState("");
   const [showTip, setShowTip] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [tipText, setTipText] = useState("");
   const [showInstallBubble, setShowInstallBubble] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [installDismissed, setInstallDismissed] = useState(false);
-
-  const isStandalone = typeof window !== "undefined" && (
-    window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true
-  );
 
   // Hidden paths
   const hiddenPaths = ["/myu", "/login", "/register", "/", "/menu", "/s/"];
@@ -48,36 +45,15 @@ export default function MyuMascot() {
     (p) => location.pathname === p || location.pathname.startsWith("/s/") || location.pathname.startsWith("/menu/")
   );
 
-  // Capture install prompt
+  // Show install bubble periodically when not installed
   useEffect(() => {
-    const handler = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-    window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
-  }, []);
-
-  // Show install bubble periodically when not standalone
-  useEffect(() => {
-    if (isHidden || isStandalone || installDismissed) return;
-
-    // Show install bubble after 6s, then every 60s
-    const initial = setTimeout(() => {
-      setShowInstallBubble(true);
-    }, 6000);
-
+    if (isHidden || isInstalled || installDismissed) return;
+    const initial = setTimeout(() => setShowInstallBubble(true), 6000);
     const recurring = setInterval(() => {
-      if (!installDismissed) {
-        setShowInstallBubble(true);
-      }
+      if (!installDismissed) setShowInstallBubble(true);
     }, 60000);
-
-    return () => {
-      clearTimeout(initial);
-      clearInterval(recurring);
-    };
-  }, [location.pathname, isHidden, isStandalone, installDismissed]);
+    return () => { clearTimeout(initial); clearInterval(recurring); };
+  }, [location.pathname, isHidden, isInstalled, installDismissed]);
 
   // Page tips
   useEffect(() => {
@@ -109,20 +85,12 @@ export default function MyuMascot() {
   }, [location.pathname, isHidden, showInstallBubble]);
 
   const handleInstall = useCallback(async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === "accepted") {
-        setShowInstallBubble(false);
-        setInstallDismissed(true);
-      }
-      setDeferredPrompt(null);
-    } else {
-      // Show manual instructions
+    const result = await triggerInstall();
+    if (result) {
       setShowInstallBubble(false);
-      navigate("/myu");
+      setInstallDismissed(true);
     }
-  }, [deferredPrompt, navigate]);
+  }, [triggerInstall]);
 
   const dismissInstall = useCallback(() => {
     setShowInstallBubble(false);
@@ -136,7 +104,7 @@ export default function MyuMascot() {
   return (
     <>
       {/* Install bubble from MYU */}
-      {showInstallBubble && !isStandalone && (
+      {showInstallBubble && !isInstalled && (
         <div
           className="fixed bottom-[108px] right-4 z-50"
           style={{ animation: "myuFadeIn 0.3s ease" }}

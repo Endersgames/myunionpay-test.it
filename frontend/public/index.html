@@ -21,6 +21,21 @@
         <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Manrope:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
         
         <title>myUup.com - Paga. Guadagna. Unisciti.</title>
+        <script>
+          // GLOBAL PWA INSTALL PROMPT CAPTURE - must be before React mounts
+          window.__pwaInstallPrompt = null;
+          window.__pwaInstallOutcome = null;
+          window.addEventListener('beforeinstallprompt', function(e) {
+            e.preventDefault();
+            window.__pwaInstallPrompt = e;
+            console.log('[PWA] Install prompt captured globally');
+          });
+          window.addEventListener('appinstalled', function() {
+            window.__pwaInstallPrompt = null;
+            window.__pwaInstallOutcome = 'installed';
+            console.log('[PWA] App installed');
+          });
+        </script>
         <script src="https://assets.emergent.sh/scripts/emergent-main.js"></script>
         <!--
         These two scripts have been added for the Visual Edits, please do not edit or remove them
