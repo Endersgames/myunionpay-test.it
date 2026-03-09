@@ -73,10 +73,20 @@ async def root_health():
 # Include the router
 app.include_router(api_router)
 
+def _get_cors_origins() -> list[str]:
+    raw_origins = os.environ.get(
+        "CORS_ORIGINS",
+        "https://dev.myuup.com,http://localhost:3000,http://127.0.0.1:3000"
+    )
+    origins = [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
+    if not origins:
+        return ["https://dev.myuup.com"]
+    return origins
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=_get_cors_origins(),
     allow_methods=["*"],
     allow_headers=["*"],
 )

@@ -46,9 +46,9 @@ const AuthProvider = ({ children }) => {
   // Check for existing token on mount
   useEffect(() => {
     const initAuth = async () => {
-      // CRITICAL: If returning from Google OAuth callback, skip the /me check.
-      // GoogleAuthCallback will exchange the session_id and establish the session first.
-      if (window.location.hash?.includes('session_id=')) {
+      const isGoogleCallbackPath = window.location.pathname === "/google-auth/callback";
+      const callbackHasSession = window.location.search?.includes("session_id=") || window.location.hash?.includes("session_id=");
+      if (isGoogleCallbackPath && callbackHasSession) {
         setLoading(false);
         return;
       }
@@ -135,17 +135,12 @@ const ProtectedRoute = ({ children }) => {
 };
 
 function AppContent() {
-  // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-  // Detect session_id synchronously during render to prevent race conditions
-  if (window.location.hash?.includes('session_id=')) {
-    return <GoogleAuthCallback />;
-  }
-
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/google-auth/callback" element={<GoogleAuthCallback />} />
       <Route path="/s/:qrCode" element={<ScanRedirectPage />} />
       <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
       <Route path="/qr" element={<ProtectedRoute><QRCodePage /></ProtectedRoute>} />

@@ -24,9 +24,16 @@ export default function GoogleAuthCallback() {
     hasProcessed.current = true;
 
     const processCallback = async () => {
-      const hash = window.location.hash;
-      const params = new URLSearchParams(hash.replace("#", ""));
-      const sid = params.get("session_id");
+      const queryParams = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.replace("#", ""));
+      const sid = queryParams.get("session_id") || hashParams.get("session_id");
+      const oauthError = queryParams.get("error") || hashParams.get("error");
+
+      if (oauthError) {
+        toast.error("Accesso Google annullato o non riuscito");
+        navigate("/login", { replace: true });
+        return;
+      }
 
       if (!sid) {
         toast.error("Sessione Google non trovata");

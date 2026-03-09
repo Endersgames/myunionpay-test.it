@@ -1,6 +1,8 @@
 // API Service - Backend REST API integration
 // Use relative URLs - works on any domain (preview, custom, localhost)
 
+const API_BASE = (process.env.REACT_APP_API_BASE_URL || "/api").replace(/\/+$/, "");
+
 // Token management
 let authToken = localStorage.getItem('auth_token');
 
@@ -34,7 +36,7 @@ const apiRequest = async (endpoint, options = {}) => {
 
   let response;
   try {
-    response = await fetch(`/api${endpoint}`, {
+    response = await fetch(`${API_BASE}${endpoint}`, {
       ...options,
       headers,
     });
@@ -99,6 +101,20 @@ export const authAPI = {
 
   async getMe() {
     return apiRequest('/auth/me');
+  },
+
+  async googleCallback(sessionId) {
+    return apiRequest('/auth/google/callback', {
+      method: 'POST',
+      body: JSON.stringify({ session_id: sessionId }),
+    });
+  },
+
+  async googleComplete(sessionId, phone) {
+    return apiRequest('/auth/google/complete', {
+      method: 'POST',
+      body: JSON.stringify({ session_id: sessionId, phone }),
+    });
   },
 
   logout() {
@@ -482,7 +498,7 @@ export const menuAPI = {
     const headers = {};
     const token = getAuthToken();
     if (token) headers['Authorization'] = `Bearer ${token}`;
-    const response = await fetch(`/api/menu/items/${itemId}/image`, { method: 'POST', headers, body: formData });
+    const response = await fetch(`${API_BASE}/menu/items/${itemId}/image`, { method: 'POST', headers, body: formData });
     if (!response.ok) throw new Error('Errore upload immagine');
     return response.json();
   },
@@ -492,12 +508,12 @@ export const menuAPI = {
     const headers = {};
     const token = getAuthToken();
     if (token) headers['Authorization'] = `Bearer ${token}`;
-    const response = await fetch('/api/menu/cover-image', { method: 'POST', headers, body: formData });
+    const response = await fetch(`${API_BASE}/menu/cover-image`, { method: 'POST', headers, body: formData });
     if (!response.ok) throw new Error('Errore upload copertina');
     return response.json();
   },
   async getPublicMenu(merchantId) {
-    const response = await fetch(`/api/menu/public/${merchantId}`);
+    const response = await fetch(`${API_BASE}/menu/public/${merchantId}`);
     if (!response.ok) throw new Error('Menu non disponibile');
     return response.json();
   },

@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
-// REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
 export default function GoogleSignInButton({ label = "Continua con Google" }) {
   const [loading, setLoading] = useState(false);
 
   const handleGoogleSignIn = () => {
     setLoading(true);
-    const redirectUrl = window.location.origin + '/dashboard';
-    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
+    const apiBase = (process.env.REACT_APP_API_BASE_URL || `${window.location.origin}/api`).replace(/\/+$/, "");
+    const googleAuthStartUrl = process.env.REACT_APP_GOOGLE_AUTH_START_URL || `${apiBase}/auth/google/login`;
+    window.location.href = googleAuthStartUrl;
   };
 
   return (

@@ -1,9 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import RedirectResponse
 import uuid
 import logging
 import re
 import httpx
-from datetime import datetime, timezone
+import os
+from datetime import datetime, timezone, timedelta
+from urllib.parse import urlencode
 from database import db
 from models import UserCreate, UserLogin, UserResponse
 from services.auth import hash_password, verify_password, create_token, get_current_user, generate_qr_code
@@ -172,27 +175,159 @@ async def verify_login_test():
 # GOOGLE AUTH
 # ========================
 
-EMERGENT_AUTH_URL = "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data"
+GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
+GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
+GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
+GOOGLE_SESSION_TTL_MINUTES = int(os.environ.get("GOOGLE_SESSION_TTL_MINUTES", "15"))
+
+
+def _get_google_redirect_uri() -> str:
+    return os.environ.get("GOOGLE_REDIRECT_URI", "https://dev.myuup.com/api/auth/google/callback").strip()
+
+
+def _get_google_frontend_callback_url() -> str:
+    return os.environ.get("GOOGLE_FRONTEND_CALLBACK_URL", "https://dev.myuup.com/google-auth/callback").strip()
+
+
+def _build_frontend_callback_url(session_id: str = "", error: str = "") -> str:
+    base = _get_google_frontend_callback_url()
+    params = {}
+    if session_id:
+        params["session_id"] = session_id
+    if error:
+        params["error"] = error
+    if not params:
+        return base
+    return f"{base}?{urlencode(params)}"
+
+
+def _parse_iso_datetime(value: str) -> datetime | None:
+    try:
+        return datetime.fromisoformat(value)
+    except Exception:
+        return None
+
+
+async def _get_google_session(session_id: str) -> dict:
+    google_session = await db.google_oauth_sessions.find_one({"id": session_id}, {"_id": 0})
+    if not google_session:
+        raise HTTPException(status_code=401, detail="Sessione Google non valida")
+
+    expires_at = _parse_iso_datetime(google_session.get("expires_at", ""))
+    if not expires_at or expires_at <= datetime.now(timezone.utc):
+        await db.google_oauth_sessions.delete_one({"id": session_id})
+        raise HTTPException(status_code=401, detail="Sessione Google scaduta o non valida")
+
+    return google_session
+
+
+@router.get("/google/login")
+async def google_login():
+    """Start Google OAuth flow using backend callback on dev.myuup.com."""
+    client_id = os.environ.get("GOOGLE_CLIENT_ID", "").strip()
+    if not client_id:
+        raise HTTPException(status_code=500, detail="GOOGLE_CLIENT_ID non configurato")
+
+    state = str(uuid.uuid4())
+    await db.google_oauth_states.insert_one({
+        "state": state,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+
+    query = urlencode({
+        "client_id": client_id,
+        "redirect_uri": _get_google_redirect_uri(),
+        "response_type": "code",
+        "scope": "openid email profile",
+        "state": state,
+        "prompt": "select_account",
+        "access_type": "offline",
+    })
+    return RedirectResponse(url=f"{GOOGLE_AUTH_URL}?{query}", status_code=302)
+
+
+@router.get("/google/callback")
+async def google_oauth_callback(code: str = "", state: str = "", error: str = ""):
+    """Google OAuth callback endpoint on backend."""
+    if error:
+        logger.warning(f"Google OAuth error: {error}")
+        return RedirectResponse(url=_build_frontend_callback_url(error=error), status_code=302)
+
+    if not code or not state:
+        return RedirectResponse(
+            url=_build_frontend_callback_url(error="missing_code_or_state"),
+            status_code=302
+        )
+
+    state_doc = await db.google_oauth_states.find_one({"state": state})
+    if not state_doc:
+        return RedirectResponse(url=_build_frontend_callback_url(error="invalid_state"), status_code=302)
+    await db.google_oauth_states.delete_one({"state": state})
+
+    client_id = os.environ.get("GOOGLE_CLIENT_ID", "").strip()
+    client_secret = os.environ.get("GOOGLE_CLIENT_SECRET", "").strip()
+    if not client_id or not client_secret:
+        logger.error("Google OAuth not configured: missing client credentials")
+        return RedirectResponse(url=_build_frontend_callback_url(error="google_not_configured"), status_code=302)
+
+    async with httpx.AsyncClient(timeout=15) as client:
+        token_resp = await client.post(
+            GOOGLE_TOKEN_URL,
+            data={
+                "code": code,
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "redirect_uri": _get_google_redirect_uri(),
+                "grant_type": "authorization_code",
+            }
+        )
+
+        if token_resp.status_code != 200:
+            logger.warning(f"Google token exchange failed: {token_resp.status_code} {token_resp.text[:200]}")
+            return RedirectResponse(url=_build_frontend_callback_url(error="token_exchange_failed"), status_code=302)
+
+        access_token = token_resp.json().get("access_token", "")
+        if not access_token:
+            return RedirectResponse(url=_build_frontend_callback_url(error="missing_access_token"), status_code=302)
+
+        user_resp = await client.get(
+            GOOGLE_USERINFO_URL,
+            headers={"Authorization": f"Bearer {access_token}"}
+        )
+        if user_resp.status_code != 200:
+            logger.warning(f"Google userinfo failed: {user_resp.status_code}")
+            return RedirectResponse(url=_build_frontend_callback_url(error="userinfo_failed"), status_code=302)
+
+    google_data = user_resp.json()
+    google_email = google_data.get("email", "").strip().lower()
+    google_name = google_data.get("name", "")
+    google_picture = google_data.get("picture", "")
+
+    if not google_email:
+        return RedirectResponse(url=_build_frontend_callback_url(error="google_email_missing"), status_code=302)
+
+    session_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc)
+    await db.google_oauth_sessions.insert_one({
+        "id": session_id,
+        "email": google_email,
+        "name": google_name,
+        "picture": google_picture,
+        "created_at": now.isoformat(),
+        "expires_at": (now + timedelta(minutes=GOOGLE_SESSION_TTL_MINUTES)).isoformat(),
+    })
+
+    return RedirectResponse(url=_build_frontend_callback_url(session_id=session_id), status_code=302)
 
 
 @router.post("/google/callback", response_model=dict)
 async def google_callback(data: dict):
-    """Process Google OAuth session_id. Returns token for existing users or user info for new users."""
+    """Process Google OAuth session_id stored by backend callback."""
     session_id = data.get("session_id")
     if not session_id:
         raise HTTPException(status_code=400, detail="session_id mancante")
 
-    async with httpx.AsyncClient(timeout=10) as client:
-        resp = await client.get(
-            EMERGENT_AUTH_URL,
-            headers={"X-Session-ID": session_id}
-        )
-
-    if resp.status_code != 200:
-        logger.warning(f"Google auth failed: {resp.status_code}")
-        raise HTTPException(status_code=401, detail="Sessione Google non valida")
-
-    google_data = resp.json()
+    google_data = await _get_google_session(session_id)
     google_email = google_data.get("email", "").strip().lower()
     google_name = google_data.get("name", "")
     google_picture = google_data.get("picture", "")
@@ -207,6 +342,7 @@ async def google_callback(data: dict):
 
     if existing_user:
         token = create_token(existing_user["id"])
+        await db.google_oauth_sessions.delete_one({"id": session_id})
         return {"token": token, "user_id": existing_user["id"], "is_new": False}
 
     return {
@@ -229,16 +365,7 @@ async def google_complete(data: dict):
     if not phone:
         raise HTTPException(status_code=400, detail="Numero di telefono obbligatorio")
 
-    async with httpx.AsyncClient(timeout=10) as client:
-        resp = await client.get(
-            EMERGENT_AUTH_URL,
-            headers={"X-Session-ID": session_id}
-        )
-
-    if resp.status_code != 200:
-        raise HTTPException(status_code=401, detail="Sessione Google scaduta o non valida")
-
-    google_data = resp.json()
+    google_data = await _get_google_session(session_id)
     google_email = google_data.get("email", "").strip().lower()
     google_name = google_data.get("name", "")
     google_picture = google_data.get("picture", "")
@@ -282,7 +409,7 @@ async def google_complete(data: dict):
 
     await db.users.insert_one(user_doc)
     await db.wallets.insert_one(wallet_doc)
+    await db.google_oauth_sessions.delete_one({"id": session_id})
 
     token = create_token(user_id)
     return {"token": token, "user_id": user_id, "is_new": False}
-
