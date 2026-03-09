@@ -54,17 +54,7 @@ function BrandBanner({ onInstall, installing, isInstalled }) {
           </div>
         ))}
       </div>
-      {/* MYU Install CTA under brands */}
-      {!isInstalled && (
-        <div className="flex justify-center mt-4 pt-3 border-t border-black/5" data-testid="myu-brand-cta">
-          <button onClick={onInstall} disabled={installing}
-            className="flex items-center gap-1.5 bg-[#2B7AB8] hover:bg-[#236699] active:scale-[0.97] text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-md shadow-[#2B7AB8]/20 transition-all disabled:opacity-70"
-            data-testid="myu-brand-install-btn">
-            <Download className="w-3.5 h-3.5" />
-            {installing ? "..." : "Installa Ora"}
-          </button>
-        </div>
-      )}
+      {/* MYU Install CTA under brands - removed */}
     </div>
   );
 }
