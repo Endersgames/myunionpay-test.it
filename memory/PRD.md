@@ -106,6 +106,7 @@ App PWA per pagamenti digitali con wallet UP, gift card, merchant affiliati, QR 
 - myu_conversations, myu_conversation_state, myu_tasks, myu_intent_logs
 - app_config, user_notifications, notification_interactions
 - **NEW**: user_location_state, tool_cache, request_cost_logs
+- **NEW**: app_content (admin-managed: privacy_policy, data_treatment_1-4)
 
 ## API Endpoints Auth
 - POST /api/auth/register - Registrazione classica
@@ -113,6 +114,16 @@ App PWA per pagamenti digitali con wallet UP, gift card, merchant affiliati, QR 
 - GET /api/auth/me - Info utente corrente
 - POST /api/auth/google/callback - Verifica sessione Google (nuovo/esistente)
 - POST /api/auth/google/complete - Completa registrazione Google con telefono
+- POST /api/auth/delete-account - Richiesta eliminazione account (30 giorni)
+
+## API Endpoints Profilo/Impostazioni
+- PUT /api/profile/personal - Aggiorna dati personali (nome, telefono, indirizzo)
+- POST /api/profile/picture - Upload foto profilo
+- GET /api/profile/data-treatment - Preferenze trattamento dati
+- PUT /api/profile/data-treatment - Aggiorna switch trattamento dati
+- GET /api/content/{key} - Contenuto pubblico (privacy policy, etc.)
+- GET /api/admin/content - Admin: tutti i contenuti
+- PUT /api/admin/content/{key} - Admin: aggiorna contenuto
 
 ## API Endpoints MYU
 - POST /api/myu/chat - Chat principale orchestrato
@@ -169,4 +180,4 @@ App PWA per pagamenti digitali con wallet UP, gift card, merchant affiliati, QR 
 - Utenti Google senza password (password_hash vuoto, google_auth: true)
 
 ---
-Ultimo aggiornamento: Marzo 2026 (Google Auth aggiunto)
+Ultimo aggiornamento: Marzo 2026 (Impostazioni + Profilo redesign)

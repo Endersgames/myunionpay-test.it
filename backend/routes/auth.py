@@ -288,6 +288,11 @@ async def google_complete(data: dict):
         "created_at": datetime.now(timezone.utc).isoformat()
     }
 
+    await db.users.insert_one(user_doc)
+    await db.wallets.insert_one(wallet_doc)
+
+    token = create_token(user_id)
+    return {"token": token, "user_id": user_id, "is_new": False}
 
 
 @router.post("/delete-account", response_model=dict)
@@ -308,10 +313,4 @@ async def request_account_deletion(user: dict = Depends(get_current_user)):
         "message": "Account disattivato. Sarà eliminato definitivamente tra 30 giorni.",
         "deletion_scheduled_at": deletion_date.isoformat()
     }
-
-    await db.users.insert_one(user_doc)
-    await db.wallets.insert_one(wallet_doc)
-
-    token = create_token(user_id)
-    return {"token": token, "user_id": user_id, "is_new": False}
 
