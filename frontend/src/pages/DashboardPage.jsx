@@ -249,6 +249,15 @@ export default function DashboardPage() {
               <Bot className="w-4 h-4 mr-2" />
               Admin - Configurazione AI
             </Button>
+            <Button
+              onClick={() => navigate("/admin/content")}
+              variant="outline"
+              className="w-full h-12 rounded-xl border-[#1A1A1A] text-[#1A1A1A] font-semibold"
+              data-testid="admin-content-btn"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Admin - Contenuti
+            </Button>
           </div>
         )}
       </div>

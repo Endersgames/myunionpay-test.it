@@ -118,7 +118,11 @@ export const authAPI = {
 
   logout() {
     clearAuth();
-  }
+  },
+
+  async deleteAccount() {
+    return apiRequest('/auth/delete-account', { method: 'POST' });
+  },
 };
 
 // ========================
@@ -264,7 +268,43 @@ export const profileAPI = {
       method: 'PUT',
       body: JSON.stringify({ tags }),
     });
-  }
+  },
+
+  async updatePersonalData(data) {
+    return apiRequest('/profile/personal', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async uploadPicture(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const headers = {};
+    const token = getAuthToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await fetch('/api/profile/picture', {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+    if (!response.ok) {
+      const err = await response.text().catch(() => '');
+      try { throw new Error(JSON.parse(err).detail); } catch { throw new Error('Errore upload'); }
+    }
+    return response.json();
+  },
+
+  async getDataTreatment() {
+    return apiRequest('/profile/data-treatment');
+  },
+
+  async updateDataTreatment(data) {
+    return apiRequest('/profile/data-treatment', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
 };
 
 // ========================
@@ -587,3 +627,28 @@ export const MERCHANT_CATEGORIES = [
   "Palestra/Fitness", "Bellezza/Spa", "Alimentari", "Farmacia",
   "Servizi", "Intrattenimento", "Altro"
 ];
+
+// ========================
+// CONTENT API (Public + Admin)
+// ========================
+
+export const contentAPI = {
+  async getPublic(key) {
+    return apiRequest(`/content/${key}`);
+  },
+
+  async adminGetAll() {
+    return apiRequest('/admin/content');
+  },
+
+  async adminGet(key) {
+    return apiRequest(`/admin/content/${key}`);
+  },
+
+  async adminUpdate(key, data) {
+    return apiRequest(`/admin/content/${key}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+};

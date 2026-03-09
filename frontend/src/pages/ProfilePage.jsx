@@ -1,16 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/App";
-import { 
-  User, Copy, Share2, 
-  LogOut, Store, Users, Tag, ChevronRight, Smartphone, Wifi, Phone, Signal, CreditCard, Gift,
-  ClipboardCheck, Upload, FileCheck, Zap, CheckCircle2
+import {
+  User, Copy, Share2, Settings,
+  Store, Users, Tag, ChevronRight, Smartphone, Wifi, Phone, Signal, CreditCard, Gift,
+  ClipboardCheck, Upload, FileCheck, Zap, CheckCircle2, Camera
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import BottomNav from "@/components/BottomNav";
-
-// API
 import { profileAPI, referralAPI, simAPI, tasksAPI, PROFILE_TAGS } from "@/lib/api";
 
 export default function ProfilePage() {
@@ -23,11 +21,11 @@ export default function ProfilePage() {
   const [uploadingTask, setUploadingTask] = useState(null);
   const [showTags, setShowTags] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [uploadingPic, setUploadingPic] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
-    if (user?.id) {
-      fetchData();
-    }
+    if (user?.id) fetchData();
   }, [user?.id]);
 
   const fetchData = async () => {
@@ -49,12 +47,10 @@ export default function ProfilePage() {
   };
 
   const toggleTag = async (tag) => {
-    const newTags = myTags.includes(tag) 
+    const newTags = myTags.includes(tag)
       ? myTags.filter(t => t !== tag)
       : [...myTags, tag];
-    
     setMyTags(newTags);
-    
     try {
       await profileAPI.updateTags(newTags);
       await refreshUser();
@@ -76,26 +72,32 @@ export default function ProfilePage() {
       try {
         await navigator.share({
           title: "Unisciti a myUup.com",
-          text: `Registrati con il mio codice referral e guadagna 1 UP!`,
+          text: "Registrati con il mio codice referral e guadagna 1 UP!",
           url
         });
-      } catch (err) {
-        console.log("Share cancelled");
-      }
+      } catch (err) { /* cancelled */ }
     } else {
       handleCopyReferral();
     }
   };
 
-  const handleLogout = async () => {
-    await logout();
-    navigate("/");
+  const handlePictureUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingPic(true);
+    try {
+      await profileAPI.uploadPicture(file);
+      await refreshUser();
+      toast.success("Foto profilo aggiornata");
+    } catch (err) {
+      toast.error(err.message || "Errore upload foto");
+    }
+    setUploadingPic(false);
   };
 
   const handleFileUpload = async (taskId, e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setUploadingTask(taskId);
     try {
       const result = await tasksAPI.uploadDocument(taskId, file);
@@ -118,25 +120,79 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-white pb-safe">
-      {/* Header */}
       <div className="px-6 pt-8 pb-4">
         <h1 className="font-heading text-2xl font-bold mb-6 text-[#1A1A1A]">Profilo</h1>
 
-        {/* User Card */}
+        {/* User Card - Redesigned */}
         <div className="bg-[#F5F5F5] rounded-2xl p-5 border border-black/5 mb-6">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#2B7AB8] to-[#1E5F8A] flex items-center justify-center">
-              <span className="font-heading text-2xl font-bold text-white">
-                {user?.full_name?.charAt(0).toUpperCase()}
-              </span>
+          <div className="flex items-center justify-between mb-4">
+            {/* Left: Account icon + Name + Info account */}
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-[#2B7AB8]/10 flex items-center justify-center">
+                <User className="w-6 h-6 text-[#2B7AB8]" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-lg text-[#1A1A1A]" data-testid="profile-name">
+                  {user?.full_name}
+                </h2>
+                <button
+                  onClick={() => navigate("/settings")}
+                  className="text-sm text-[#2B7AB8] hover:underline"
+                  data-testid="info-account-link"
+                >
+                  Info account
+                </button>
+              </div>
             </div>
-            <div>
-              <h2 className="font-semibold text-lg text-[#1A1A1A]">{user?.full_name}</h2>
-              <p className="text-sm text-[#6B7280]">{user?.email}</p>
-              <p className="text-sm text-[#6B7280]">{user?.phone}</p>
+
+            {/* Right: Profile photo (customizable) + Settings gear */}
+            <div className="flex items-center gap-3">
+              {/* Profile picture */}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="relative group"
+                data-testid="profile-picture-btn"
+              >
+                {user?.profile_picture ? (
+                  <img
+                    src={user.profile_picture}
+                    alt=""
+                    className="w-14 h-14 rounded-full object-cover border-2 border-white shadow"
+                  />
+                ) : (
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#2B7AB8] to-[#1E5F8A] flex items-center justify-center border-2 border-white shadow">
+                    <span className="font-heading text-xl font-bold text-white">
+                      {user?.full_name?.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                )}
+                <div className="absolute inset-0 rounded-full bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  {uploadingPic ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Camera className="w-4 h-4 text-white" />
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handlePictureUpload}
+                />
+              </button>
+
+              {/* Settings gear */}
+              <button
+                onClick={() => navigate("/settings")}
+                className="p-2 rounded-xl hover:bg-black/5 transition-colors"
+                data-testid="settings-gear-btn"
+              >
+                <Settings className="w-5 h-5 text-[#6B7280]" />
+              </button>
             </div>
           </div>
-          
+
           <div className="flex gap-4">
             <div className="flex-1 bg-white rounded-xl p-3 text-center">
               <p className="font-mono text-xl font-bold text-[#E85A24]">{user?.up_points || 0}</p>
@@ -160,10 +216,7 @@ export default function ProfilePage() {
           </p>
           <div className="bg-white rounded-xl p-3 mb-4 flex items-center justify-between">
             <span className="font-mono text-[#2B7AB8]">{user?.referral_code}</span>
-            <button 
-              onClick={handleCopyReferral}
-              className="text-[#6B7280] hover:text-[#1A1A1A]"
-            >
+            <button onClick={handleCopyReferral} className="text-[#6B7280] hover:text-[#1A1A1A]">
               <Copy className="w-4 h-4" />
             </button>
           </div>
@@ -183,7 +236,6 @@ export default function ProfilePage() {
             <ClipboardCheck className="w-5 h-5 text-[#2B7AB8]" />
             <h3 className="font-semibold text-[#1A1A1A]">Task</h3>
           </div>
-
           {tasks.length === 0 ? (
             <p className="text-sm text-[#6B7280]">Nessun task disponibile</p>
           ) : (
@@ -192,17 +244,13 @@ export default function ProfilePage() {
                 <div
                   key={task.id}
                   className={`rounded-xl p-4 border ${
-                    task.status === "verified"
-                      ? "bg-green-50 border-green-200"
-                      : "bg-white border-black/5"
+                    task.status === "verified" ? "bg-green-50 border-green-200" : "bg-white border-black/5"
                   }`}
                   data-testid={`task-${task.task_type}`}
                 >
                   <div className="flex items-start gap-3">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
-                      task.status === "verified"
-                        ? "bg-green-100"
-                        : "bg-[#E85A24]/10"
+                      task.status === "verified" ? "bg-green-100" : "bg-[#E85A24]/10"
                     }`}>
                       {task.status === "verified" ? (
                         <CheckCircle2 className="w-5 h-5 text-green-600" />
@@ -214,15 +262,12 @@ export default function ProfilePage() {
                       <div className="flex items-center justify-between mb-1">
                         <h4 className="font-semibold text-sm text-[#1A1A1A]">{task.title}</h4>
                         <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                          task.status === "verified"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-[#E85A24]/10 text-[#E85A24]"
+                          task.status === "verified" ? "bg-green-100 text-green-700" : "bg-[#E85A24]/10 text-[#E85A24]"
                         }`}>
                           {task.status === "verified" ? "Completato" : `+${task.reward_up} UP`}
                         </span>
                       </div>
                       <p className="text-xs text-[#6B7280] mb-3">{task.description}</p>
-
                       {task.status === "verified" ? (
                         <div className="flex items-center gap-2 text-green-600">
                           <Zap className="w-4 h-4" />
@@ -234,9 +279,7 @@ export default function ProfilePage() {
                       ) : (
                         <label
                           className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium cursor-pointer transition-colors ${
-                            uploadingTask === task.id
-                              ? "bg-gray-200 text-gray-500"
-                              : "bg-[#E85A24] text-white hover:bg-[#D14E1A]"
+                            uploadingTask === task.id ? "bg-gray-200 text-gray-500" : "bg-[#E85A24] text-white hover:bg-[#D14E1A]"
                           }`}
                           data-testid={`upload-btn-${task.task_type}`}
                         >
@@ -266,10 +309,8 @@ export default function ProfilePage() {
             className="w-full bg-gradient-to-br from-[#1A1A1A] to-[#2D2D2D] rounded-2xl p-5 mb-6 text-white text-left relative overflow-hidden"
             data-testid="sim-dashboard-btn"
           >
-            {/* Card pattern */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
-            
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -283,15 +324,12 @@ export default function ProfilePage() {
                 </div>
                 <ChevronRight className="w-5 h-5 text-white/50" />
               </div>
-              
-              {/* Mini card preview */}
               <div className="bg-gradient-to-r from-[#2B7AB8] to-[#1E5F8A] rounded-xl p-3 mb-3">
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-sm tracking-wider">•••• •••• •••• {sim.phone_number?.slice(-4) || '0000'}</span>
+                  <span className="font-mono text-sm tracking-wider">.... .... .... {sim.phone_number?.slice(-4) || '0000'}</span>
                   <img src="/logo.png" alt="UP" className="h-5 opacity-80" />
                 </div>
               </div>
-              
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div className="bg-white/10 rounded-lg p-2">
                   <Phone className="w-4 h-4 mx-auto mb-1 opacity-70" />
@@ -310,10 +348,8 @@ export default function ProfilePage() {
           </button>
         ) : (
           <div className="bg-gradient-to-br from-[#1A1A1A] to-[#2D2D2D] rounded-2xl p-5 mb-6 text-white relative overflow-hidden">
-            {/* Card pattern */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
-            
             <div className="relative z-10">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#E85A24] to-[#D14E1A] flex items-center justify-center">
@@ -327,15 +363,13 @@ export default function ProfilePage() {
                   </div>
                 </div>
               </div>
-              
-              {/* Card Preview */}
               <div className="bg-gradient-to-r from-[#2B7AB8] to-[#1E5F8A] rounded-xl p-4 mb-4 relative">
                 <div className="flex items-center justify-between mb-6">
                   <img src="/logo.png" alt="UP" className="h-6" />
                   <span className="text-xs text-white/60">DEBIT</span>
                 </div>
                 <div className="font-mono text-lg tracking-widest mb-4 text-white/80">
-                  •••• •••• •••• ••••
+                  .... .... .... ....
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <div>
@@ -344,12 +378,10 @@ export default function ProfilePage() {
                   </div>
                   <div className="text-right">
                     <p className="text-white/50 text-xs">SCADENZA</p>
-                    <p className="font-medium">••/••</p>
+                    <p className="font-medium">../..</p>
                   </div>
                 </div>
               </div>
-              
-              {/* Benefits */}
               <div className="grid grid-cols-2 gap-2 mb-4">
                 <div className="bg-white/10 rounded-lg p-3 text-center">
                   <CreditCard className="w-5 h-5 mx-auto mb-1 text-[#E85A24]" />
@@ -362,12 +394,10 @@ export default function ProfilePage() {
                   <p className="text-xs text-white/50">In omaggio</p>
                 </div>
               </div>
-              
               <div className="flex items-center justify-between mb-4 px-1">
                 <span className="text-white/60">Attivazione</span>
-                <span className="font-mono text-2xl font-bold text-[#E85A24]">15,99€</span>
+                <span className="font-mono text-2xl font-bold text-[#E85A24]">15,99 EUR</span>
               </div>
-              
               <Button
                 onClick={() => navigate("/sim-activation")}
                 className="w-full h-12 rounded-full bg-[#E85A24] hover:bg-[#D14E1A] text-white font-semibold"
@@ -382,7 +412,7 @@ export default function ProfilePage() {
 
         {/* Profile Tags */}
         <div className="bg-[#F5F5F5] rounded-2xl p-5 border border-black/5 mb-6">
-          <button 
+          <button
             onClick={() => setShowTags(!showTags)}
             className="w-full flex items-center justify-between"
             data-testid="toggle-tags-btn"
@@ -398,7 +428,6 @@ export default function ProfilePage() {
             </div>
             <ChevronRight className={`w-5 h-5 text-[#6B7280] transition-transform ${showTags ? 'rotate-90' : ''}`} />
           </button>
-          
           {showTags && (
             <div className="mt-4 pt-4 border-t border-black/5">
               <p className="text-sm text-[#6B7280] mb-3">
@@ -452,17 +481,6 @@ export default function ProfilePage() {
             <ChevronRight className="w-5 h-5 text-[#6B7280]" />
           </button>
         )}
-
-        {/* Logout */}
-        <Button
-          onClick={handleLogout}
-          variant="outline"
-          className="w-full h-12 rounded-full border-[#FF3B30]/30 text-[#FF3B30] hover:bg-[#FF3B30]/10 hover:text-[#FF3B30]"
-          data-testid="logout-btn"
-        >
-          <LogOut className="w-4 h-4 mr-2" />
-          Esci
-        </Button>
       </div>
 
       <BottomNav active="profile" />

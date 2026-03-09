@@ -31,6 +31,13 @@ import AdminUsersPage from "@/pages/AdminUsersPage";
 import AdminOpenAIPage from "@/pages/AdminOpenAIPage";
 import MerchantReferredUsersPage from "@/pages/MerchantReferredUsersPage";
 import GoogleAuthCallback from "@/pages/GoogleAuthCallback";
+import SettingsPage from "@/pages/SettingsPage";
+import DatiPersonaliPage from "@/pages/DatiPersonaliPage";
+import TrattamentoDatiPage from "@/pages/TrattamentoDatiPage";
+import PrivacyPolicyPage from "@/pages/PrivacyPolicyPage";
+import RimuoviAccountPage from "@/pages/RimuoviAccountPage";
+import MieGiftCardPage from "@/pages/MieGiftCardPage";
+import AdminContentPage from "@/pages/AdminContentPage";
 import MyuMascot from "@/components/MyuMascot";
 import ChromePromptBanner from "@/components/ChromePromptBanner";
 
@@ -166,6 +173,13 @@ function AppContent() {
       <Route path="/admin/users" element={<ProtectedRoute><AdminUsersPage /></ProtectedRoute>} />
       <Route path="/admin/openai" element={<ProtectedRoute><AdminOpenAIPage /></ProtectedRoute>} />
       <Route path="/merchant/referred-users" element={<ProtectedRoute><MerchantReferredUsersPage /></ProtectedRoute>} />
+      <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+      <Route path="/settings/personal" element={<ProtectedRoute><DatiPersonaliPage /></ProtectedRoute>} />
+      <Route path="/settings/data-treatment" element={<ProtectedRoute><TrattamentoDatiPage /></ProtectedRoute>} />
+      <Route path="/settings/privacy" element={<ProtectedRoute><PrivacyPolicyPage /></ProtectedRoute>} />
+      <Route path="/settings/delete-account" element={<ProtectedRoute><RimuoviAccountPage /></ProtectedRoute>} />
+      <Route path="/settings/gift-cards" element={<ProtectedRoute><MieGiftCardPage /></ProtectedRoute>} />
+      <Route path="/admin/content" element={<ProtectedRoute><AdminContentPage /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

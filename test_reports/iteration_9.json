@@ -1,0 +1,66 @@
+{
+  "summary": "Settings/Profile Redesign Feature Testing Complete. Backend: 29/29 tests passed. Frontend: All UI tests passed for regular user and admin user flows.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "/api/auth/google/complete",
+        "issue": "Function creates user_doc and wallet_doc but never inserts them into database. The insert code and return statement are unreachable (placed after delete-account function at lines 312-316). New users cannot complete Google OAuth registration.",
+        "priority": "CRITICAL"
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_settings_profile.py",
+    "/app/test_reports/pytest/settings_profile_results.xml"
+  ],
+  "action_items": [
+    "CRITICAL: Fix /app/backend/routes/auth.py - The google_complete function (lines 229-290) is missing the code to insert user and wallet documents. The db.users.insert_one, db.wallets.insert_one, and return statement are currently placed after the delete-account function (lines 312-316) making them unreachable dead code. Move lines 312-316 to be inside the google_complete function before line 291."
+  ],
+  "critical_code_review_comments": [
+    "auth.py has code after return statement at line 316 (dead code after google_complete function) - this should be cleaned up",
+    "All new pages have proper data-testid attributes for testing"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_settings_profile.py"
+  ],
+  "success_rate": {
+    "backend": "100% (29/29 passed)",
+    "frontend": "100% (all pages and flows working)"
+  },
+  "test_credentials": {
+    "test_user": "test@test.com / test123",
+    "admin_user": "admin@test.com / test123"
+  },
+  "seed_data_creation": "None - using existing seeded data (5 app_content items)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Settings/Profile redesign fully tested. Key findings: 1) Profile page has redesigned header with account icon (left), name + 'Info account' link, profile photo button (right), and settings gear icon. 2) Settings page (/settings) has all 5 menu items: Dati Personali, Le mie Gift Card, Trattamento dati, Privacy Policy, Rimuovi account, plus Log Out button. 3) Dati Personali (/settings/personal) shows name, email (disabled), phone, address fields with save button working. 4) Trattamento Dati (/settings/data-treatment) shows 4 sections with toggle switches, badge shows 'Attivo' or 'Non attivo'. 5) Privacy Policy (/settings/privacy) loads content from /api/content/privacy_policy. 6) Gift Cards (/settings/gift-cards) shows empty state or purchased cards from /api/giftcards/my-purchases. 7) Rimuovi Account (/settings/delete-account) has two-step confirmation flow. 8) Admin Content (/admin/content) shows all 5 content items with edit buttons, edit form has title/content inputs and save button. 9) Admin button 'Admin - Contenuti' visible on dashboard for admin user (admin@test.com). 10) Account deletion via POST /api/auth/delete-account sets is_deleted=true, login cancels deletion.",
+  "verified_features": {
+    "Profile page header redesign": "PASS - Account icon left, name shown, Info account link, profile photo right, settings gear icon",
+    "Settings page menu items": "PASS - All 5 items (personal, gift-cards, data-treatment, privacy, delete-account) + logout button visible",
+    "Settings navigation": "PASS - Each item navigates to correct sub-page",
+    "Dati Personali page": "PASS - Name, email (disabled), phone, address fields; save works",
+    "Trattamento Dati page": "PASS - 4 sections with switches, badge status changes",
+    "Privacy Policy page": "PASS - Shows content from admin",
+    "Rimuovi Account page": "PASS - Two-step confirmation flow working",
+    "Le mie Gift Card page": "PASS - Shows empty state or purchased cards",
+    "Admin Content page": "PASS - Admin can view and edit all 5 content items",
+    "Backend POST /api/profile/personal": "PASS - Updates personal data",
+    "Backend POST /api/profile/picture": "PASS - Validates image uploads",
+    "Backend GET /api/profile/data-treatment": "PASS - Returns 4 sections with status",
+    "Backend PUT /api/profile/data-treatment": "PASS - Updates switches",
+    "Backend POST /api/auth/delete-account": "PASS - Soft deletes with 30-day grace period",
+    "Backend GET /api/content/{key}": "PASS - Public content endpoint works",
+    "Backend GET /api/admin/content": "PASS - Admin gets all content (regular user denied)",
+    "Backend PUT /api/admin/content/{key}": "PASS - Admin updates content",
+    "Admin button on dashboard": "PASS - 'Admin - Contenuti' visible for admin user",
+    "Login cancels deletion": "PASS - Verified in tests"
+  },
+  "code_issue_found": "CRITICAL BUG: In /app/backend/routes/auth.py lines 312-316, there is dead code after the return statement in the delete-account endpoint. This appears to be leftover code from the google_complete function that should have been inside that function (lines 229-290). The db.users.insert_one, db.wallets.insert_one and return statement are unreachable. This means Google Auth complete flow is broken - new users cannot be registered via Google OAuth because the code to create the user and wallet is placed in the wrong function."
+}

@@ -102,6 +102,14 @@ async def login(data: UserLogin):
         logger.warning(f"Login failed: wrong password for {email_lower}")
         raise HTTPException(status_code=401, detail="Credenziali non valide - password errata")
 
+    # Cancel pending account deletion on login
+    if user.get("is_deleted"):
+        await db.users.update_one(
+            {"id": user["id"]},
+            {"$unset": {"is_deleted": "", "deleted_at": "", "deletion_scheduled_at": ""}}
+        )
+        logger.info(f"Account deletion cancelled for: {email_lower}")
+
     token = create_token(user["id"])
     logger.info(f"Login success for: {email_lower}")
     return {"token": token, "user_id": user["id"]}
@@ -278,6 +286,27 @@ async def google_complete(data: dict):
         "balance": 100.0,
         "currency": "EUR",
         "created_at": datetime.now(timezone.utc).isoformat()
+    }
+
+
+
+@router.post("/delete-account", response_model=dict)
+async def request_account_deletion(user: dict = Depends(get_current_user)):
+    """Request account deletion. Account is deactivated immediately, deleted after 30 days."""
+    from datetime import timedelta
+    now = datetime.now(timezone.utc)
+    deletion_date = now + timedelta(days=30)
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$set": {
+            "is_deleted": True,
+            "deleted_at": now.isoformat(),
+            "deletion_scheduled_at": deletion_date.isoformat()
+        }}
+    )
+    return {
+        "message": "Account disattivato. Sarà eliminato definitivamente tra 30 giorni.",
+        "deletion_scheduled_at": deletion_date.isoformat()
     }
 
     await db.users.insert_one(user_doc)

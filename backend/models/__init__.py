@@ -31,6 +31,9 @@ class UserResponse(BaseModel):
     is_merchant: bool
     is_admin: Optional[bool] = False
     created_at: str
+    address: Optional[str] = ""
+    profile_picture: Optional[str] = ""
+    google_auth: Optional[bool] = False
 
 
 # ========================

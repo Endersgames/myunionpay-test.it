@@ -1,5 +1,7 @@
 from fastapi import FastAPI, APIRouter
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
+from datetime import datetime, timezone
 import os
 import logging
 
@@ -25,6 +27,7 @@ from routes.myu import router as myu_router
 from routes.merchant_users import router as merchant_users_router
 from routes.admin_users import router as admin_users_router
 from routes.admin_openai import router as admin_openai_router
+from routes.admin_content import router as admin_content_router
 
 # Create the main app
 app = FastAPI(title="myUup.com API", version="2.0.0")
@@ -51,6 +54,7 @@ api_router.include_router(myu_router)
 api_router.include_router(merchant_users_router)
 api_router.include_router(admin_users_router)
 api_router.include_router(admin_openai_router)
+api_router.include_router(admin_content_router)
 
 
 # ========================
@@ -65,6 +69,15 @@ async def root():
 async def health():
     return {"status": "healthy"}
 
+@api_router.get("/content/{key}")
+async def get_public_content(key: str):
+    """Public endpoint to get app content."""
+    from database import db
+    item = await db.app_content.find_one({"key": key}, {"_id": 0})
+    if not item:
+        return {"key": key, "title": "", "content": ""}
+    return item
+
 # Root level health check for Kubernetes probes
 @app.get("/health")
 async def root_health():
@@ -72,6 +85,11 @@ async def root_health():
 
 # Include the router
 app.include_router(api_router)
+
+# Serve uploaded files
+UPLOADS_DIR = os.path.join(os.path.dirname(__file__), "uploads")
+os.makedirs(UPLOADS_DIR, exist_ok=True)
+app.mount("/api/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
 
 app.add_middleware(
     CORSMiddleware,
@@ -91,6 +109,46 @@ logger = logging.getLogger(__name__)
 @app.on_event("startup")
 async def startup_event():
     await seed_test_data()
+    await seed_app_content()
+
+
+async def seed_app_content():
+    """Seed default app content if not present."""
+    from database import db
+    defaults = [
+        {
+            "key": "data_treatment_1",
+            "title": "Comunicazioni commerciali",
+            "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+        },
+        {
+            "key": "data_treatment_2",
+            "title": "Profilazione utente",
+            "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident."
+        },
+        {
+            "key": "data_treatment_3",
+            "title": "Condivisione con terze parti",
+            "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit."
+        },
+        {
+            "key": "data_treatment_4",
+            "title": "Analisi e miglioramento servizi",
+            "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error."
+        },
+        {
+            "key": "privacy_policy",
+            "title": "Informativa sulla Privacy",
+            "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.\n\nDuis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n\nSed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo."
+        }
+    ]
+    for item in defaults:
+        existing = await db.app_content.find_one({"key": item["key"]})
+        if not existing:
+            item["created_at"] = datetime.now(timezone.utc).isoformat()
+            item["updated_at"] = item["created_at"]
+            await db.app_content.insert_one(item)
+    logger.info("App content seed complete")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
