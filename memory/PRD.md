@@ -125,6 +125,13 @@ App PWA per pagamenti digitali con wallet UP, gift card, merchant affiliati, QR 
 - GET /api/admin/content - Admin: tutti i contenuti
 - PUT /api/admin/content/{key} - Admin: aggiorna contenuto
 
+## API Endpoints Admin Features & API Config
+- GET /api/admin/features/public - Feature toggles pubblici (no auth)
+- GET /api/admin/features - Admin: tutti i toggle con categorie
+- PUT /api/admin/features - Admin: aggiorna toggle {feature: bool}
+- GET /api/admin/features/api-config - Admin: config API telefonia/fintech
+- PUT /api/admin/features/api-config/{section} - Admin: aggiorna config API
+
 ## API Endpoints MYU
 - POST /api/myu/chat - Chat principale orchestrato
 - GET /api/myu/history - Storico chat
