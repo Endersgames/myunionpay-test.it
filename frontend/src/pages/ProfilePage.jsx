@@ -126,11 +126,15 @@ export default function ProfilePage() {
         {/* User Card - Redesigned */}
         <div className="bg-[#F5F5F5] rounded-2xl p-5 border border-black/5 mb-6">
           <div className="flex items-center justify-between mb-4">
-            {/* Left: Account icon + Name + Info account */}
+            {/* Left: Settings gear icon + Name + Info account */}
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-[#2B7AB8]/10 flex items-center justify-center">
-                <User className="w-6 h-6 text-[#2B7AB8]" />
-              </div>
+              <button
+                onClick={() => navigate("/settings")}
+                className="w-14 h-14 rounded-full bg-[#2B7AB8]/10 flex items-center justify-center hover:bg-[#2B7AB8]/20 transition-colors shrink-0"
+                data-testid="settings-gear-btn"
+              >
+                <Settings className="w-7 h-7 text-[#2B7AB8]" />
+              </button>
               <div>
                 <h2 className="font-semibold text-lg text-[#1A1A1A]" data-testid="profile-name">
                   {user?.full_name}
@@ -145,52 +149,40 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Right: Profile photo (customizable) + Settings gear */}
-            <div className="flex items-center gap-3">
-              {/* Profile picture */}
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="relative group"
-                data-testid="profile-picture-btn"
-              >
-                {user?.profile_picture ? (
-                  <img
-                    src={user.profile_picture}
-                    alt=""
-                    className="w-14 h-14 rounded-full object-cover border-2 border-white shadow"
-                  />
-                ) : (
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#2B7AB8] to-[#1E5F8A] flex items-center justify-center border-2 border-white shadow">
-                    <span className="font-heading text-xl font-bold text-white">
-                      {user?.full_name?.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                )}
-                <div className="absolute inset-0 rounded-full bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  {uploadingPic ? (
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <Camera className="w-4 h-4 text-white" />
-                  )}
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handlePictureUpload}
+            {/* Right: Profile photo (customizable) */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="relative group shrink-0"
+              data-testid="profile-picture-btn"
+            >
+              {user?.profile_picture ? (
+                <img
+                  src={user.profile_picture}
+                  alt=""
+                  className="w-14 h-14 rounded-full object-cover border-2 border-white shadow"
                 />
-              </button>
-
-              {/* Settings gear */}
-              <button
-                onClick={() => navigate("/settings")}
-                className="p-2 rounded-xl hover:bg-black/5 transition-colors"
-                data-testid="settings-gear-btn"
-              >
-                <Settings className="w-5 h-5 text-[#6B7280]" />
-              </button>
-            </div>
+              ) : (
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#2B7AB8] to-[#1E5F8A] flex items-center justify-center border-2 border-white shadow">
+                  <span className="font-heading text-xl font-bold text-white">
+                    {user?.full_name?.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
+              <div className="absolute inset-0 rounded-full bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                {uploadingPic ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Camera className="w-4 h-4 text-white" />
+                )}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handlePictureUpload}
+              />
+            </button>
           </div>
 
           <div className="flex gap-4">
