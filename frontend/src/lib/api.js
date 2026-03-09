@@ -99,6 +99,23 @@ export const authAPI = {
     return apiRequest('/auth/me');
   },
 
+  async googleCallback(sessionId) {
+    return apiRequest('/auth/google/callback', {
+      method: 'POST',
+      body: JSON.stringify({ session_id: sessionId }),
+    });
+  },
+
+  async googleComplete(sessionId, phone) {
+    const result = await apiRequest('/auth/google/complete', {
+      method: 'POST',
+      body: JSON.stringify({ session_id: sessionId, phone }),
+    });
+    setAuthToken(result.token);
+    localStorage.setItem('user_id', result.user_id);
+    return result;
+  },
+
   logout() {
     clearAuth();
   }

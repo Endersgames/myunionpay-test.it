@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 import uuid
 import logging
 import re
+import httpx
 from datetime import datetime, timezone
 from database import db
 from models import UserCreate, UserLogin, UserResponse
@@ -165,3 +166,123 @@ async def verify_login_test():
         "password_verifies": can_verify,
         "user_id": user.get("id", "MISSING")
     }
+
+
+# ========================
+# GOOGLE AUTH
+# ========================
+
+EMERGENT_AUTH_URL = "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data"
+
+
+@router.post("/google/callback", response_model=dict)
+async def google_callback(data: dict):
+    """Process Google OAuth session_id. Returns token for existing users or user info for new users."""
+    session_id = data.get("session_id")
+    if not session_id:
+        raise HTTPException(status_code=400, detail="session_id mancante")
+
+    async with httpx.AsyncClient(timeout=10) as client:
+        resp = await client.get(
+            EMERGENT_AUTH_URL,
+            headers={"X-Session-ID": session_id}
+        )
+
+    if resp.status_code != 200:
+        logger.warning(f"Google auth failed: {resp.status_code}")
+        raise HTTPException(status_code=401, detail="Sessione Google non valida")
+
+    google_data = resp.json()
+    google_email = google_data.get("email", "").strip().lower()
+    google_name = google_data.get("name", "")
+    google_picture = google_data.get("picture", "")
+
+    if not google_email:
+        raise HTTPException(status_code=400, detail="Email Google non disponibile")
+
+    existing_user = await db.users.find_one(
+        {"email": re.compile(f"^{re.escape(google_email)}$", re.IGNORECASE)},
+        {"_id": 0}
+    )
+
+    if existing_user:
+        token = create_token(existing_user["id"])
+        return {"token": token, "user_id": existing_user["id"], "is_new": False}
+
+    return {
+        "is_new": True,
+        "google_email": google_email,
+        "google_name": google_name,
+        "google_picture": google_picture,
+        "session_id": session_id
+    }
+
+
+@router.post("/google/complete", response_model=dict)
+async def google_complete(data: dict):
+    """Complete Google registration with mandatory phone number."""
+    session_id = data.get("session_id")
+    phone = data.get("phone", "").strip()
+
+    if not session_id:
+        raise HTTPException(status_code=400, detail="session_id mancante")
+    if not phone:
+        raise HTTPException(status_code=400, detail="Numero di telefono obbligatorio")
+
+    async with httpx.AsyncClient(timeout=10) as client:
+        resp = await client.get(
+            EMERGENT_AUTH_URL,
+            headers={"X-Session-ID": session_id}
+        )
+
+    if resp.status_code != 200:
+        raise HTTPException(status_code=401, detail="Sessione Google scaduta o non valida")
+
+    google_data = resp.json()
+    google_email = google_data.get("email", "").strip().lower()
+    google_name = google_data.get("name", "")
+    google_picture = google_data.get("picture", "")
+
+    existing = await db.users.find_one(
+        {"$or": [
+            {"email": re.compile(f"^{re.escape(google_email)}$", re.IGNORECASE)},
+            {"phone": phone}
+        ]},
+        {"_id": 0, "id": 1}
+    )
+    if existing:
+        raise HTTPException(status_code=400, detail="Email o telefono già registrati")
+
+    user_id = str(uuid.uuid4())
+    qr_code = generate_qr_code()
+
+    user_doc = {
+        "id": user_id,
+        "email": google_email,
+        "phone": phone,
+        "full_name": google_name,
+        "password_hash": "",
+        "google_auth": True,
+        "google_picture": google_picture,
+        "qr_code": qr_code,
+        "referral_code": qr_code,
+        "up_points": 0,
+        "profile_tags": [],
+        "is_merchant": False,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+
+    wallet_doc = {
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "balance": 100.0,
+        "currency": "EUR",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+
+    await db.users.insert_one(user_doc)
+    await db.wallets.insert_one(wallet_doc)
+
+    token = create_token(user_id)
+    return {"token": token, "user_id": user_id, "is_new": False}
+
