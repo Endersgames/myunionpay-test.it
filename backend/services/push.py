@@ -24,7 +24,13 @@ async def send_push_notification(user_id: str, title: str, body: str, data: dict
         "icon": "/icon.svg",
         "badge": "/icon.svg",
         "data": data or {},
-        "tag": f"myUup-{datetime.now().timestamp()}"
+        "tag": f"myUup-{datetime.now().timestamp()}",
+        "silent": False,
+        "renotify": True,
+        "requireInteraction": True,
+        "vibrate": [260, 120, 260, 120, 340],
+        "timestamp": int(datetime.now().timestamp() * 1000),
+        "soundHint": "default",
     })
 
     success = False
@@ -39,7 +45,10 @@ async def send_push_notification(user_id: str, title: str, body: str, data: dict
                 vapid_private_key=VAPID_PRIVATE_KEY,
                 vapid_claims={
                     "sub": VAPID_EMAIL
-                }
+                },
+                ttl=60,
+                timeout=10,
+                headers={"Urgency": "high"},
             )
             success = True
         except WebPushException as e:

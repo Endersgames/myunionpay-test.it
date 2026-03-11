@@ -90,7 +90,7 @@ async def seed_test_data():
             wallet_docs.append({
                 "id": str(uuid.uuid4()),
                 "user_id": user_id,
-                "balance": 100.0,
+                "balance": 1.0,
                 "currency": "EUR",
                 "created_at": datetime.now(timezone.utc).isoformat()
             })

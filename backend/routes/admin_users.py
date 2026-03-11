@@ -3,7 +3,7 @@ from database import db
 from services.auth import get_current_user
 from pydantic import BaseModel
 from typing import Optional
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -60,6 +60,74 @@ async def get_all_users(search: str = "", status: str = "all", admin=Depends(req
         })
 
     return {"users": user_list, "total": len(user_list)}
+
+
+@router.get("/dashboard")
+async def get_admin_dashboard(admin=Depends(require_admin)):
+    """Platform-level metrics for the admin dashboard."""
+    non_admin_users = await db.users.find(
+        {"is_admin": {"$ne": True}},
+        {"_id": 0, "id": 1},
+    ).to_list(10000)
+    non_admin_user_ids = [user["id"] for user in non_admin_users]
+
+    circulating_debt = 0.0
+    if non_admin_user_ids:
+        debt_rows = await db.wallets.aggregate(
+            [
+                {"$match": {"user_id": {"$in": non_admin_user_ids}}},
+                {"$group": {"_id": None, "total": {"$sum": "$balance"}}},
+            ]
+        ).to_list(1)
+        if debt_rows:
+            circulating_debt = float(debt_rows[0].get("total", 0) or 0)
+
+    since_24h = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+    recent_transactions = await db.transactions.find({}, {"_id": 0}).sort("created_at", -1).to_list(20)
+    transactions_last_24h = await db.transactions.count_documents({"created_at": {"$gte": since_24h}})
+
+    totals_rows = await db.transactions.aggregate(
+        [
+            {
+                "$group": {
+                    "_id": None,
+                    "total_volume": {"$sum": "$amount"},
+                    "average_value": {"$avg": "$amount"},
+                    "total_transactions": {"$sum": 1},
+                }
+            }
+        ]
+    ).to_list(1)
+    totals = totals_rows[0] if totals_rows else {}
+
+    serialized_recent_transactions = []
+    for tx in recent_transactions:
+        tx_type = tx.get("transaction_type", "payment")
+        if tx_type == "deposit" or tx.get("sender_id") == "SYSTEM":
+            description = f"Deposito a {tx.get('recipient_name', 'Utente')}"
+        else:
+            description = f"{tx.get('sender_name', 'Utente')} -> {tx.get('recipient_name', 'Utente')}"
+
+        serialized_recent_transactions.append(
+            {
+                "id": tx.get("id", ""),
+                "type": "platform",
+                "amount": float(tx.get("amount", 0) or 0),
+                "description": description,
+                "note": tx.get("note") or tx_type,
+                "created_at": tx.get("created_at", ""),
+            }
+        )
+
+    return {
+        "circulating_debt": round(circulating_debt, 2),
+        "transactions_last_24h": transactions_last_24h,
+        "total_volume": round(float(totals.get("total_volume", 0) or 0), 2),
+        "average_transaction_value": round(float(totals.get("average_value", 0) or 0), 2),
+        "total_transactions": int(totals.get("total_transactions", 0) or 0),
+        "total_users": len(non_admin_user_ids),
+        "recent_transactions": serialized_recent_transactions,
+    }
 
 
 @router.get("/user/{user_id}")

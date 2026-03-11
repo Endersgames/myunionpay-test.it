@@ -4,12 +4,17 @@ from datetime import datetime, timezone
 from database import db
 from models import WalletResponse, DepositRequest
 from services.auth import get_current_user
+from services.notification_rewards import refund_expired_notification_rewards
 
 router = APIRouter(prefix="/wallet", tags=["wallet"])
 
 
 @router.get("", response_model=WalletResponse)
 async def get_wallet(user: dict = Depends(get_current_user)):
+    merchant = await db.merchants.find_one({"user_id": user["id"]}, {"_id": 0, "id": 1})
+    if merchant:
+        await refund_expired_notification_rewards(merchant_id=merchant["id"])
+
     wallet = await db.wallets.find_one({"user_id": user["id"]}, {"_id": 0})
     if not wallet:
         raise HTTPException(status_code=404, detail="Wallet non trovato")

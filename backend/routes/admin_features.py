@@ -1,11 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException
+from copy import deepcopy
 from datetime import datetime, timezone
+
+from fastapi import APIRouter, Depends, HTTPException
+
 from database import db
 from services.auth import get_current_user
 
 router = APIRouter(prefix="/admin/features", tags=["admin-features"])
 
-# Default feature toggles
+
 DEFAULT_FEATURES = {
     "conto_up": {"label": "Conto UP", "category": "fintech", "enabled": True},
     "card_fisica": {"label": "Card Fisica", "category": "fintech", "enabled": True},
@@ -19,7 +22,6 @@ DEFAULT_FEATURES = {
     "qr_payments": {"label": "Pagamenti QR", "category": "fintech", "enabled": True},
 }
 
-# Default API configs
 DEFAULT_API_CONFIGS = {
     "telefonia": {
         "label": "API Telefonia",
@@ -28,7 +30,7 @@ DEFAULT_API_CONFIGS = {
         "api_secret": "",
         "endpoint": "",
         "enabled": False,
-        "notes": ""
+        "notes": "",
     },
     "fintech": {
         "label": "Funzioni Fintech",
@@ -37,16 +39,37 @@ DEFAULT_API_CONFIGS = {
         "api_secret": "",
         "endpoint": "",
         "enabled": False,
-        "notes": ""
-    }
+        "notes": "",
+    },
 }
 
-# Default pricing
 DEFAULT_PRICING = {
-    "myu_chat_per_message": {"label": "MYU Chat (per messaggio)", "price": 0.01, "currency": "UP"},
-    "menu_scan_per_item": {"label": "Scansione Menu (per piatto)", "price": 0.01, "currency": "UP"},
+    "myu_chat_per_message": {
+        "label": "MYU Chat (per messaggio)",
+        "price": 0.01,
+        "currency": "UP",
+    },
+    "menu_scan_per_item": {
+        "label": "Scansione Menu (per piatto)",
+        "price": 0.01,
+        "currency": "UP",
+    },
     "visura_scan": {"label": "Scansione Visura", "price": 0.00, "currency": "UP"},
-    "conto_up_activation": {"label": "Attivazione Conto UP", "price": 15.99, "currency": "UP"},
+    "conto_up_activation": {
+        "label": "Attivazione Conto UP",
+        "price": 15.99,
+        "currency": "UP",
+    },
+    "referral_bonus_referrer": {
+        "label": "Referral al presentante",
+        "price": 1.00,
+        "currency": "UP",
+    },
+    "referral_bonus_referred": {
+        "label": "Referral al presentato",
+        "price": 1.00,
+        "currency": "UP",
+    },
 }
 
 
@@ -56,85 +79,86 @@ async def require_admin(user: dict = Depends(get_current_user)):
     return user
 
 
+def _merge_defaults(existing: dict | None, defaults: dict) -> dict:
+    merged = {}
+    current = existing or {}
+
+    for key, default_value in defaults.items():
+        current_value = current.get(key)
+        if isinstance(default_value, dict):
+            merged[key] = deepcopy(default_value)
+            if isinstance(current_value, dict):
+                merged[key].update(current_value)
+        elif current_value is not None:
+            merged[key] = current_value
+        else:
+            merged[key] = deepcopy(default_value)
+
+    for key, value in current.items():
+        if key not in merged:
+            merged[key] = deepcopy(value)
+
+    return merged
+
+
+async def _ensure_document(doc_type: str, field_name: str, defaults: dict) -> dict:
+    now = datetime.now(timezone.utc).isoformat()
+    doc = await db.feature_toggles.find_one({"type": doc_type}, {"_id": 0})
+    if not doc:
+        payload = {
+            "type": doc_type,
+            field_name: deepcopy(defaults),
+            "created_at": now,
+        }
+        await db.feature_toggles.insert_one(payload)
+        return payload[field_name]
+
+    merged = _merge_defaults(doc.get(field_name), defaults)
+    if merged != doc.get(field_name):
+        await db.feature_toggles.update_one(
+            {"type": doc_type},
+            {"$set": {field_name: merged, "updated_at": now}},
+        )
+    return merged
+
+
 async def ensure_defaults():
-    """Ensure default feature toggles, API configs, and pricing exist."""
-    existing = await db.feature_toggles.find_one({"type": "features"}, {"_id": 0})
-    if not existing:
-        await db.feature_toggles.insert_one({
-            "type": "features",
-            "toggles": DEFAULT_FEATURES,
-            "created_at": datetime.now(timezone.utc).isoformat()
-        })
-
-    existing_api = await db.feature_toggles.find_one({"type": "api_configs"}, {"_id": 0})
-    if not existing_api:
-        await db.feature_toggles.insert_one({
-            "type": "api_configs",
-            "configs": DEFAULT_API_CONFIGS,
-            "created_at": datetime.now(timezone.utc).isoformat()
-        })
-
-    existing_pricing = await db.feature_toggles.find_one({"type": "pricing"}, {"_id": 0})
-    if not existing_pricing:
-        await db.feature_toggles.insert_one({
-            "type": "pricing",
-            "pricing": DEFAULT_PRICING,
-            "created_at": datetime.now(timezone.utc).isoformat()
-        })
+    await _ensure_document("features", "toggles", DEFAULT_FEATURES)
+    await _ensure_document("api_configs", "configs", DEFAULT_API_CONFIGS)
+    await _ensure_document("pricing", "pricing", DEFAULT_PRICING)
 
 
 async def get_pricing_config() -> dict:
-    """Helper to get pricing from DB (used by other modules)."""
-    await ensure_defaults()
-    doc = await db.feature_toggles.find_one({"type": "pricing"}, {"_id": 0})
-    return doc.get("pricing", DEFAULT_PRICING) if doc else DEFAULT_PRICING
+    return await _ensure_document("pricing", "pricing", DEFAULT_PRICING)
 
 
 async def get_price(key: str) -> float:
-    """Get a specific price value."""
     pricing = await get_pricing_config()
     item = pricing.get(key, {})
     return float(item.get("price", 0))
 
 
-# ========================
-# PUBLIC ENDPOINTS
-# ========================
-
 @router.get("/public", response_model=dict)
 async def get_public_features():
-    """Public endpoint - returns which features are enabled."""
-    await ensure_defaults()
-    doc = await db.feature_toggles.find_one({"type": "features"}, {"_id": 0})
-    toggles = doc.get("toggles", DEFAULT_FEATURES) if doc else DEFAULT_FEATURES
-    return {k: v["enabled"] for k, v in toggles.items()}
+    toggles = await _ensure_document("features", "toggles", DEFAULT_FEATURES)
+    return {key: value.get("enabled", False) for key, value in toggles.items()}
 
 
 @router.get("/public/pricing", response_model=dict)
 async def get_public_pricing():
-    """Public endpoint - returns pricing for all services."""
     pricing = await get_pricing_config()
-    return {k: v["price"] for k, v in pricing.items()}
+    return {key: value.get("price", 0) for key, value in pricing.items()}
 
-
-# ========================
-# ADMIN ENDPOINTS
-# ========================
 
 @router.get("", response_model=dict)
 async def get_features(user: dict = Depends(require_admin)):
-    """Get all feature toggles."""
-    await ensure_defaults()
-    doc = await db.feature_toggles.find_one({"type": "features"}, {"_id": 0})
-    return {"toggles": doc.get("toggles", DEFAULT_FEATURES) if doc else DEFAULT_FEATURES}
+    toggles = await _ensure_document("features", "toggles", DEFAULT_FEATURES)
+    return {"toggles": toggles}
 
 
 @router.put("", response_model=dict)
 async def update_features(data: dict, user: dict = Depends(require_admin)):
-    """Update feature toggles."""
-    await ensure_defaults()
-    doc = await db.feature_toggles.find_one({"type": "features"}, {"_id": 0})
-    toggles = doc.get("toggles", DEFAULT_FEATURES) if doc else DEFAULT_FEATURES
+    toggles = await _ensure_document("features", "toggles", DEFAULT_FEATURES)
 
     for key, value in data.items():
         if key in toggles and isinstance(value, bool):
@@ -142,56 +166,20 @@ async def update_features(data: dict, user: dict = Depends(require_admin)):
 
     await db.feature_toggles.update_one(
         {"type": "features"},
-        {"$set": {"toggles": toggles, "updated_at": datetime.now(timezone.utc).isoformat()}}
+        {"$set": {"toggles": toggles, "updated_at": datetime.now(timezone.utc).isoformat()}},
     )
     return {"message": "Feature aggiornate", "toggles": toggles}
 
 
 @router.get("/api-config", response_model=dict)
 async def get_api_configs(user: dict = Depends(require_admin)):
-    """Get API configurations."""
-    await ensure_defaults()
-    doc = await db.feature_toggles.find_one({"type": "api_configs"}, {"_id": 0})
-    return {"configs": doc.get("configs", DEFAULT_API_CONFIGS) if doc else DEFAULT_API_CONFIGS}
+    configs = await _ensure_document("api_configs", "configs", DEFAULT_API_CONFIGS)
+    return {"configs": configs}
 
 
 @router.put("/api-config/{section}", response_model=dict)
-
-
-# ========================
-# PRICING ENDPOINTS
-# ========================
-
-@router.get("/pricing", response_model=dict)
-async def get_pricing(user: dict = Depends(require_admin)):
-    """Admin: get all pricing."""
-    pricing = await get_pricing_config()
-    return {"pricing": pricing}
-
-
-@router.put("/pricing", response_model=dict)
-async def update_pricing(data: dict, user: dict = Depends(require_admin)):
-    """Admin: update pricing. Send {key: new_price} pairs."""
-    pricing = await get_pricing_config()
-
-    for key, value in data.items():
-        if key in pricing:
-            try:
-                pricing[key]["price"] = round(float(value), 2)
-            except (ValueError, TypeError):
-                continue
-
-    await db.feature_toggles.update_one(
-        {"type": "pricing"},
-        {"$set": {"pricing": pricing, "updated_at": datetime.now(timezone.utc).isoformat()}}
-    )
-    return {"message": "Prezzi aggiornati", "pricing": pricing}
-
 async def update_api_config(section: str, data: dict, user: dict = Depends(require_admin)):
-    """Update API config for a section (telefonia/fintech)."""
-    await ensure_defaults()
-    doc = await db.feature_toggles.find_one({"type": "api_configs"}, {"_id": 0})
-    configs = doc.get("configs", DEFAULT_API_CONFIGS) if doc else DEFAULT_API_CONFIGS
+    configs = await _ensure_document("api_configs", "configs", DEFAULT_API_CONFIGS)
 
     if section not in configs:
         raise HTTPException(status_code=404, detail=f"Sezione '{section}' non trovata")
@@ -202,6 +190,31 @@ async def update_api_config(section: str, data: dict, user: dict = Depends(requi
 
     await db.feature_toggles.update_one(
         {"type": "api_configs"},
-        {"$set": {"configs": configs, "updated_at": datetime.now(timezone.utc).isoformat()}}
+        {"$set": {"configs": configs, "updated_at": datetime.now(timezone.utc).isoformat()}},
     )
     return {"message": f"Configurazione {section} aggiornata", "config": configs[section]}
+
+
+@router.get("/pricing", response_model=dict)
+async def get_pricing(user: dict = Depends(require_admin)):
+    pricing = await get_pricing_config()
+    return {"pricing": pricing}
+
+
+@router.put("/pricing", response_model=dict)
+async def update_pricing(data: dict, user: dict = Depends(require_admin)):
+    pricing = await get_pricing_config()
+
+    for key, value in data.items():
+        if key not in pricing:
+            continue
+        try:
+            pricing[key]["price"] = round(float(value), 2)
+        except (TypeError, ValueError):
+            continue
+
+    await db.feature_toggles.update_one(
+        {"type": "pricing"},
+        {"$set": {"pricing": pricing, "updated_at": datetime.now(timezone.utc).isoformat()}},
+    )
+    return {"message": "Prezzi aggiornati", "pricing": pricing}

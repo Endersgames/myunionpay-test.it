@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getAuthToken } from '@/lib/api';
+import { withApiPath } from '@/lib/runtime-config';
 
-const VAPID_PUBLIC_KEY = process.env.REACT_APP_VAPID_PUBLIC_KEY;
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -83,7 +84,7 @@ export function usePushNotifications(token) {
 
       // Send subscription to backend
       const subJson = subscription.toJSON();
-      await fetch('/api/push/subscribe', {
+      await fetch(withApiPath('/push/subscribe'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -116,7 +117,7 @@ export function usePushNotifications(token) {
       }
 
       // Remove from backend
-      await fetch('/api/push/unsubscribe', {
+      await fetch(withApiPath('/push/unsubscribe'), {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

@@ -1,9 +1,8 @@
 """MYU LLM Service Layer - Cost-aware LLM wrapper."""
-import os
 import json
 import logging
-from database import db
 from myu.cost_control import MAX_OUTPUT_TOKENS, MAX_CONTEXT_TOKENS, cap_tokens, count_tokens
+from services.ai_config import DEFAULT_CHAT_MODEL, get_ai_runtime_config
 
 logger = logging.getLogger("myu.llm")
 
@@ -16,25 +15,15 @@ ACTIONS: {"type": "navigate", "path": "...", "label": "..."}, {"type": "create_t
 
 async def get_llm_config() -> dict:
     """Get LLM model config from DB or fallback to env defaults."""
-    config = await db.app_config.find_one({"key": "openai"}, {"_id": 0})
-    env_key = os.environ.get("EMERGENT_LLM_KEY")
-
-    if config and config.get("enabled", True):
-        api_key = config.get("api_key")
-        # Fallback to env if DB key is invalid/placeholder
-        if not api_key or api_key == "KEEP_EXISTING" or len(api_key) < 10:
-            api_key = env_key
-        return {
-            "api_key": api_key,
-            "model": config.get("model", "gpt-4.1-nano"),
-            "max_tokens": min(config.get("max_tokens", MAX_OUTPUT_TOKENS), MAX_OUTPUT_TOKENS),
-            "temperature": config.get("temperature", 0.7),
-        }
+    runtime = await get_ai_runtime_config(default_model=DEFAULT_CHAT_MODEL)
     return {
-        "api_key": env_key,
-        "model": "gpt-4.1-nano",
-        "max_tokens": MAX_OUTPUT_TOKENS,
-        "temperature": 0.7,
+        "api_key": runtime["api_key"],
+        "provider": runtime["provider"],
+        "model": runtime["model"],
+        "enabled": runtime["enabled"],
+        "source": runtime["source"],
+        "max_tokens": min(runtime["max_tokens"], MAX_OUTPUT_TOKENS),
+        "temperature": runtime["temperature"],
     }
 
 
@@ -71,6 +60,10 @@ async def call_llm(
     from emergentintegrations.llm.chat import LlmChat, UserMessage
 
     config = await get_llm_config()
+    if not config["enabled"]:
+        raise RuntimeError("MYU AI disabilitata dal pannello admin")
+    if not config["api_key"]:
+        raise RuntimeError("MYU AI non configurata")
     prompt = f"CONTESTO:\n{context}\n\nMESSAGGIO: {user_message}"
 
     # Cap the prompt
@@ -81,7 +74,7 @@ async def call_llm(
         session_id=f"myu_{session_id}",
         system_message=SYSTEM_PROMPT,
     )
-    chat.with_model("openai", config["model"])
+    chat.with_model(config["provider"], config["model"])
 
     raw = await chat.send_message(UserMessage(text=prompt))
 

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { Chrome, Smartphone, ExternalLink } from "lucide-react";
+import { Chrome, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/App";
+import { hasQueuedPostRegistrationInstall } from "@/lib/pwa-install-state";
 
 /**
  * Detects if user is on a non-Chrome Android browser and prompts to open in Chrome
@@ -16,8 +17,10 @@ export function useBrowserCheck() {
     const ua = navigator.userAgent.toLowerCase();
     const android = /android/.test(ua);
     const chrome = /chrome/.test(ua) && !/edge|edg|opr|opera/.test(ua);
-    const standalone = window.matchMedia('(display-mode: standalone)').matches || 
-                       window.navigator.standalone === true;
+    const standalone =
+      (typeof window.matchMedia === "function" &&
+        window.matchMedia("(display-mode: standalone)").matches) ||
+      window.navigator.standalone === true;
     
     setIsAndroid(android);
     setIsChrome(chrome);
@@ -38,13 +41,17 @@ export function useBrowserCheck() {
 
   const dismissPrompt = () => {
     setShowChromePrompt(false);
-    sessionStorage.setItem('chrome-prompt-dismissed', 'true');
+    try {
+      sessionStorage.setItem('chrome-prompt-dismissed', 'true');
+    } catch (_) {}
   };
 
   useEffect(() => {
-    if (sessionStorage.getItem('chrome-prompt-dismissed')) {
-      setShowChromePrompt(false);
-    }
+    try {
+      if (sessionStorage.getItem('chrome-prompt-dismissed')) {
+        setShowChromePrompt(false);
+      }
+    } catch (_) {}
   }, []);
 
   return { showChromePrompt, isAndroid, isChrome, isStandalone, openInChrome, dismissPrompt };
@@ -52,8 +59,10 @@ export function useBrowserCheck() {
 
 export default function ChromePromptBanner() {
   const { showChromePrompt, openInChrome, dismissPrompt } = useBrowserCheck();
+  const { user } = useAuth();
+  const postRegistrationInstallPending = hasQueuedPostRegistrationInstall();
 
-  if (!showChromePrompt) return null;
+  if (!user?.id || !showChromePrompt) return null;
 
   return (
     <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
@@ -65,11 +74,13 @@ export default function ChromePromptBanner() {
         </div>
         
         <h2 className="font-heading text-2xl font-bold text-center mb-3">
-          Apri con Chrome
+          {postRegistrationInstallPending ? "Aprimi in Chrome" : "Passa a Chrome"}
         </h2>
         
         <p className="text-[#6B7280] text-center mb-6">
-          Per la migliore esperienza e per installare l'app sulla Home, apri myUup.com con Google Chrome.
+          {postRegistrationInstallPending
+            ? "Se mi apri in Chrome ti porto subito sulla Home con un tap."
+            : "Per usare myUup.com al meglio e tenerla sulla Home, aprila con Google Chrome."}
         </p>
 
         <div className="space-y-3">
@@ -86,14 +97,14 @@ export default function ChromePromptBanner() {
             variant="ghost"
             className="w-full text-[#6B7280] hover:text-white"
           >
-            Continua comunque
+            Dopo
           </Button>
         </div>
 
         <div className="mt-6 p-4 bg-white rounded-xl">
           <p className="text-xs text-[#6B7280] text-center">
             <Smartphone className="w-4 h-4 inline mr-1" />
-            Con Chrome puoi installare myUup.com come app e ricevere notifiche push
+            Con Chrome posso passare da browser a app in un tap e gestire meglio le notifiche
           </p>
         </div>
       </div>

@@ -1,15 +1,65 @@
 // API Service - Backend REST API integration
 // Use relative URLs - works on any domain (preview, custom, localhost)
 
+import { withApiPath } from "@/lib/runtime-config";
+import { optimizeImageForUpload } from "@/lib/image-upload";
+
+const extractErrorMessage = (responseText, status, fallbackMessage) => {
+  let errorMessage = "";
+
+  if (responseText) {
+    try {
+      const data = JSON.parse(responseText);
+      if (typeof data.detail === "string") {
+        errorMessage = data.detail;
+      } else if (
+        data.detail &&
+        typeof data.detail === "object" &&
+        typeof data.detail.message === "string"
+      ) {
+        errorMessage = data.detail.message;
+      } else if (Array.isArray(data.detail)) {
+        errorMessage = data.detail.map((detail) => detail.msg || detail.message).join(", ");
+      } else if (typeof data.message === "string") {
+        errorMessage = data.message;
+      }
+    } catch (_) {
+      const trimmed = responseText.trim();
+      if (trimmed && !trimmed.startsWith("<")) {
+        errorMessage = trimmed.substring(0, 200);
+      }
+    }
+  }
+
+  if (!errorMessage) {
+    if (status === 401) errorMessage = "Credenziali non valide";
+    else if (status === 402) errorMessage = "Saldo insufficiente";
+    else if (status === 413) errorMessage = "Immagine troppo grande. Usa una foto piu leggera.";
+    else if (status === 404) errorMessage = fallbackMessage || "Risorsa non trovata";
+    else if (status === 422) errorMessage = "Dati mancanti o non validi";
+    else errorMessage = fallbackMessage || `Errore (${status})`;
+  }
+
+  return errorMessage;
+};
+
+const getResponseErrorMessage = async (response, fallbackMessage) => {
+  const responseText = await response.text().catch(() => "");
+  return extractErrorMessage(responseText, response.status, fallbackMessage);
+};
+
 // Token management
-let authToken = localStorage.getItem('auth_token');
+let authToken =
+  typeof window !== "undefined" ? window.localStorage.getItem("auth_token") : null;
 
 export const setAuthToken = (token) => {
   authToken = token;
-  if (token) {
-    localStorage.setItem('auth_token', token);
-  } else {
-    localStorage.removeItem('auth_token');
+  if (typeof window !== "undefined") {
+    if (token) {
+      window.localStorage.setItem("auth_token", token);
+    } else {
+      window.localStorage.removeItem("auth_token");
+    }
   }
 };
 
@@ -17,8 +67,10 @@ export const getAuthToken = () => authToken;
 
 export const clearAuth = () => {
   authToken = null;
-  localStorage.removeItem('auth_token');
-  localStorage.removeItem('user_id');
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem("auth_token");
+    window.localStorage.removeItem("user_id");
+  }
 };
 
 // API Helper
@@ -34,7 +86,7 @@ const apiRequest = async (endpoint, options = {}) => {
 
   let response;
   try {
-    response = await fetch(`/api${endpoint}`, {
+    response = await fetch(withApiPath(endpoint), {
       ...options,
       headers,
     });
@@ -43,28 +95,7 @@ const apiRequest = async (endpoint, options = {}) => {
   }
 
   if (!response.ok) {
-    let errorMessage = '';
-    const responseText = await response.text().catch(() => '');
-    if (responseText) {
-      try {
-        const data = JSON.parse(responseText);
-        if (typeof data.detail === 'string') {
-          errorMessage = data.detail;
-        } else if (Array.isArray(data.detail)) {
-          errorMessage = data.detail.map(d => d.msg || d.message).join(', ');
-        } else if (data.message) {
-          errorMessage = data.message;
-        }
-      } catch (_) {
-        errorMessage = responseText.substring(0, 200);
-      }
-    }
-    if (!errorMessage) {
-      if (response.status === 401) errorMessage = 'Credenziali non valide';
-      else if (response.status === 422) errorMessage = 'Dati mancanti o non validi';
-      else errorMessage = `Errore (${response.status})`;
-    }
-    throw new Error(errorMessage);
+    throw new Error(await getResponseErrorMessage(response));
   }
 
   return response.json();
@@ -81,7 +112,9 @@ export const authAPI = {
       body: JSON.stringify(data),
     });
     setAuthToken(result.token);
-    localStorage.setItem('user_id', result.user_id);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("user_id", result.user_id);
+    }
     return result;
   },
 
@@ -91,7 +124,9 @@ export const authAPI = {
       body: JSON.stringify({ email, password }),
     });
     setAuthToken(result.token);
-    localStorage.setItem('user_id', result.user_id);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("user_id", result.user_id);
+    }
     return result;
   },
 
@@ -106,13 +141,15 @@ export const authAPI = {
     });
   },
 
-  async googleComplete(sessionId, phone) {
+  async googleComplete(sessionId, phone, extra = {}) {
     const result = await apiRequest('/auth/google/complete', {
       method: 'POST',
-      body: JSON.stringify({ session_id: sessionId, phone }),
+      body: JSON.stringify({ session_id: sessionId, phone, ...extra }),
     });
     setAuthToken(result.token);
-    localStorage.setItem('user_id', result.user_id);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("user_id", result.user_id);
+    }
     return result;
   },
 
@@ -183,8 +220,17 @@ export const merchantAPI = {
     });
   },
 
-  async getAll(category = null) {
-    const query = category ? `?category=${encodeURIComponent(category)}` : '';
+  async getAll(categoryOrOptions = null, maybeOptions = {}) {
+    const options = typeof categoryOrOptions === 'object' && categoryOrOptions !== null
+      ? categoryOrOptions
+      : { ...maybeOptions, category: categoryOrOptions };
+    const params = new URLSearchParams();
+
+    if (options.category) params.set('category', options.category);
+    if (options.city) params.set('city', options.city);
+    if (options.prioritizeCity) params.set('prioritize_city', 'true');
+
+    const query = params.toString() ? `?${params.toString()}` : '';
     return apiRequest(`/merchants${query}`);
   },
 
@@ -201,37 +247,43 @@ export const merchantAPI = {
   },
 
   async uploadVisura(file) {
+    const optimizedFile = await optimizeImageForUpload(file, {
+      maxBytes: 850 * 1024,
+      maxDimension: 1800,
+    });
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', optimizedFile);
     const headers = {};
     const token = getAuthToken();
     if (token) headers['Authorization'] = `Bearer ${token}`;
-    const response = await fetch('/api/merchant/ai/upload-visura', {
+    const response = await fetch(withApiPath("/merchant/ai/upload-visura"), {
       method: 'POST',
       headers,
       body: formData,
     });
     if (!response.ok) {
-      const err = await response.text().catch(() => '');
-      try { throw new Error(JSON.parse(err).detail); } catch (e) { if (e.message) throw e; throw new Error('Errore upload visura'); }
+      throw new Error(await getResponseErrorMessage(response, 'Errore upload visura'));
     }
     return response.json();
   },
 
   async scanMenu(file) {
+    const optimizedFile = await optimizeImageForUpload(file, {
+      maxBytes: 850 * 1024,
+      maxDimension: 1800,
+    });
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', optimizedFile);
     const headers = {};
     const token = getAuthToken();
     if (token) headers['Authorization'] = `Bearer ${token}`;
-    const response = await fetch('/api/merchant/ai/scan-menu', {
+    const response = await fetch(withApiPath("/merchant/ai/scan-menu"), {
       method: 'POST',
       headers,
       body: formData,
     });
     if (!response.ok) {
-      const err = await response.text().catch(() => '');
-      try { throw new Error(JSON.parse(err).detail); } catch (e) { if (e.message) throw e; throw new Error('Errore scansione menu'); }
+      throw new Error(await getResponseErrorMessage(response, 'Errore scansione menu'));
     }
     return response.json();
   },
@@ -319,15 +371,12 @@ export const profileAPI = {
     const headers = {};
     const token = getAuthToken();
     if (token) headers['Authorization'] = `Bearer ${token}`;
-    const response = await fetch('/api/profile/picture', {
+    const response = await fetch(withApiPath("/profile/picture"), {
       method: 'POST',
       headers,
       body: formData,
     });
-    if (!response.ok) {
-      const err = await response.text().catch(() => '');
-      try { throw new Error(JSON.parse(err).detail); } catch { throw new Error('Errore upload'); }
-    }
+    if (!response.ok) throw new Error(await getResponseErrorMessage(response, 'Errore upload'));
     return response.json();
   },
 
@@ -442,7 +491,7 @@ export const tasksAPI = {
       headers['Authorization'] = `Bearer ${authToken}`;
     }
 
-    const response = await fetch(`/api/tasks/${taskId}/upload`, {
+    const response = await fetch(withApiPath(`/tasks/${taskId}/upload`), {
       method: 'POST',
       headers,
       body: formData,
@@ -537,15 +586,12 @@ export const giftcardAPI = {
     const headers = {};
     const token = getAuthToken();
     if (token) headers['Authorization'] = `Bearer ${token}`;
-    const response = await fetch(`/api/giftcards/admin/${giftcard_id}/logo`, {
+    const response = await fetch(withApiPath(`/giftcards/admin/${giftcard_id}/logo`), {
       method: 'POST',
       headers,
       body: formData,
     });
-    if (!response.ok) {
-      const err = await response.text().catch(() => '');
-      try { throw new Error(JSON.parse(err).detail); } catch { throw new Error('Errore upload'); }
-    }
+    if (!response.ok) throw new Error(await getResponseErrorMessage(response, 'Errore upload'));
     return response.json();
   }
 };
@@ -573,8 +619,8 @@ export const menuAPI = {
     const headers = {};
     const token = getAuthToken();
     if (token) headers['Authorization'] = `Bearer ${token}`;
-    const response = await fetch(`/api/menu/items/${itemId}/image`, { method: 'POST', headers, body: formData });
-    if (!response.ok) throw new Error('Errore upload immagine');
+    const response = await fetch(withApiPath(`/menu/items/${itemId}/image`), { method: 'POST', headers, body: formData });
+    if (!response.ok) throw new Error(await getResponseErrorMessage(response, 'Errore upload immagine'));
     return response.json();
   },
   async uploadCoverImage(file) {
@@ -583,12 +629,12 @@ export const menuAPI = {
     const headers = {};
     const token = getAuthToken();
     if (token) headers['Authorization'] = `Bearer ${token}`;
-    const response = await fetch('/api/menu/cover-image', { method: 'POST', headers, body: formData });
-    if (!response.ok) throw new Error('Errore upload copertina');
+    const response = await fetch(withApiPath("/menu/cover-image"), { method: 'POST', headers, body: formData });
+    if (!response.ok) throw new Error(await getResponseErrorMessage(response, 'Errore upload copertina'));
     return response.json();
   },
   async getPublicMenu(merchantId) {
-    const response = await fetch(`/api/menu/public/${merchantId}`);
+    const response = await fetch(withApiPath(`/menu/public/${merchantId}`));
     if (!response.ok) throw new Error('Menu non disponibile');
     return response.json();
   },
@@ -686,6 +732,12 @@ export const contentAPI = {
       method: 'PUT',
       body: JSON.stringify(data),
     });
+  },
+};
+
+export const adminAPI = {
+  async getDashboardSummary() {
+    return apiRequest('/admin/dashboard');
   },
 };
 

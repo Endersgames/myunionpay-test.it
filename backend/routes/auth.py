@@ -6,10 +6,72 @@ import httpx
 from datetime import datetime, timezone
 from database import db
 from models import UserCreate, UserLogin, UserResponse
+from routes.admin_features import get_price
 from services.auth import hash_password, verify_password, create_token, get_current_user, generate_qr_code
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 logger = logging.getLogger("auth")
+DEFAULT_SIGNUP_BALANCE = 1.0
+
+
+async def _get_referral_bonus_amounts() -> tuple[float, float]:
+    referrer_bonus = await get_price("referral_bonus_referrer")
+    referred_bonus = await get_price("referral_bonus_referred")
+    return float(referrer_bonus), float(referred_bonus)
+
+
+def _extract_oauth_context(google_data: dict) -> tuple[str, str]:
+    redirect_path = (
+        google_data.get("redirect_path")
+        or google_data.get("redirect")
+        or ""
+    )
+    referral_code = (
+        google_data.get("referral_code")
+        or google_data.get("ref")
+        or ""
+    )
+    return redirect_path, referral_code
+
+
+async def _apply_referral_bonus(user_id: str, referral_code: str) -> None:
+    if not referral_code:
+        return
+
+    referrer = await db.users.find_one(
+        {"referral_code": referral_code},
+        {"_id": 0, "id": 1}
+    )
+    if not referrer or referrer["id"] == user_id:
+        return
+
+    existing_referral = await db.referrals.find_one(
+        {"referrer_id": referrer["id"], "referred_id": user_id},
+        {"_id": 0, "id": 1}
+    )
+    if existing_referral:
+        return
+
+    referrer_bonus, referred_bonus = await _get_referral_bonus_amounts()
+
+    if referrer_bonus:
+        await db.wallets.update_one({"user_id": referrer["id"]}, {"$inc": {"balance": referrer_bonus}})
+        await db.users.update_one({"id": referrer["id"]}, {"$inc": {"up_points": referrer_bonus}})
+
+    if referred_bonus:
+        await db.wallets.update_one({"user_id": user_id}, {"$inc": {"balance": referred_bonus}})
+        await db.users.update_one({"id": user_id}, {"$inc": {"up_points": referred_bonus}})
+
+    referral_doc = {
+        "id": str(uuid.uuid4()),
+        "referrer_id": referrer["id"],
+        "referred_id": user_id,
+        "bonus_amount": referrer_bonus,
+        "reward_amount": referrer_bonus,
+        "referred_bonus_amount": referred_bonus,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.referrals.insert_one(referral_doc)
 
 
 @router.post("/register", response_model=dict)
@@ -46,7 +108,7 @@ async def register(data: UserCreate):
     wallet_doc = {
         "id": str(uuid.uuid4()),
         "user_id": user_id,
-        "balance": 100.0,
+        "balance": DEFAULT_SIGNUP_BALANCE,
         "currency": "EUR",
         "created_at": datetime.now(timezone.utc).isoformat()
     }
@@ -54,25 +116,7 @@ async def register(data: UserCreate):
     await db.users.insert_one(user_doc)
     await db.wallets.insert_one(wallet_doc)
 
-    if data.referral_code:
-        referrer = await db.users.find_one(
-            {"referral_code": data.referral_code},
-            {"_id": 0, "id": 1}
-        )
-        if referrer:
-            await db.wallets.update_one({"user_id": referrer["id"]}, {"$inc": {"balance": 1}})
-            await db.wallets.update_one({"user_id": user_id}, {"$inc": {"balance": 1}})
-            await db.users.update_one({"id": referrer["id"]}, {"$inc": {"up_points": 1}})
-            await db.users.update_one({"id": user_id}, {"$inc": {"up_points": 1}})
-
-            referral_doc = {
-                "id": str(uuid.uuid4()),
-                "referrer_id": referrer["id"],
-                "referred_id": user_id,
-                "bonus_amount": 1,
-                "created_at": datetime.now(timezone.utc).isoformat()
-            }
-            await db.referrals.insert_one(referral_doc)
+    await _apply_referral_bonus(user_id, data.referral_code or "")
 
     token = create_token(user_id)
     return {"token": token, "user_id": user_id}
@@ -204,6 +248,7 @@ async def google_callback(data: dict):
     google_email = google_data.get("email", "").strip().lower()
     google_name = google_data.get("name", "")
     google_picture = google_data.get("picture", "")
+    redirect_path, referral_code = _extract_oauth_context(google_data)
 
     if not google_email:
         raise HTTPException(status_code=400, detail="Email Google non disponibile")
@@ -215,14 +260,22 @@ async def google_callback(data: dict):
 
     if existing_user:
         token = create_token(existing_user["id"])
-        return {"token": token, "user_id": existing_user["id"], "is_new": False}
+        return {
+            "token": token,
+            "user_id": existing_user["id"],
+            "is_new": False,
+            "redirect_path": redirect_path,
+            "referral_code": referral_code,
+        }
 
     return {
         "is_new": True,
         "google_email": google_email,
         "google_name": google_name,
         "google_picture": google_picture,
-        "session_id": session_id
+        "session_id": session_id,
+        "redirect_path": redirect_path,
+        "referral_code": referral_code,
     }
 
 
@@ -250,6 +303,8 @@ async def google_complete(data: dict):
     google_email = google_data.get("email", "").strip().lower()
     google_name = google_data.get("name", "")
     google_picture = google_data.get("picture", "")
+    redirect_path, fallback_referral_code = _extract_oauth_context(google_data)
+    referral_code = (data.get("referral_code") or fallback_referral_code or "").strip()
 
     existing = await db.users.find_one(
         {"$or": [
@@ -283,16 +338,22 @@ async def google_complete(data: dict):
     wallet_doc = {
         "id": str(uuid.uuid4()),
         "user_id": user_id,
-        "balance": 100.0,
+        "balance": DEFAULT_SIGNUP_BALANCE,
         "currency": "EUR",
         "created_at": datetime.now(timezone.utc).isoformat()
     }
 
     await db.users.insert_one(user_doc)
     await db.wallets.insert_one(wallet_doc)
+    await _apply_referral_bonus(user_id, referral_code)
 
     token = create_token(user_id)
-    return {"token": token, "user_id": user_id, "is_new": False}
+    return {
+        "token": token,
+        "user_id": user_id,
+        "is_new": False,
+        "redirect_path": data.get("redirect") or redirect_path or "",
+    }
 
 
 @router.post("/delete-account", response_model=dict)
@@ -313,4 +374,3 @@ async def request_account_deletion(user: dict = Depends(get_current_user)):
         "message": "Account disattivato. Sarà eliminato definitivamente tra 30 giorni.",
         "deletion_scheduled_at": deletion_date.isoformat()
     }
-

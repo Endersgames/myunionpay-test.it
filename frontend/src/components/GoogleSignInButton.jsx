@@ -1,14 +1,27 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { setPendingGoogleAuthContext } from "@/lib/google-auth-context";
+import { getGoogleAuthStartUrl } from "@/lib/runtime-config";
 
-// REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
 export default function GoogleSignInButton({ label = "Continua con Google" }) {
   const [loading, setLoading] = useState(false);
 
   const handleGoogleSignIn = () => {
     setLoading(true);
-    const redirectUrl = window.location.origin + '/dashboard';
-    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
+    const authUrl = new URL(getGoogleAuthStartUrl(), window.location.origin);
+    const currentParams = new URLSearchParams(window.location.search);
+    const authContext = {};
+
+    ["ref", "redirect"].forEach((key) => {
+      const value = currentParams.get(key);
+      if (value) {
+        authUrl.searchParams.set(key, value);
+        authContext[key === "ref" ? "referral_code" : "redirect_path"] = value;
+      }
+    });
+
+    setPendingGoogleAuthContext(authContext);
+    window.location.assign(authUrl.toString());
   };
 
   return (

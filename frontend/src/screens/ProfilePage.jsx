@@ -1,0 +1,527 @@
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/App";
+import {
+  User, Copy, Share2, Settings,
+  Store, Users, Tag, ChevronRight, Smartphone, Wifi, Phone, Signal, CreditCard, Gift,
+  ClipboardCheck, Upload, FileCheck, Zap, CheckCircle2, Camera
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import BottomNav from "@/components/BottomNav";
+import { profileAPI, referralAPI, simAPI, tasksAPI, walletAPI, PROFILE_TAGS, featuresAPI } from "@/lib/api";
+
+function normalizeTaskCopy(task) {
+  if (task.task_type !== "residence_verification") {
+    return task;
+  }
+
+  return {
+    ...task,
+    title: "Verifica residenza",
+    description: "Se carichi un'utenza MYU ti fara un'offerta :) e riceverai subito 5 UP",
+  };
+}
+
+export default function ProfilePage() {
+  const navigate = useNavigate();
+  const { user, logout, refreshUser } = useAuth();
+  const [myTags, setMyTags] = useState([]);
+  const [referralStats, setReferralStats] = useState(null);
+  const [sim, setSim] = useState(null);
+  const [wallet, setWallet] = useState(null);
+  const [tasks, setTasks] = useState([]);
+  const [uploadingTask, setUploadingTask] = useState(null);
+  const [showTags, setShowTags] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [uploadingPic, setUploadingPic] = useState(false);
+  const [features, setFeatures] = useState({});
+  const [pricing, setPricing] = useState({});
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (user?.id) fetchData();
+  }, [user?.id]);
+
+  const fetchData = async () => {
+    try {
+      const [tagsData, refStats, simData, walletData, tasksData, featData, pricingData] = await Promise.all([
+        profileAPI.getMyTags(),
+        referralAPI.getStats(),
+        simAPI.getMySim(),
+        walletAPI.getWallet(),
+        tasksAPI.getMyTasks(),
+        featuresAPI.getPublic(),
+        featuresAPI.getPublicPricing()
+      ]);
+      setMyTags(tagsData.tags || []);
+      setReferralStats(refStats);
+      setSim(simData);
+      setWallet(walletData);
+      setTasks((tasksData || []).map(normalizeTaskCopy));
+      setFeatures(featData || {});
+      setPricing(pricingData || {});
+    } catch (err) {
+      console.error("Profile fetch error:", err);
+    }
+    setLoading(false);
+  };
+
+  const referrerBonus = Number(pricing?.referral_bonus_referrer ?? 1);
+  const referredBonus = Number(pricing?.referral_bonus_referred ?? referrerBonus);
+  const liveWalletBalance = Number(wallet?.balance ?? user?.wallet_balance ?? 0);
+
+  const toggleTag = async (tag) => {
+    const newTags = myTags.includes(tag)
+      ? myTags.filter(t => t !== tag)
+      : [...myTags, tag];
+    setMyTags(newTags);
+    try {
+      await profileAPI.updateTags(newTags);
+      await refreshUser();
+      toast.success("Interessi aggiornati");
+    } catch (err) {
+      toast.error("Errore nell'aggiornamento");
+    }
+  };
+
+  const handleCopyReferral = () => {
+    const url = `${window.location.origin}/register?ref=${user?.referral_code}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Link referral copiato!");
+  };
+
+  const handleShare = async () => {
+    const url = `${window.location.origin}/register?ref=${user?.referral_code}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Unisciti a myUup.com",
+          text: `Registrati con il mio codice referral e guadagna ${referredBonus.toFixed(2)} UP!`,
+          url
+        });
+      } catch (err) { /* cancelled */ }
+    } else {
+      handleCopyReferral();
+    }
+  };
+
+  const handlePictureUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingPic(true);
+    try {
+      await profileAPI.uploadPicture(file);
+      await refreshUser();
+      toast.success("Foto profilo aggiornata");
+    } catch (err) {
+      toast.error(err.message || "Errore upload foto");
+    }
+    setUploadingPic(false);
+  };
+
+  const handleFileUpload = async (taskId, e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingTask(taskId);
+    try {
+      const result = await tasksAPI.uploadDocument(taskId, file);
+      toast.success(result.message);
+      await fetchData();
+      await refreshUser();
+    } catch (err) {
+      toast.error(err.message || "Errore nel caricamento");
+    }
+    setUploadingTask(null);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="w-8 h-8 border-2 border-[#2B7AB8] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-white pb-safe">
+      <div className="px-6 pt-8 pb-4">
+        <h1 className="font-heading text-2xl font-bold mb-6 text-[#1A1A1A]">Profilo</h1>
+
+        {/* User Card - Redesigned */}
+        <div className="bg-[#F5F5F5] rounded-2xl p-5 border border-black/5 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            {/* Left: Settings gear icon + Name + Info account */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => navigate("/settings")}
+                className="w-14 h-14 rounded-full bg-[#2B7AB8]/10 flex items-center justify-center hover:bg-[#2B7AB8]/20 transition-colors shrink-0"
+                data-testid="settings-gear-btn"
+              >
+                <Settings className="w-7 h-7 text-[#2B7AB8]" />
+              </button>
+              <div>
+                <h2 className="font-semibold text-lg text-[#1A1A1A]" data-testid="profile-name">
+                  {user?.full_name}
+                </h2>
+                <button
+                  onClick={() => navigate("/settings")}
+                  className="text-sm text-[#2B7AB8] hover:underline"
+                  data-testid="info-account-link"
+                >
+                  Info account
+                </button>
+              </div>
+            </div>
+
+            {/* Right: Profile photo (customizable) */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="relative group shrink-0"
+              data-testid="profile-picture-btn"
+            >
+              {user?.profile_picture ? (
+                <img
+                  src={user.profile_picture}
+                  alt=""
+                  className="w-14 h-14 rounded-full object-cover border-2 border-white shadow"
+                />
+              ) : (
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#2B7AB8] to-[#1E5F8A] flex items-center justify-center border-2 border-white shadow">
+                  <span className="font-heading text-xl font-bold text-white">
+                    {user?.full_name?.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
+              <div className="absolute inset-0 rounded-full bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                {uploadingPic ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Camera className="w-4 h-4 text-white" />
+                )}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handlePictureUpload}
+              />
+            </button>
+          </div>
+
+          <div className="flex gap-4">
+            <div className="flex-1 bg-white rounded-xl p-3 text-center">
+              <p className="font-mono text-xl font-bold text-[#E85A24]">{liveWalletBalance.toFixed(2)}</p>
+              <p className="text-xs text-[#6B7280]">Saldo UP</p>
+            </div>
+            <div className="flex-1 bg-white rounded-xl p-3 text-center">
+              <p className="font-mono text-xl font-bold text-[#1A1A1A]">{referralStats?.total_referrals || 0}</p>
+              <p className="text-xs text-[#6B7280]">Invitati</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Referral Section */}
+        {features.invita_amici !== false && (
+        <div className="bg-[#F5F5F5] rounded-2xl p-5 border border-black/5 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <Users className="w-5 h-5 text-[#E85A24]" />
+            <h3 className="font-semibold text-[#1A1A1A]">Invita Amici</h3>
+          </div>
+          <p className="text-sm text-[#6B7280] mb-4">
+            Tu guadagni {referrerBonus.toFixed(2)} UP e il tuo amico riceve {referredBonus.toFixed(2)} UP alla registrazione.
+          </p>
+          <p className="text-sm text-[#1A1A1A] font-medium mb-4">
+            Bonus referral maturati: {(Number(referralStats?.total_referral_bonus || 0)).toFixed(2)} UP
+          </p>
+          <div className="bg-white rounded-xl p-3 mb-4 flex items-center justify-between">
+            <span className="font-mono text-[#2B7AB8]">{user?.referral_code}</span>
+            <button onClick={handleCopyReferral} className="text-[#6B7280] hover:text-[#1A1A1A]">
+              <Copy className="w-4 h-4" />
+            </button>
+          </div>
+          <Button
+            onClick={handleShare}
+            className="w-full h-12 rounded-full bg-[#2B7AB8] hover:bg-[#236699]"
+            data-testid="share-referral-btn"
+          >
+            <Share2 className="w-4 h-4 mr-2" />
+            Condividi Link
+          </Button>
+        </div>
+        )}
+
+        {/* Tasks Section */}
+        {features.tasks !== false && (
+        <div className="bg-[#F5F5F5] rounded-2xl p-5 border border-black/5 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <ClipboardCheck className="w-5 h-5 text-[#2B7AB8]" />
+            <h3 className="font-semibold text-[#1A1A1A]">Task</h3>
+          </div>
+          {tasks.length === 0 ? (
+            <p className="text-sm text-[#6B7280]">Nessun task disponibile</p>
+          ) : (
+            <div className="space-y-3">
+              {tasks.map((task) => (
+                <div
+                  key={task.id}
+                  className={`rounded-xl p-4 border ${
+                    task.status === "verified" ? "bg-green-50 border-green-200" : "bg-white border-black/5"
+                  }`}
+                  data-testid={`task-${task.task_type}`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
+                      task.status === "verified" ? "bg-green-100" : "bg-[#E85A24]/10"
+                    }`}>
+                      {task.status === "verified" ? (
+                        <CheckCircle2 className="w-5 h-5 text-green-600" />
+                      ) : (
+                        <FileCheck className="w-5 h-5 text-[#E85A24]" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <h4 className="font-semibold text-sm text-[#1A1A1A]">{task.title}</h4>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                          task.status === "verified" ? "bg-green-100 text-green-700" : "bg-[#E85A24]/10 text-[#E85A24]"
+                        }`}>
+                          {task.status === "verified" ? "Completato" : `+${task.reward_up} UP`}
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#6B7280] mb-3">{task.description}</p>
+                      {task.status === "verified" ? (
+                        <div className="flex items-center gap-2 text-green-600">
+                          <Zap className="w-4 h-4" />
+                          <span className="text-xs font-medium">
+                            +{task.reward_up} UP ricevuti
+                            {task.file_name && ` - ${task.file_name}`}
+                          </span>
+                        </div>
+                      ) : (
+                        <label
+                          className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium cursor-pointer transition-colors ${
+                            uploadingTask === task.id ? "bg-gray-200 text-gray-500" : "bg-[#E85A24] text-white hover:bg-[#D14E1A]"
+                          }`}
+                          data-testid={`upload-btn-${task.task_type}`}
+                        >
+                          <Upload className="w-4 h-4" />
+                          {uploadingTask === task.id
+                            ? "Caricamento..."
+                            : task.task_type === "residence_verification"
+                              ? "Carica Utenza"
+                              : "Carica Fattura"}
+                          <input
+                            type="file"
+                            accept="image/*,.pdf"
+                            className="hidden"
+                            onChange={(e) => handleFileUpload(task.id, e)}
+                            disabled={uploadingTask === task.id}
+                          />
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        )}
+
+        {/* Conto UP Section */}
+        {features.conto_up !== false && (
+        <>
+        {sim ? (
+          <button
+            onClick={() => navigate("/sim-dashboard")}
+            className="w-full bg-gradient-to-br from-[#1A1A1A] to-[#2D2D2D] rounded-2xl p-5 mb-6 text-white text-left relative overflow-hidden"
+            data-testid="sim-dashboard-btn"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#E85A24] to-[#D14E1A] flex items-center justify-center">
+                    <CreditCard className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">Conto UP</h3>
+                    <p className="text-sm text-white/60">Card + SIM attiva</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-white/50" />
+              </div>
+              <div className="bg-gradient-to-r from-[#2B7AB8] to-[#1E5F8A] rounded-xl p-3 mb-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-sm tracking-wider">.... .... .... {sim.phone_number?.slice(-4) || '0000'}</span>
+                  <img src="/logo.png" alt="UP" className="h-5 opacity-80" />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="bg-white/10 rounded-lg p-2">
+                  <Phone className="w-4 h-4 mx-auto mb-1 opacity-70" />
+                  <p className="text-xs font-semibold">Illimitati</p>
+                </div>
+                <div className="bg-white/10 rounded-lg p-2">
+                  <p className="text-xs font-semibold">{sim.sms_total - sim.sms_used}</p>
+                  <p className="text-xs opacity-70">SMS</p>
+                </div>
+                <div className="bg-white/10 rounded-lg p-2">
+                  <p className="text-xs font-semibold">{(sim.gb_total - sim.gb_used).toFixed(1)}</p>
+                  <p className="text-xs opacity-70">GB</p>
+                </div>
+              </div>
+            </div>
+          </button>
+        ) : (
+          <div className="bg-gradient-to-br from-[#1A1A1A] to-[#2D2D2D] rounded-2xl p-5 mb-6 text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#E85A24] to-[#D14E1A] flex items-center justify-center">
+                  <CreditCard className="w-6 h-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg">Attiva il Conto UP</h3>
+                  <div className="flex items-center gap-1 text-[#E85A24]">
+                    <Gift className="w-4 h-4" />
+                    <span className="text-sm font-medium">SIM voce e dati in omaggio</span>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gradient-to-r from-[#2B7AB8] to-[#1E5F8A] rounded-xl p-4 mb-4 relative">
+                <div className="flex items-center justify-between mb-6">
+                  <img src="/logo.png" alt="UP" className="h-6" />
+                  <span className="text-xs text-white/60">DEBIT</span>
+                </div>
+                <div className="font-mono text-lg tracking-widest mb-4 text-white/80">
+                  .... .... .... ....
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <div>
+                    <p className="text-white/50 text-xs">INTESTATARIO</p>
+                    <p className="font-medium">IL TUO NOME</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-white/50 text-xs">SCADENZA</p>
+                    <p className="font-medium">../..</p>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                <div className="bg-white/10 rounded-lg p-3 text-center">
+                  <CreditCard className="w-5 h-5 mx-auto mb-1 text-[#E85A24]" />
+                  <p className="text-xs font-medium">Card Fisica</p>
+                  <p className="text-xs text-white/50">Gratis</p>
+                </div>
+                <div className="bg-white/10 rounded-lg p-3 text-center">
+                  <Smartphone className="w-5 h-5 mx-auto mb-1 text-[#2B7AB8]" />
+                  <p className="text-xs font-medium">SIM 100GB</p>
+                  <p className="text-xs text-white/50">In omaggio</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between mb-4 px-1">
+                <span className="text-white/60">Attivazione</span>
+                <span className="font-mono text-2xl font-bold text-[#E85A24]">{pricing.conto_up_activation?.toFixed?.(2) || '15.99'} UP</span>
+              </div>
+              <Button
+                onClick={() => navigate("/sim-activation")}
+                className="w-full h-12 rounded-full bg-[#E85A24] hover:bg-[#D14E1A] text-white font-semibold"
+                data-testid="activate-sim-btn"
+              >
+                <CreditCard className="w-4 h-4 mr-2" />
+                Attiva il Conto UP
+              </Button>
+            </div>
+          </div>
+        )}
+        </>
+        )}
+
+        {/* Profile Tags */}
+        {features.interessi !== false && (
+        <div className="bg-[#F5F5F5] rounded-2xl p-5 border border-black/5 mb-6">
+          <button
+            onClick={() => setShowTags(!showTags)}
+            className="w-full flex items-center justify-between"
+            data-testid="toggle-tags-btn"
+          >
+            <div className="flex items-center gap-3">
+              <Tag className="w-5 h-5 text-[#2B7AB8]" />
+              <div className="text-left">
+                <h3 className="font-semibold text-[#1A1A1A]">I Miei Interessi</h3>
+                <p className="text-sm text-[#6B7280]">
+                  {myTags.length > 0 ? `${myTags.length} selezionati` : "Nessuno selezionato"}
+                </p>
+              </div>
+            </div>
+            <ChevronRight className={`w-5 h-5 text-[#6B7280] transition-transform ${showTags ? 'rotate-90' : ''}`} />
+          </button>
+          {showTags && (
+            <div className="mt-4 pt-4 border-t border-black/5">
+              <p className="text-sm text-[#6B7280] mb-3">
+                Seleziona i tuoi interessi per ricevere notifiche personalizzate dai merchant
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {PROFILE_TAGS.map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => toggleTag(tag)}
+                    className={`tag-pill ${myTags.includes(tag) ? 'selected' : ''}`}
+                    data-testid={`tag-${tag}`}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+        )}
+
+        {/* Merchant Section */}
+        {features.merchant !== false && (
+        <>
+        {user?.is_merchant ? (
+          <button
+            onClick={() => navigate("/merchant-dashboard")}
+            className="w-full bg-[#F5F5F5] rounded-2xl p-5 border border-black/5 mb-6 flex items-center justify-between"
+            data-testid="merchant-dashboard-btn"
+          >
+            <div className="flex items-center gap-3">
+              <Store className="w-5 h-5 text-[#E85A24]" />
+              <div className="text-left">
+                <h3 className="font-semibold text-[#1A1A1A]">Dashboard Merchant</h3>
+                <p className="text-sm text-[#6B7280]">Gestisci il tuo negozio</p>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-[#6B7280]" />
+          </button>
+        ) : (
+          <button
+            onClick={() => navigate("/merchant-dashboard")}
+            className="w-full bg-[#F5F5F5] rounded-2xl p-5 border border-black/5 mb-6 flex items-center justify-between"
+            data-testid="become-merchant-btn"
+          >
+            <div className="flex items-center gap-3">
+              <Store className="w-5 h-5 text-[#2B7AB8]" />
+              <div className="text-left">
+                <h3 className="font-semibold text-[#1A1A1A]">Diventa Merchant</h3>
+                <p className="text-sm text-[#6B7280]">Registra la tua attività</p>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-[#6B7280]" />
+          </button>
+        )}
+        </>
+        )}
+      </div>
+
+      <BottomNav active="profile" />
+    </div>
+  );
+}

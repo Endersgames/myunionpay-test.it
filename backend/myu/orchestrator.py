@@ -112,6 +112,12 @@ async def handle_chat(user_id: str, message: str, session_id: str) -> dict:
 
     # 7. Estimate cost and check budget
     llm_config = await get_llm_config()
+    if not llm_config["enabled"]:
+        logger.warning("MYU disabled by admin configuration")
+        return _error_response(request_id, "MYU e momentaneamente disattivata dall'amministrazione.", balance)
+    if not llm_config["api_key"]:
+        logger.error("MYU AI is not configured with a usable API key")
+        return _error_response(request_id, "MYU non e ancora configurata. Riprova tra poco.", balance)
     model = llm_config["model"]
     est_input = MAX_CONTEXT_TOKENS
     est_output = MAX_OUTPUT_TOKENS

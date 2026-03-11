@@ -106,6 +106,7 @@ class NotificationCreate(BaseModel):
     message: str
     target_tags: List[str]
     reward_amount: float
+    validity_minutes: int = 60
     target_cap: Optional[str] = None
     target_all_italy: bool = True
 
@@ -118,6 +119,8 @@ class NotificationResponse(BaseModel):
     message: str
     target_tags: List[str]
     reward_amount: float
+    validity_minutes: int
+    expires_at: str
     total_recipients: int
     total_cost: float
     created_at: str
@@ -130,7 +133,12 @@ class UserNotificationResponse(BaseModel):
     title: str
     message: str
     reward_amount: float
+    reward_status: Optional[str] = "pending"
     is_read: bool
+    is_expired: Optional[bool] = False
+    expires_at: Optional[str] = None
+    read_at: Optional[str] = None
+    credited_at: Optional[str] = None
     created_at: str
 
 class NotificationPreviewRequest(BaseModel):
