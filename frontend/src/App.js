@@ -18,7 +18,10 @@ export const AuthProvider = ({ children }) => {
       const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
       const isGoogleCallbackPath = pathname === "/google-auth/callback";
       const callbackHasSession =
-        queryParams.has("session_id") || hashParams.has("session_id");
+        queryParams.has("session_id") ||
+        hashParams.has("session_id") ||
+        queryParams.has("error") ||
+        hashParams.has("error");
 
       if (isGoogleCallbackPath && callbackHasSession) {
         setLoading(false);

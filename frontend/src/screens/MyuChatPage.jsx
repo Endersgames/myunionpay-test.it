@@ -1,9 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { ArrowLeft, Send, RotateCcw, CheckCircle2, Clock, X, ChevronRight, MapPin } from "lucide-react";
+import { ArrowLeft, Send, RotateCcw, CheckCircle2, Clock, X, ChevronRight, MapPin, BellRing } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { myuAPI } from "@/lib/api";
+import {
+  ensurePushSubscription,
+  getNotificationPermissionState,
+  supportsPushNotifications,
+} from "@/lib/push-subscription";
 
 const MYU_ICON = "/myu-icon.png";
 
@@ -60,8 +65,11 @@ export default function MyuChatPage() {
   const [loading, setLoading] = useState(false);
   const [showTasks, setShowTasks] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [pushPermission, setPushPermission] = useState(() => getNotificationPermissionState());
+  const [enablingPush, setEnablingPush] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const pushSupported = supportsPushNotifications();
 
   useEffect(() => {
     loadData();
@@ -157,6 +165,36 @@ export default function MyuChatPage() {
     }
   };
 
+  const handleEnableMyuPush = async () => {
+    if (!pushSupported) {
+      toast.error("Questo browser non supporta le notifiche push");
+      return;
+    }
+
+    setEnablingPush(true);
+    try {
+      const result = await ensurePushSubscription({ requestPermission: true });
+      setPushPermission(result.permission);
+
+      if (result.permission === "granted") {
+        toast.success("MYU e i remind task possono inviarti push, suono e vibrazione.");
+        window.setTimeout(() => window.location.reload(), 500);
+        return;
+      }
+
+      if (result.permission === "denied") {
+        toast.error("Permesso negato. Riattivalo dalle impostazioni del browser.");
+        return;
+      }
+
+      toast.error("Conferma la richiesta del browser per attivare MYU.");
+    } catch (error) {
+      toast.error(error?.message || "Impossibile attivare le notifiche MYU");
+    } finally {
+      setEnablingPush(false);
+    }
+  };
+
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -217,6 +255,31 @@ export default function MyuChatPage() {
           {activeTasks.map(task => (
             <TaskCard key={task.id} task={task} onUpdate={handleTaskUpdate} />
           ))}
+        </div>
+      )}
+
+      {pushSupported && pushPermission !== "granted" && (
+        <div className="flex-shrink-0 border-b border-[#2B7AB8]/10 bg-[#EBF4FC] px-4 py-3">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#2B7AB8] text-white">
+              <BellRing className="h-4 w-4" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-[#1A1A1A]">Attiva MYU e remind task</p>
+              <p className="mt-1 text-xs text-[#6B7280]">
+                Un tap abilita push browser per risposte MYU, promemoria task, segnale sonoro,
+                avviso grafico e vibrazione.
+              </p>
+            </div>
+            <Button
+              onClick={handleEnableMyuPush}
+              disabled={enablingPush}
+              className="h-10 rounded-full bg-[#2B7AB8] px-4 hover:bg-[#236699]"
+              data-testid="myu-enable-push"
+            >
+              {enablingPush ? "Attivo..." : "Attiva"}
+            </Button>
+          </div>
         </div>
       )}
 

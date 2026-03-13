@@ -22,7 +22,6 @@ const MODELS = [
   { id: "gpt-4.1-mini", label: "GPT-4.1 Mini", cost: "Medio" },
   { id: "gpt-4o-mini", label: "GPT-4o Mini", cost: "Medio" },
   { id: "gpt-4o", label: "GPT-4o", cost: "Alto" },
-  { id: "gemini-2.0-flash-lite", label: "Gemini Flash Lite (economico)", cost: "Basso" },
 ];
 
 export default function AdminOpenAIPage() {

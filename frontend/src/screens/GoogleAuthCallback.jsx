@@ -6,13 +6,11 @@ import { useAuth } from "@/App";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import PostRegistrationNotificationsStep from "@/components/PostRegistrationNotificationsStep";
 import {
   clearPendingGoogleAuthContext,
   getPendingGoogleAuthContext,
 } from "@/lib/google-auth-context";
 import { queuePostRegistrationInstall } from "@/lib/pwa-install-state";
-import { shouldShowPushOnboardingStep } from "@/lib/push-subscription";
 import { Phone } from "lucide-react";
 
 export default function GoogleAuthCallback() {
@@ -25,8 +23,6 @@ export default function GoogleAuthCallback() {
   const [sessionId, setSessionId] = useState("");
   const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [showNotificationStep, setShowNotificationStep] = useState(false);
-  const [postRegistrationDestination, setPostRegistrationDestination] = useState("");
 
   useEffect(() => {
     if (hasProcessed.current) return;
@@ -37,6 +33,14 @@ export default function GoogleAuthCallback() {
       const queryParams = new URLSearchParams(window.location.search);
       const hashParams = new URLSearchParams(window.location.hash.replace("#", ""));
       const sid = queryParams.get("session_id") || hashParams.get("session_id");
+      const oauthError = queryParams.get("error") || hashParams.get("error");
+
+      if (oauthError) {
+        clearPendingGoogleAuthContext();
+        toast.error("Autenticazione Google non completata");
+        navigate("/login", { replace: true });
+        return;
+      }
 
       if (!sid) {
         toast.error("Sessione Google non trovata");
@@ -95,13 +99,6 @@ export default function GoogleAuthCallback() {
       clearPendingGoogleAuthContext();
       toast.success("Account creato! Benvenuto in myUup.com");
       const destination = result.redirect_path || googleData?.redirect_path || "/dashboard";
-      if (shouldShowPushOnboardingStep()) {
-        setPostRegistrationDestination(destination);
-        setShowNotificationStep(true);
-        setSubmitting(false);
-        return;
-      }
-
       navigate(destination, { replace: true });
     } catch (err) {
       console.error("Google complete error:", err);
@@ -109,14 +106,6 @@ export default function GoogleAuthCallback() {
       setSubmitting(false);
     }
   };
-
-  if (showNotificationStep) {
-    return (
-      <PostRegistrationNotificationsStep
-        onContinue={() => navigate(postRegistrationDestination || "/dashboard", { replace: true })}
-      />
-    );
-  }
 
   if (loading) {
     return (

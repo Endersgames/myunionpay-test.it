@@ -46,10 +46,6 @@ export function shouldShowPushOnboardingStep() {
 }
 
 async function getVapidKey() {
-  if (VAPID_PUBLIC_KEY) {
-    return VAPID_PUBLIC_KEY;
-  }
-
   const response = await fetch(withApiPath("/push/vapid-key"), {
     cache: "no-store",
   });
@@ -59,11 +55,15 @@ async function getVapidKey() {
   }
 
   const data = await response.json();
-  if (typeof data.publicKey !== "string" || !data.publicKey) {
-    throw new Error("Chiave push non valida");
+  if (typeof data.publicKey === "string" && data.publicKey.length > 80) {
+    return data.publicKey;
   }
 
-  return data.publicKey;
+  if (typeof VAPID_PUBLIC_KEY === "string" && VAPID_PUBLIC_KEY.length > 80) {
+    return VAPID_PUBLIC_KEY;
+  }
+
+  throw new Error("Chiave push non valida");
 }
 
 async function getServiceWorkerRegistration() {

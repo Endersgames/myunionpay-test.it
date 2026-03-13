@@ -1,6 +1,7 @@
 """MYU LLM Service Layer - Cost-aware LLM wrapper."""
 import json
 import logging
+from openai import AsyncOpenAI
 from myu.cost_control import MAX_OUTPUT_TOKENS, MAX_CONTEXT_TOKENS, cap_tokens, count_tokens
 from services.ai_config import DEFAULT_CHAT_MODEL, get_ai_runtime_config
 
@@ -57,8 +58,6 @@ async def call_llm(
     session_id: str,
 ) -> dict:
     """Call LLM with minimal context. Returns parsed response + token estimates."""
-    from emergentintegrations.llm.chat import LlmChat, UserMessage
-
     config = await get_llm_config()
     if not config["enabled"]:
         raise RuntimeError("MYU AI disabilitata dal pannello admin")
@@ -69,14 +68,19 @@ async def call_llm(
     # Cap the prompt
     prompt = cap_tokens(prompt, MAX_CONTEXT_TOKENS)
 
-    chat = LlmChat(
+    client = AsyncOpenAI(
         api_key=config["api_key"],
-        session_id=f"myu_{session_id}",
-        system_message=SYSTEM_PROMPT,
     )
-    chat.with_model(config["provider"], config["model"])
-
-    raw = await chat.send_message(UserMessage(text=prompt))
+    response = await client.chat.completions.create(
+        model=config["model"],
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": prompt},
+        ],
+        max_tokens=config["max_tokens"],
+        temperature=config["temperature"],
+    )
+    raw = response.choices[0].message.content or ""
 
     # Parse JSON response
     parsed = _parse_llm_response(raw)

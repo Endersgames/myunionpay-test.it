@@ -5,11 +5,16 @@ import { toast } from "sonner";
 import {
   Bell, Check, Gift, Store, Tag, Calendar, Heart,
   Megaphone, ChevronDown, ChevronUp, MapPin, Bookmark,
-  ExternalLink, Wallet, ListTodo, MessageCircle
+  ExternalLink, Wallet, ListTodo, MessageCircle, BellRing
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BottomNav from "@/components/BottomNav";
 import { notificationAPI } from "@/lib/api";
+import {
+  ensurePushSubscription,
+  getNotificationPermissionState,
+  supportsPushNotifications,
+} from "@/lib/push-subscription";
 
 const MYU_ICON = "/myu-icon.png";
 
@@ -256,6 +261,9 @@ export default function NotificationsPage() {
   const [expandedId, setExpandedId] = useState(null);
   const [myuVisible, setMyuVisible] = useState(false);
   const [myuComment, setMyuComment] = useState("");
+  const [pushPermission, setPushPermission] = useState(() => getNotificationPermissionState());
+  const [enablingPush, setEnablingPush] = useState(false);
+  const pushSupported = supportsPushNotifications();
 
   useEffect(() => {
     if (user?.id) fetchNotifications();
@@ -265,10 +273,10 @@ export default function NotificationsPage() {
     if (notifications.length > 0 && !loading) {
       const unread = notifications.filter(n => !n.is_read && !n.is_expired && n.reward_status !== "refunded");
       if (unread.length > 0) {
+        setMyuComment(MYU_COMMENTS[Math.floor(Math.random() * MYU_COMMENTS.length)]);
         const timer = setTimeout(() => {
-          setMyuComment(MYU_COMMENTS[Math.floor(Math.random() * MYU_COMMENTS.length)]);
           setMyuVisible(true);
-        }, 3000);
+        }, 180);
         return () => clearTimeout(timer);
       }
     }
@@ -283,6 +291,36 @@ export default function NotificationsPage() {
     }
     setLoading(false);
   };
+
+  const handleEnablePush = useCallback(async () => {
+    if (!pushSupported) {
+      toast.error("Questo browser non supporta le notifiche push");
+      return;
+    }
+
+    setEnablingPush(true);
+    try {
+      const result = await ensurePushSubscription({ requestPermission: true });
+      setPushPermission(result.permission);
+
+      if (result.permission === "granted") {
+        toast.success("Notifiche browser attivate: banner, suono, vibrazione, MYU e remind task.");
+        window.setTimeout(() => window.location.reload(), 500);
+        return;
+      }
+
+      if (result.permission === "denied") {
+        toast.error("Permesso negato. Riattivalo dalle impostazioni del browser.");
+        return;
+      }
+
+      toast.error("Conferma la richiesta del browser per attivare le notifiche.");
+    } catch (error) {
+      toast.error(error?.message || "Impossibile attivare le notifiche");
+    } finally {
+      setEnablingPush(false);
+    }
+  }, [pushSupported]);
 
   const markAsRead = useCallback(async (id) => {
     try {
@@ -355,6 +393,31 @@ export default function NotificationsPage() {
 
       {/* Content */}
       <div className="px-4 py-4">
+        {pushSupported && pushPermission !== "granted" && (
+          <div className="mb-4 rounded-3xl border border-[#2B7AB8]/20 bg-gradient-to-br from-[#EBF4FC] to-white p-4 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex h-11 w-11 items-center justify-center rounded-2xl bg-[#2B7AB8] text-white">
+                <BellRing className="h-5 w-5" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-[#1A1A1A]">Attiva notifiche complete</p>
+                <p className="mt-1 text-xs leading-relaxed text-[#6B7280]">
+                  Al primo tap il browser ti chiede il consenso. Abiliti avvisi a schermo,
+                  segnale sonoro, vibrazione, push MYU e remind task.
+                </p>
+                <Button
+                  onClick={handleEnablePush}
+                  disabled={enablingPush}
+                  className="mt-3 h-11 rounded-full bg-[#2B7AB8] px-5 hover:bg-[#236699]"
+                  data-testid="notifications-enable-push"
+                >
+                  {enablingPush ? "Richiesta in corso..." : "Attiva notifiche browser"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {notifications.length === 0 ? (
           <MyuEmptyState onChatClick={() => navigate("/myu")} />
         ) : (

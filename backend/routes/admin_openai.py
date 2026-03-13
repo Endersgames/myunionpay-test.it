@@ -6,10 +6,12 @@ from services.ai_config import (
     DEFAULT_CHAT_MODEL,
     get_ai_runtime_config,
     mask_api_key,
+    normalize_chat_model,
     sanitize_api_key,
 )
 from pydantic import BaseModel
 from datetime import datetime, timezone
+from openai import AsyncOpenAI
 
 router = APIRouter(prefix="/admin/openai", tags=["admin-openai"])
 
@@ -56,7 +58,7 @@ async def save_openai_config(data: OpenAIConfig, admin=Depends(require_admin)):
     # Build update document
     update_doc = {
         "key": "openai",
-        "model": data.model,
+        "model": normalize_chat_model(data.model),
         "enabled": data.enabled,
         "max_tokens": data.max_tokens,
         "temperature": data.temperature,
@@ -91,21 +93,24 @@ async def test_openai_connection(admin=Depends(require_admin)):
         return {"success": False, "error": "AI disabilitata dal pannello admin", "model": model}
 
     try:
-        from emergentintegrations.llm.chat import LlmChat, UserMessage
-        chat = LlmChat(
-            api_key=api_key,
-            session_id=f"admin_test_{admin['id'][:8]}",
-            system_message="Rispondi solo 'OK' in una parola."
+        client = AsyncOpenAI(api_key=api_key)
+        response = await client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": "Rispondi solo con la parola OK."},
+                {"role": "user", "content": "Test connessione"},
+            ],
+            max_tokens=10,
+            temperature=0,
         )
-        chat.with_model(provider, model)
-        response = await chat.send_message(UserMessage(text="Test connessione"))
+        content = response.choices[0].message.content or ""
         return {
             "success": True,
             "model": model,
             "provider": provider,
             "source": runtime["source"],
             "api_key_preview": mask_api_key(api_key),
-            "response": response[:100],
+            "response": content[:100],
             "message": "Connessione riuscita!"
         }
     except Exception as e:

@@ -91,7 +91,7 @@ export default function SendNotificationPage() {
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("auth_token");
       const res = await fetch(withBackendPath("/api/notifications/upload-image"), {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },

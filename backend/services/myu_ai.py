@@ -4,11 +4,12 @@ import logging
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 from pathlib import Path
+from openai import AsyncOpenAI
 
 load_dotenv(Path(__file__).parent.parent / '.env')
 
-from emergentintegrations.llm.chat import LlmChat, UserMessage
 from database import db
+from services.ai_config import DEFAULT_CHAT_MODEL, get_ai_runtime_config
 
 logger = logging.getLogger("myu_ai")
 
@@ -112,18 +113,24 @@ async def send_message(user_id: str, user_text: str, session_id: str) -> dict:
     context = await get_user_context(user_id)
     
     prompt_text = f"CONTESTO UTENTE:\n{context}\n\nMESSAGGIO: {user_text}"
+    runtime = await get_ai_runtime_config(default_model=DEFAULT_CHAT_MODEL)
+    if not runtime["enabled"]:
+        raise RuntimeError("MYU AI disabilitata dal pannello admin")
+    if not runtime["api_key"]:
+        raise RuntimeError("OpenAI API key non configurata")
 
-    chat = LlmChat(
-        api_key=os.environ.get("EMERGENT_LLM_KEY"),
-        session_id=f"myu_{session_id}",
-        system_message=SYSTEM_PROMPT
-    )
-    chat.with_model("openai", "gpt-4.1-nano")
-
-    user_message = UserMessage(text=prompt_text)
-    
     try:
-        raw_response = await chat.send_message(user_message)
+        client = AsyncOpenAI(api_key=runtime["api_key"])
+        response = await client.chat.completions.create(
+            model=runtime["model"],
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": prompt_text},
+            ],
+            max_tokens=runtime["max_tokens"],
+            temperature=runtime["temperature"],
+        )
+        raw_response = response.choices[0].message.content or ""
         
         try:
             clean = raw_response.strip()

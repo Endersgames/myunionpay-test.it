@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { featuresAPI, paymentAPI } from "@/lib/api";
 import { getBackendBase } from "@/lib/runtime-config";
+import { saveReferralContext } from "@/lib/referral-context";
 
 const MYU_MESSAGES = {
   merchant: [
@@ -123,15 +124,40 @@ export default function ScanRedirectPage() {
     return params.toString() ? `/menu/${merchantId}?${params.toString()}` : `/menu/${merchantId}`;
   };
 
+  const persistReferral = (redirectPath) => {
+    if (!resolvedReferralCode) {
+      return;
+    }
+
+    saveReferralContext({
+      referralCode: resolvedReferralCode,
+      redirectPath: redirectPath || "",
+      source: "qr",
+      qrCode,
+      recipientName,
+      recipientType,
+    });
+  };
+
   const handleContinue = () => {
     if (authLoading) return;
     if (user) navigate(`/pay/${qrCode}`, { replace: true });
-    else navigate(buildRegisterUrl(`/pay/${qrCode}`), { replace: true });
+    else {
+      persistReferral(`/pay/${qrCode}`);
+      navigate(buildRegisterUrl(`/pay/${qrCode}`), { replace: true });
+    }
   };
 
   const handleViewMenu = () => merchantData && navigate(buildMenuUrl(merchantData.id));
-  const handleViewMenuRegister = () => merchantData && navigate(buildRegisterUrl(`/menu/${merchantData.id}`));
-  const handleRegisterAndPay = () => navigate(buildRegisterUrl(`/pay/${qrCode}`));
+  const handleViewMenuRegister = () => {
+    if (!merchantData) return;
+    persistReferral(`/menu/${merchantData.id}`);
+    navigate(buildRegisterUrl(`/menu/${merchantData.id}`));
+  };
+  const handleRegisterAndPay = () => {
+    persistReferral(`/pay/${qrCode}`);
+    navigate(buildRegisterUrl(`/pay/${qrCode}`));
+  };
 
   const getMyuMsg = (type) => {
     const msgs = MYU_MESSAGES[type] || MYU_MESSAGES.user;

@@ -7,17 +7,16 @@ import { ArrowLeft, Eye, EyeOff, Gift } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/App";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
-import PostRegistrationNotificationsStep from "@/components/PostRegistrationNotificationsStep";
 import { featuresAPI } from "@/lib/api";
 import { queuePostRegistrationInstall } from "@/lib/pwa-install-state";
-import { shouldShowPushOnboardingStep } from "@/lib/push-subscription";
+import { clearReferralContext, getReferralContext, saveReferralContext } from "@/lib/referral-context";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
   const { register } = useAuth();
   const [searchParams] = useSearchParams();
-  
-  const redirectTo = searchParams.get("redirect");
+  const [redirectTo, setRedirectTo] = useState(searchParams.get("redirect") || "");
+  const [referralLocked, setReferralLocked] = useState(false);
   
   const [formData, setFormData] = useState({
     full_name: "",
@@ -29,12 +28,40 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [pricing, setPricing] = useState({});
-  const [showNotificationStep, setShowNotificationStep] = useState(false);
-  const [postRegistrationDestination, setPostRegistrationDestination] = useState("");
 
   useEffect(() => {
     featuresAPI.getPublicPricing().then((data) => setPricing(data || {})).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    const queryReferral = searchParams.get("ref") || "";
+    const queryRedirect = searchParams.get("redirect") || "";
+    const stored = getReferralContext();
+
+    const resolvedReferral = queryReferral || stored.referralCode || "";
+    const resolvedRedirect = queryRedirect || stored.redirectPath || "";
+    const locked = Boolean(queryReferral || stored.referralCode);
+
+    if (resolvedRedirect) {
+      setRedirectTo(resolvedRedirect);
+    }
+
+    if (resolvedReferral) {
+      setFormData((prev) => (
+        prev.referral_code === resolvedReferral
+          ? prev
+          : { ...prev, referral_code: resolvedReferral }
+      ));
+      setReferralLocked(locked);
+      saveReferralContext({
+        ...stored,
+        referralCode: resolvedReferral,
+        redirectPath: resolvedRedirect,
+      });
+    } else {
+      setReferralLocked(false);
+    }
+  }, [searchParams]);
 
   const referrerBonus = Number(pricing?.referral_bonus_referrer ?? 1);
   const referredBonus = Number(pricing?.referral_bonus_referred ?? referrerBonus);
@@ -58,6 +85,7 @@ export default function RegisterPage() {
     try {
       await register(formData);
       queuePostRegistrationInstall();
+      clearReferralContext();
       
       if (formData.referral_code) {
         toast.success(
@@ -68,13 +96,6 @@ export default function RegisterPage() {
       toast.success("Account creato! Benvenuto in myUup.com");
       
       const destination = redirectTo || "/dashboard";
-      if (shouldShowPushOnboardingStep()) {
-        setPostRegistrationDestination(destination);
-        setShowNotificationStep(true);
-        setLoading(false);
-        return;
-      }
-
       navigate(destination);
       
     } catch (err) {
@@ -83,14 +104,6 @@ export default function RegisterPage() {
       setLoading(false);
     }
   };
-
-  if (showNotificationStep) {
-    return (
-      <PostRegistrationNotificationsStep
-        onContinue={() => navigate(postRegistrationDestination || "/dashboard")}
-      />
-    );
-  }
 
   return (
     <div className="min-h-screen bg-white px-6 py-8">
@@ -117,7 +130,9 @@ export default function RegisterPage() {
           <div className="bg-[#E85A24]/10 border border-[#E85A24]/30 rounded-2xl p-4 mb-6 flex items-center gap-3">
             <Gift className="w-6 h-6 text-[#E85A24]" />
             <div>
-              <p className="font-semibold text-[#E85A24]">Codice Referral Applicato!</p>
+              <p className="font-semibold text-[#E85A24]">
+                {referralLocked ? "Referral da QR applicato!" : "Codice Referral Applicato!"}
+              </p>
               <p className="text-sm text-[#6B7280]">
                 Riceverai {referredBonus.toFixed(2)} UP bonus alla registrazione
               </p>
@@ -195,9 +210,15 @@ export default function RegisterPage() {
               placeholder="REFXXXXX"
               value={formData.referral_code}
               onChange={handleChange("referral_code")}
+              readOnly={referralLocked}
               className="h-12 bg-[#F5F5F5] border-black/10 focus:border-[#2B7AB8] rounded-xl text-[#1A1A1A]"
               data-testid="referral-input"
             />
+            {referralLocked && (
+              <p className="text-[11px] text-[#6B7280] mt-2">
+                Codice referral bloccato dal QR scansionato per non perdere il bonus in registrazione.
+              </p>
+            )}
           </div>
 
           <Button
