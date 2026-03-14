@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="23" time="4.673" timestamp="2026-03-01T17:58:07.209118+00:00" hostname="agent-env-75fe411f-2468-40d6-9574-a265d12cbf19"><testcase classname="tests.test_uppay_api.TestHealthEndpoints" name="test_api_health" time="0.247" /><testcase classname="tests.test_uppay_api.TestHealthEndpoints" name="test_root_health" time="0.145"><failure message="requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)">/root/.venv/lib/python3.11/site-packages/requests/models.py:976: in json
+    return complexjson.loads(self.text, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/json/__init__.py:346: in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/json/decoder.py:337: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/json/decoder.py:355: in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+E   json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+tests/test_uppay_api.py:34: in test_root_health
+    data = response.json()
+           ^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/requests/models.py:980: in json
+    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+E   requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)</failure></testcase><testcase classname="tests.test_uppay_api.TestHealthEndpoints" name="test_api_root" time="0.151" /><testcase classname="tests.test_uppay_api.TestAuthEndpoints" name="test_login_success" time="0.383" /><testcase classname="tests.test_uppay_api.TestAuthEndpoints" name="test_login_invalid_credentials" time="0.142" /><testcase classname="tests.test_uppay_api.TestAuthEndpoints" name="test_get_me_with_token" time="0.439" /><testcase classname="tests.test_uppay_api.TestAuthEndpoints" name="test_get_me_without_token" time="0.141" /><testcase classname="tests.test_uppay_api.TestWalletEndpoints" name="test_get_wallet" time="0.447" /><testcase classname="tests.test_uppay_api.TestWalletEndpoints" name="test_get_wallet_without_auth" time="0.102" /><testcase classname="tests.test_uppay_api.TestMerchantEndpoints" name="test_get_merchants_list" time="0.102" /><testcase classname="tests.test_uppay_api.TestMerchantEndpoints" name="test_get_merchant_by_id" time="0.108" /><testcase classname="tests.test_uppay_api.TestMerchantEndpoints" name="test_get_merchant_not_found" time="0.129" /><testcase classname="tests.test_uppay_api.TestMerchantEndpoints" name="test_get_categories" time="0.137" /><testcase classname="tests.test_uppay_api.TestQRReferralEndpoints" name="test_merchant_qr_referral" time="0.109" /><testcase classname="tests.test_uppay_api.TestQRReferralEndpoints" name="test_user_qr_referral" time="0.100" /><testcase classname="tests.test_uppay_api.TestQRReferralEndpoints" name="test_invalid_qr_referral" time="0.122" /><testcase classname="tests.test_uppay_api.TestPaymentsEndpoints" name="test_get_user_by_merchant_qr" time="0.122" /><testcase classname="tests.test_uppay_api.TestPaymentsEndpoints" name="test_get_user_by_invalid_qr" time="0.112" /><testcase classname="tests.test_uppay_api.TestProfileEndpoints" name="test_get_profile_tags" time="0.115" /><testcase classname="tests.test_uppay_api.TestNotificationsEndpoints" name="test_get_unread_count" time="0.445" /><testcase classname="tests.test_uppay_api.TestNotificationsEndpoints" name="test_get_unread_count_without_auth" time="0.122" /><testcase classname="tests.test_uppay_api.TestReferralsEndpoints" name="test_get_referral_stats" time="0.474" /><testcase classname="tests.test_uppay_api.TestReferralsEndpoints" name="test_get_referral_stats_without_auth" time="0.152" /></testsuite></testsuites>

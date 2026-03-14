@@ -1,0 +1,14 @@
+--- /etc/nginx/sites-available/dev.myuup
++++ /etc/nginx/sites-available/dev.myuup
+@@ -1,9 +1,9 @@
+ server {
+     listen 443 ssl;
+     server_name dev.myuup.com;
+ 
+-    ssl_certificate /etc/letsencrypt/live/myuup.com/fullchain.pem;
+-    ssl_certificate_key /etc/letsencrypt/live/myuup.com/privkey.pem;
++    ssl_certificate /etc/letsencrypt/live/dev.myuup.com/fullchain.pem;
++    ssl_certificate_key /etc/letsencrypt/live/dev.myuup.com/privkey.pem;
+ 
+     location / {
+         proxy_pass http://127.0.0.1:3000;

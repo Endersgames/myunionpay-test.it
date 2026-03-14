@@ -1,0 +1,32 @@
+{
+  "short_name": "myUup",
+  "name": "myUup.com - Paga. Guadagna. Unisciti.",
+  "description": "App PWA per pagamenti peer-to-peer tramite QR Code - myUup.com",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#2B7AB8",
+  "background_color": "#FFFFFF",
+  "orientation": "portrait",
+  "categories": ["finance", "business"],
+  "prefer_related_applications": false
+}

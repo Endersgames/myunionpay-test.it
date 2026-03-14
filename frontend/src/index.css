@@ -1,0 +1,510 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Manrope:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --up-background: #FFFFFF;
+  --up-surface: #F5F5F5;
+  --up-surface-highlight: #EBEBEB;
+  --up-primary: #2B7AB8;
+  --up-secondary: #E85A24;
+  --up-accent: #2B7AB8;
+  --up-text-primary: #1A1A1A;
+  --up-text-secondary: #6B7280;
+  --up-success: #22C55E;
+  --up-error: #FF3B30;
+  --up-border: rgba(0, 0, 0, 0.1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--up-background);
+  color: var(--up-text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.font-heading {
+  font-family: 'Syne', sans-serif;
+}
+
+.font-mono {
+  font-family: 'Space Mono', monospace;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--up-surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--up-primary);
+  border-radius: 3px;
+}
+
+/* Glassmorphism */
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--up-border);
+}
+
+/* Glow effects */
+.glow-primary {
+  box-shadow: 0 4px 20px rgba(43, 122, 184, 0.3);
+}
+
+.glow-secondary {
+  box-shadow: 0 4px 20px rgba(232, 90, 36, 0.3);
+}
+
+/* Keypad button */
+.keypad-btn {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--up-surface);
+  color: var(--up-text-primary);
+  font-family: 'Space Mono', monospace;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--up-border);
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.keypad-btn:active {
+  background: rgba(43, 122, 184, 0.2);
+  transform: scale(0.95);
+}
+
+/* Amount input */
+.amount-input {
+  background: transparent;
+  font-family: 'Space Mono', monospace;
+  font-size: 3.5rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--up-text-primary);
+  border: none;
+  outline: none;
+  width: 100%;
+  caret-color: var(--up-secondary);
+}
+
+.amount-input::placeholder {
+  color: rgba(0, 0, 0, 0.2);
+}
+
+/* QR Scanner Styles */
+#qr-reader {
+  border: none !important;
+  border-radius: 21px !important;
+  overflow: hidden;
+}
+
+#qr-reader video {
+  border-radius: 21px !important;
+  object-fit: cover !important;
+}
+
+#qr-reader__scan_region {
+  background: transparent !important;
+}
+
+#qr-reader__dashboard {
+  display: none !important;
+}
+
+#qr-reader__dashboard_section {
+  display: none !important;
+}
+
+#qr-reader__dashboard_section_csr {
+  display: none !important;
+}
+
+#qr-reader__status_span {
+  display: none !important;
+}
+
+#qr-reader__camera_selection {
+  display: none !important;
+}
+
+/* Wallet card */
+.wallet-card {
+  background: linear-gradient(135deg, var(--up-primary) 0%, #1E5F8A 100%);
+  border: none;
+  border-radius: 24px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  color: white;
+}
+
+.wallet-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.1) 25%, transparent 30%);
+  pointer-events: none;
+}
+
+/* Bottom navigation */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  padding: 12px 16px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+.bottom-nav-inner {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--up-border);
+  border-radius: 24px;
+  padding: 8px 16px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  color: var(--up-text-secondary);
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.nav-item.active {
+  color: var(--up-primary);
+  background: rgba(43, 122, 184, 0.1);
+}
+
+.nav-item:hover {
+  color: var(--up-primary);
+}
+
+/* UP Points badge */
+.up-badge {
+  background: var(--up-secondary);
+  color: white;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  box-shadow: 0 2px 10px rgba(232, 90, 36, 0.3);
+}
+
+/* Merchant card */
+.merchant-card {
+  background: var(--up-surface);
+  border: 1px solid var(--up-border);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.merchant-card:hover {
+  border-color: rgba(43, 122, 184, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* QR Scanner frame */
+.qr-scanner-frame {
+  position: relative;
+  width: 280px;
+  height: 280px;
+  border: 3px solid var(--up-primary);
+  border-radius: 24px;
+  box-shadow: 0 0 30px rgba(43, 122, 184, 0.2);
+}
+
+.qr-scanner-frame::before,
+.qr-scanner-frame::after {
+  content: '';
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--up-secondary);
+}
+
+.qr-scanner-frame::before {
+  top: -3px;
+  left: -3px;
+  border-right: none;
+  border-bottom: none;
+  border-top-left-radius: 24px;
+}
+
+.qr-scanner-frame::after {
+  bottom: -3px;
+  right: -3px;
+  border-left: none;
+  border-top: none;
+  border-bottom-right-radius: 24px;
+}
+
+/* Animation classes */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes scan {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(260px);
+  }
+}
+
+.animate-slideUp {
+  animation: slideUp 0.3s ease-out;
+}
+
+.animate-pulse-slow {
+  animation: pulse 2s infinite;
+}
+
+.scan-line {
+  position: absolute;
+  top: 0;
+  left: 10px;
+  right: 10px;
+  height: 2px;
+  background: var(--up-secondary);
+  box-shadow: 0 0 10px var(--up-secondary);
+  animation: scan 2s ease-in-out infinite;
+}
+
+/* Tag pills */
+.tag-pill {
+  background: white;
+  border: 1px solid var(--up-border);
+  color: var(--up-text-secondary);
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  cursor: pointer;
+}
+
+.tag-pill.selected {
+  background: rgba(43, 122, 184, 0.1);
+  border-color: var(--up-primary);
+  color: var(--up-primary);
+}
+
+.tag-pill:hover {
+  border-color: var(--up-primary);
+}
+
+/* Safe area padding */
+.pb-safe {
+  padding-bottom: max(100px, calc(80px + env(safe-area-inset-bottom)));
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 10%;
+    --card: 0 0% 96%;
+    --card-foreground: 0 0% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+    --primary: 204 58% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 18 81% 53%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 204 58% 45%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 4 100% 59%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 204 58% 45%;
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Notification badge */
+.notification-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  background: var(--up-secondary);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+}
+
+/* PWA Install Banner */
+.install-banner {
+  background: linear-gradient(135deg, var(--up-primary) 0%, #1E5F8A 100%);
+  padding: 16px 20px;
+  border-radius: 16px;
+  margin: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 20px rgba(43, 122, 184, 0.3);
+  color: white;
+}
+
+/* Light theme cards */
+.card-light {
+  background: white;
+  border: 1px solid var(--up-border);
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+
+/* ========================
+   MYU MASCOT ANIMATIONS
+   ======================== */
+
+/* Wave animation - MYU sways side to side */
+.myu-wave {
+  animation: myuWave 0.6s ease-in-out 3;
+}
+@keyframes myuWave {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(15deg); }
+  75% { transform: rotate(-15deg); }
+}
+
+/* Bounce animation - MYU jumps */
+.myu-bounce {
+  animation: myuBounce 0.5s ease 3;
+}
+@keyframes myuBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+/* Peek right animation - MYU slides in from right */
+.myu-peek-right {
+  animation: myuPeekRight 1.5s ease-in-out;
+}
+@keyframes myuPeekRight {
+  0% { transform: translateX(20px) scale(0.8); opacity: 0.5; }
+  30% { transform: translateX(0) scale(1.05); opacity: 1; }
+  50% { transform: scale(1); }
+  70% { transform: rotate(5deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* Look around animation */
+.myu-look-around {
+  animation: myuLookAround 2s ease-in-out;
+}
+@keyframes myuLookAround {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-5px) rotate(-3deg); }
+  40% { transform: translateX(5px) rotate(3deg); }
+  60% { transform: translateX(-3px) rotate(-2deg); }
+  80% { transform: translateX(2px) rotate(1deg); }
+}
+
+/* Point up animation */
+.myu-point-up {
+  animation: myuPointUp 1s ease-in-out;
+}
+@keyframes myuPointUp {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-8px) scale(1.1); }
+}
+
+/* Nod animation */
+.myu-nod {
+  animation: myuNod 0.4s ease-in-out 3;
+}
+@keyframes myuNod {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(4px); }
+}
+
+/* Tip bubble animations */
+@keyframes myuFadeIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes myuFadeOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.9); }
+}
+
+/* MYU thinking dots in chat */
+.myu-thinking-dot {
+  animation: myuThinkDot 1.4s ease-in-out infinite;
+}
+@keyframes myuThinkDot {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}

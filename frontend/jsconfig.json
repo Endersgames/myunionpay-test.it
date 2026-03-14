@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "react-router-dom": ["src/lib/router.js"]
+    }
+  },
+  "include": ["app", "src", "next-env.d.ts"]
+}
